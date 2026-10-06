@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 // Recorded walkthrough of the admin and storefront running together.
 //
-//   pnpm record                      full run -> recordings/<YYYY-MM-DD_HHmm>/
-//   pnpm record --chapters 01,02     only some chapters (they build on each other, so start from 01)
+//   pnpm record                      full run -> recordings/<YYYY-MM-DD_HHmm>/ (with BUGS.md)
+//   pnpm record --flows 10,13        only these chapters, plus the chapters they depend on (chapters.json)
 //   pnpm record --skip-build         reuse the last recording build of the web apps
+//   pnpm record --headed             show the browsers
+//   pnpm record --keep 3             afterwards, keep only the newest 3 fully passing runs (failed runs are never deleted)
 //   pnpm record --serve              start the isolated stack and keep it running (no recording)
 //
 // Everything runs in isolation: a throwaway PostgreSQL, an in-memory Redis, separate ports
@@ -12,7 +14,8 @@
 // No application code or configuration is changed; only environment values differ.
 import { spawn, execFileSync } from "node:child_process";
 import { createServer } from "node:http";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { connect as tcpConnect } from "node:net";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -21,6 +24,7 @@ import EmbeddedPostgres from "embedded-postgres";
 import { RedisMemoryServer } from "redis-memory-server";
 import { createClerkClient } from "@clerk/backend";
 import ffmpegPath from "ffmpeg-static";
+import { fmt, pruneRuns, writeIndex, writeReports } from "./report.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../..");
@@ -46,8 +50,16 @@ function readEnvFile(path) {
 function start(name, command, commandArgs, options) {
   const child = spawn(command, commandArgs, { ...options, stdio: ["ignore", "pipe", "pipe"], detached: false });
   const logFile = join(options.logDir, `${name}.log`);
+  // Each line is prefixed with the UTC time so BUGS.md can quote the log lines around a failure.
   let buffer = "";
-  const write = (chunk) => { buffer += chunk; if (buffer.length > 2_000_000) buffer = buffer.slice(-1_000_000); };
+  let partial = "";
+  const write = (chunk) => {
+    const lines = (partial + chunk).split("\n");
+    partial = lines.pop();
+    const stamp = `[${new Date().toISOString().slice(11, 23)}] `;
+    for (const line of lines) buffer += `${stamp}${line}\n`;
+    if (buffer.length > 2_000_000) buffer = buffer.slice(-1_000_000);
+  };
   child.stdout.on("data", write);
   child.stderr.on("data", write);
   child.on("exit", (code) => { writeFileSync(logFile, buffer); if (code && !child.killedByUs) log(`${name} exited with ${code} (see ${logFile})`); });
@@ -65,6 +77,15 @@ async function stop(name) {
   processes.delete(name);
 }
 
+/** True when something already listens on the port (e.g. a stack left over from an interrupted run). */
+function portInUse(port) {
+  return new Promise((resolvePort) => {
+    const socket = tcpConnect({ port, host: "127.0.0.1" });
+    socket.once("connect", () => { socket.destroy(); resolvePort(true); });
+    socket.once("error", () => resolvePort(false));
+  });
+}
+
 async function waitFor(url, label, timeoutMs = 180_000) {
   const until = Date.now() + timeoutMs;
   while (Date.now() < until) {
@@ -72,6 +93,25 @@ async function waitFor(url, label, timeoutMs = 180_000) {
     await new Promise((r) => setTimeout(r, 1000));
   }
   throw new Error(`${label} did not become ready at ${url}`);
+}
+
+/** --flows: the requested chapters plus everything they depend on, as spec files in run order. */
+function chapterFiles(requested) {
+  const deps = JSON.parse(readFileSync(join(here, "chapters.json"), "utf8"));
+  const wanted = new Set();
+  const add = (id) => {
+    if (!(id in deps)) throw new Error(`Unknown chapter "${id}" (see tests/recording/chapters.json)`);
+    if (wanted.has(id)) return;
+    wanted.add(id);
+    deps[id].forEach(add);
+  };
+  requested.split(",").map((c) => c.trim()).filter(Boolean).forEach(add);
+  const files = readdirSync(join(here, "chapters")).filter((f) => f.endsWith(".spec.ts")).sort();
+  return [...wanted].sort().map((id) => {
+    const file = files.find((f) => f.startsWith(`${id}-`));
+    if (!file) throw new Error(`No spec file for chapter ${id}`);
+    return `chapters/${file}`;
+  });
 }
 
 async function freshDatabase(tmp) {
@@ -147,7 +187,6 @@ function duration(file) {
   return 0;
 }
 
-const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
 
 async function main() {
   const adminEnv = readEnvFile(join(root, "apps/admin/.env.local"));
@@ -158,11 +197,13 @@ async function main() {
     throw new Error("Recording needs Clerk development keys (pk_test_/sk_test_) in apps/admin/.env.local.");
   }
 
+  const chapters = option("flows") ?? option("chapters");
+  const files = chapters ? chapterFiles(chapters) : [];
   const stamp = runStamp();
   const runDir = flag("serve") ? mkdtempSync(join(tmpdir(), "ros-serve-")) : join(root, "recordings", stamp);
   const workDir = mkdtempSync(join(tmpdir(), "ros-recording-"));
   const logDir = join(runDir, "logs");
-  for (const d of ["raw", "chapters", "logs"]) mkdirSync(join(runDir, d), { recursive: true });
+  for (const d of ["raw", "chapters", "logs", "failures"]) mkdirSync(join(runDir, d), { recursive: true });
   cleanups.push(() => rmSync(workDir, { recursive: true, force: true }));
   log(`output: ${runDir}`);
   // A full run takes ~45 min; if the Mac idles to sleep, timers freeze and chapters time out. Keep it awake
@@ -177,6 +218,9 @@ async function main() {
   const stale = await clerkCleanup(clerk);
   if (stale) log(`removed ${stale} leftover recording users from Clerk`);
 
+  const busy = [];
+  for (const port of Object.values(PORTS)) if (await portInUse(port)) busy.push(port);
+  if (busy.length) throw new Error(`Port(s) ${busy.join(", ")} already in use — stop the old process first (lsof -ti :${busy[0]} | xargs kill).`);
   log("starting PostgreSQL and Redis");
   const DATABASE_URL = await freshDatabase(workDir);
   const redis = await RedisMemoryServer.create();
@@ -192,7 +236,7 @@ async function main() {
   const webEnv = {
     ...process.env, NEXT_DIST_DIR: ".next-recording", NEXT_TELEMETRY_DISABLED: "1",
     NEXT_PUBLIC_API_BASE_URL: URLS.api, API_INTERNAL_URL: URLS.api, NEXT_PUBLIC_SITE_URL: URLS.storefront, NEXT_PUBLIC_STORE_BRAND_SLUG: STORE_SLUG,
-    NEXT_PUBLIC_STOREFRONT_URL: URLS.storefront, NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY,
+    NEXT_PUBLIC_STOREFRONT_URL: URLS.storefront, NEXT_PUBLIC_ADMIN_URL: URLS.admin, NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY,
     NEXT_PUBLIC_CLERK_SIGN_IN_URL: "/sign-in", NEXT_PUBLIC_CLERK_SIGN_UP_URL: "/sign-up",
   };
   const nextBin = join(root, "apps/storefront/node_modules/.bin/next");
@@ -247,15 +291,14 @@ async function main() {
     return;
   }
 
-  log("recording chapters");
-  const chapters = option("chapters");
+  log(`recording ${files.length ? files.map((f) => f.slice(9).split("-")[0]).join(", ") : "all chapters"}`);
   const testEnv = {
     ...process.env, RECORD_RUN_DIR: runDir, RECORD_WORK_DIR: workDir, RECORD_DATABASE_URL: DATABASE_URL, RECORD_CONTROL_URL: `http://localhost:${PORTS.control}`,
     RECORD_STOREFRONT_URL: URLS.storefront, RECORD_ADMIN_URL: URLS.admin, RECORD_API_URL: URLS.api, RECORD_STORE_SLUG: STORE_SLUG, RECORD_USER_PREFIX: USER_PREFIX,
-    CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY,
+    CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY, RECORD_HEADED: flag("headed") ? "1" : "0",
   };
   const pwArgs = ["playwright", "test", "-c", join(here, "playwright.config.ts")];
-  if (chapters) pwArgs.push(...chapters.split(",").map((c) => `chapters/${c.trim()}`));
+  pwArgs.push(...files);
   // Async on purpose: while the chapters run, this process must keep serving the control channel (worker restarts)
   // and draining the servers' stdout/stderr pipes (a full pipe would stall the API and worker).
   const exitCode = await new Promise((resolve) => {
@@ -269,31 +312,36 @@ async function main() {
   log("composing videos");
   const manifestPath = join(runDir, "raw", "manifest.json");
   const manifest = existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, "utf8")) : [];
-  const results = existsSync(join(runDir, "results.json")) ? JSON.parse(readFileSync(join(runDir, "results.json"), "utf8")) : null;
-  const status = new Map();
-  for (const suite of results?.suites ?? []) for (const spec of suite.specs ?? []) status.set(suite.file?.split("/").pop()?.slice(0, 2) ?? spec.title.slice(0, 2), spec.ok);
   const composed = [];
+  let offset = 0;
   for (const entry of manifest) {
     const out = join(runDir, "chapters", `${entry.id}.mp4`);
     try {
       compose(join(runDir, entry.admin), join(runDir, entry.store), out, entry.title);
-      composed.push({ ...entry, file: out, seconds: duration(out) });
+      const seconds = duration(out);
+      composed.push({ ...entry, file: out, seconds, offset });
+      offset += seconds;
     } catch (error) {
       log(`could not compose ${entry.id}: ${error.message}`);
     }
   }
-  const walkthrough = join(runDir, "restaurant-os-walkthrough.mp4");
-  if (composed.length) concat(composed.map((c) => c.file), walkthrough);
+  const walkthrough = "restaurant-os-walkthrough.mp4";
+  if (composed.length) concat(composed.map((c) => c.file), join(runDir, walkthrough));
 
-  let offset = 0;
+  const recordingsDir = join(root, "recordings");
+  const code = gitInfo();
+  const { summary, bugs, status } = writeReports({ runDir, stamp, code, composed, walkthrough });
+  const bugLink = (b) => `[BUG-${String(b.n).padStart(2, "0")}](BUGS.md#bug-${String(b.n).padStart(2, "0")})`;
   const rows = composed.map((c) => {
-    const row = `| ${fmt(offset)} | [${c.id}](chapters/${c.id}.mp4) | ${c.title} | ${fmt(c.seconds)} | ${status.get(c.id.slice(0, 2)) === false ? "❌ failed" : "✅"} |\n|  |  | ${c.summary} |  |  |`;
-    offset += c.seconds;
-    return row;
+    const bug = bugs.find((b) => b.stage === c.id);
+    return `| ${fmt(c.offset)} | [${c.id}](chapters/${c.id}.mp4) | ${c.title} | ${fmt(c.seconds)} | ${bug ? `❌ ${bugLink(bug)}` : "✅"} |\n|  |  | ${c.summary} |  |  |`;
   });
+  const notRecorded = Object.values(status).filter((st) => st.status === "blocked" || (st.status === "failed" && !st.stage))
+    .map((st) => `- ${st.title} — ${st.status === "blocked" ? `⏭ blocked by ${st.blockedBy.join(", ")}` : `❌ failed before recording (${bugLink(bugs.find((b) => b.title === st.title))})`}`);
+  const failing = summary.failed || summary.blocked;
   writeFileSync(join(runDir, "README.md"), `# Restaurant OS walkthrough — ${stamp.replace("_", " ")}
 
-Code: ${gitInfo()} · Result: ${testsPassed ? "all chapters passed" : "some chapters failed — see logs/ and traces"}
+Code: ${code} · Result: ${failing ? `❌ ${summary.failed} failed, ${summary.blocked} blocked, ${summary.passed} passed` : `✅ all ${summary.passed} chapters passed`} · Bugs and warnings (${summary.warnings}): [BUGS.md](BUGS.md)
 
 Left: admin (desktop, 1280×800). Right: customer storefront (phone, 430×800). Both run at the same time against
 the same API, so changes made in the admin can be watched arriving on the storefront.
@@ -302,17 +350,30 @@ How the two stay in sync: the storefront caches public pages briefly — store s
 ~15 s — so a refresh after that shows changes; checkout prices, stock and opening state are always checked live; the admin order board refreshes
 every 10 s and the customer's order page every 15 s. Payments and customer messages run in test mode (ADR-010).
 
-Full video: [restaurant-os-walkthrough.mp4](restaurant-os-walkthrough.mp4) (${fmt(offset)})
+Full video: [${walkthrough}](${walkthrough}) (${fmt(offset)})
 
 | Starts at | Chapter | What it shows | Length | Result |
 | --- | --- | --- | --- | --- |
 ${rows.join("\n")}
-
-Folders: \`chapters/\` side-by-side videos, \`raw/\` the original admin and storefront recordings,
-\`traces/\` Playwright traces (\`npx playwright show-trace <file>\`), \`logs/\` server logs from this run.
+${notRecorded.length ? `\nNot recorded:\n${notRecorded.join("\n")}\n` : ""}
+Folders: \`chapters/\` side-by-side videos, \`failures/\` everything about each failed chapter (video, screenshots,
+Playwright traces — \`npx playwright show-trace <file>\` — and its step log), \`raw/\` the original admin and
+storefront recordings with step logs, \`logs/\` server logs from this run (each line prefixed with UTC time).
 `);
+
+  const keep = option("keep");
+  if (keep) {
+    const removed = pruneRuns(recordingsDir, Number(keep), stamp, !failing);
+    if (removed.length) log(`--keep ${keep}: removed older fully passing runs ${removed.join(", ")}`);
+  }
+  writeIndex(recordingsDir);
+
   log(`done: ${join(runDir, "README.md")}`);
-  if (!testsPassed) process.exitCode = 1;
+  console.log(`\n${failing ? "❌" : "✅"} ${summary.passed} passed, ${summary.failed} failed, ${summary.blocked} blocked, ${summary.warnings} warnings`);
+  for (const b of bugs) console.log(`  BUG-${String(b.n).padStart(2, "0")} ${b.title}: ${b.error.slice(0, 140)}${b.video ? `\n         ${join(runDir, b.video)}` : ""}`);
+  for (const st of Object.values(status).filter((st) => st.status === "blocked")) console.log(`  blocked: ${st.title} (by ${st.blockedBy.join(", ")})`);
+  console.log(`  report: ${join(runDir, "BUGS.md")}\n`);
+  if (!testsPassed || failing) process.exitCode = 1;
 }
 
 async function shutdown() {
@@ -330,6 +391,8 @@ async function shutdown() {
   }
 }
 
+// Exit explicitly: embedded-postgres's exit hook (async-exit-hook) calls process.exit() on beforeExit and drops
+// process.exitCode, so a failed run would otherwise exit 0.
 main()
   .catch((error) => { console.error(error); process.exitCode = 1; })
-  .finally(shutdown);
+  .finally(async () => { await shutdown(); process.exit(process.exitCode ?? 0); });
