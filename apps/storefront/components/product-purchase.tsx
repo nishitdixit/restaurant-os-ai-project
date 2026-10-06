@@ -18,7 +18,7 @@ export function ProductPurchase({ product }: { product: MenuProduct }) {
 
   if (!product.available) {
     return (
-      <div className="rounded-[var(--radius-lg)] border border-border bg-subtle p-4">
+      <div className="rounded-[var(--ros-radius-lg)] border border-border bg-subtle p-4">
         <p className="font-medium">{product.unavailableReason ?? "Out of stock"}</p>
         <p className="mt-1 text-sm text-muted">This dish isn&apos;t available right now. Have a look at the rest of the menu.</p>
         <Button variant="outline" className="mt-3" onClick={() => router.push("/menu")}>Back to menu</Button>

@@ -17,8 +17,8 @@ const limit = (max: number) => ({ rateLimit: { max, timeWindow: "1 minute" } });
 export async function storefrontRoutes(app: FastifyInstance) {
   const r = app.withTypeProvider<ZodTypeProvider>();
 
-  r.get("/v1/storefront/:store/config", { schema: { tags, params: Store, querystring: z.object({ preview: z.enum(["1"]).optional() }) } }, async (req) => {
-    return storeConfig(req.params.store, { allowDraft: req.query.preview === "1" });
+  r.get("/v1/storefront/:store/config", { schema: { tags, params: Store, querystring: z.object({ preview: z.enum(["1"]).optional(), theme: z.enum(["draft"]).optional() }) } }, async (req) => {
+    return storeConfig(req.params.store, { allowDraft: req.query.preview === "1", draftTheme: req.query.theme === "draft" });
   });
 
   r.get("/v1/storefront/:store/menu", { schema: { tags, params: Store, querystring: Preview } }, async (req) => menu(req.params.store, req.query.preview === "1"));

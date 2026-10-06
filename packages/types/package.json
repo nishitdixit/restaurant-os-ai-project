@@ -12,7 +12,8 @@
     "test": "node -e \"console.log('Contracts are exercised by the API integration suite')\""
   },
   "dependencies": {
-    "zod": "^4.6.5"
+    "zod": "^4.6.5",
+    "@restaurant-os/domain": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.9.2"

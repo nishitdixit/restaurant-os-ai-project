@@ -20,12 +20,13 @@ export default async function HomePage() {
   return (
     <>
       <JsonLd data={restaurantJsonLd(config)} />
-      <section className="overflow-hidden rounded-[var(--radius-xl)] bg-gradient-to-br from-primary to-[color-mix(in_srgb,var(--brand-primary)_70%,black)] p-6 text-primary-contrast shadow-[var(--shadow-md)] sm:p-10">
+      {/* Hero style comes from the theme: gradient (default), solid brand colour, or minimal (on a card). */}
+      <section className="overflow-hidden rounded-[var(--ros-radius-xl)] bg-[linear-gradient(135deg,var(--ros-hero-from),var(--ros-hero-to))] p-6 text-primary-contrast shadow-[var(--ros-shadow-md)] sm:p-10 hero-solid:bg-primary hero-solid:bg-none hero-minimal:ros-card hero-minimal:bg-none hero-minimal:text-text">
         <div className="flex items-start gap-4">
-          {config.logoUrl && <Image src={config.logoUrl} alt="" width={64} height={64} className="hidden size-16 rounded-2xl bg-white object-cover sm:block" priority />}
+          {config.logoUrl && <Image src={config.logoUrl} alt="" width={64} height={64} className="hidden size-16 rounded-image bg-white object-cover sm:block" priority />}
           <div className="min-w-0">
             {config.cuisines.length > 0 && <p className="text-sm font-medium opacity-90">{config.cuisines.join(" · ")}</p>}
-            <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">{config.name}</h1>
+            <h1 className="mt-1 text-3xl ros-heading sm:text-4xl">{config.name}</h1>
             {config.tagline && <p className="mt-2 max-w-xl text-base opacity-90 sm:text-lg">{config.tagline}</p>}
           </div>
         </div>
@@ -35,12 +36,12 @@ export default async function HomePage() {
           {minFee !== null && <li className="inline-flex items-center gap-1.5"><MapPin className="size-4" aria-hidden />Delivery from {formatMoney(minFee, config.currency)}</li>}
         </ul>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Link href="/menu" className="inline-flex h-12 items-center gap-2 rounded-[var(--radius-md)] bg-white px-6 text-base font-semibold text-[var(--brand-primary)] shadow-[var(--shadow-sm)] hover:bg-white/90">
+          <Link href="/menu" className="ros-button-text inline-flex h-12 items-center gap-2 rounded-button bg-surface px-6 text-base font-semibold text-link shadow-[var(--ros-shadow-sm)] hover:brightness-95 hero-minimal:ros-btn-primary">
             <ShoppingBag className="size-5" aria-hidden />Order direct
           </Link>
-          {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="inline-flex h-12 items-center rounded-[var(--radius-md)] border border-white/40 px-5 text-sm font-medium hover:bg-white/10">Order on WhatsApp</a>}
-          {config.links.swiggy && <a href={config.links.swiggy} target="_blank" rel="noopener noreferrer" className="inline-flex h-12 items-center rounded-[var(--radius-md)] border border-white/40 px-5 text-sm font-medium hover:bg-white/10">Swiggy</a>}
-          {config.links.zomato && <a href={config.links.zomato} target="_blank" rel="noopener noreferrer" className="inline-flex h-12 items-center rounded-[var(--radius-md)] border border-white/40 px-5 text-sm font-medium hover:bg-white/10">Zomato</a>}
+          {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="ros-button-text inline-flex h-12 items-center rounded-button border border-current/40 px-5 text-sm font-medium hover:bg-current/10 hero-minimal:border-border-strong">Order on WhatsApp</a>}
+          {config.links.swiggy && <a href={config.links.swiggy} target="_blank" rel="noopener noreferrer" className="ros-button-text inline-flex h-12 items-center rounded-button border border-current/40 px-5 text-sm font-medium hover:bg-current/10 hero-minimal:border-border-strong">Swiggy</a>}
+          {config.links.zomato && <a href={config.links.zomato} target="_blank" rel="noopener noreferrer" className="ros-button-text inline-flex h-12 items-center rounded-button border border-current/40 px-5 text-sm font-medium hover:bg-current/10 hero-minimal:border-border-strong">Zomato</a>}
         </div>
       </section>
 
@@ -51,8 +52,8 @@ export default async function HomePage() {
           <h2 id="offers-heading" className="sr-only">Offers</h2>
           <ul className="flex gap-3 overflow-x-auto pb-1">
             {offers.map((offer) => (
-              <li key={offer.code} className="flex min-w-[260px] items-center gap-3 rounded-[var(--radius-lg)] border border-dashed border-primary/40 bg-primary-soft px-4 py-3">
-                <Tag className="size-5 shrink-0 text-primary" aria-hidden />
+              <li key={offer.code} className="flex min-w-[260px] items-center gap-3 rounded-card border border-dashed border-primary/40 bg-primary-soft px-4 py-3">
+                <Tag className="size-5 shrink-0 text-link" aria-hidden />
                 <div className="min-w-0">
                   <p className="font-semibold text-text">{offer.title}</p>
                   <p className="text-sm text-muted">Use <span className="font-mono font-semibold text-text">{offer.code}</span> · {offer.summary}</p>
@@ -65,11 +66,11 @@ export default async function HomePage() {
 
       {menu.categories.length > 0 && (
         <section aria-labelledby="categories-heading" className="mt-10">
-          <h2 id="categories-heading" className="text-xl font-semibold">Browse the menu</h2>
+          <h2 id="categories-heading" className="text-xl ros-heading">Browse the menu</h2>
           <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {menu.categories.map((c) => (
               <li key={c.id}>
-                <Link href={`/${c.slug}`} className="flex h-full flex-col justify-between rounded-[var(--radius-lg)] border border-border bg-surface p-4 shadow-[var(--shadow-sm)] hover:border-primary/40">
+                <Link href={`/${c.slug}`} className="ros-card flex h-full flex-col justify-between p-4 hover:border-primary/40">
                   <span className="font-semibold">{c.name}</span>
                   <span className="mt-2 text-sm text-muted">{c.products.length} item{c.products.length === 1 ? "" : "s"}</span>
                 </Link>
@@ -82,18 +83,18 @@ export default async function HomePage() {
       {popular.length > 0 && (
         <section aria-labelledby="popular-heading" className="mt-10">
           <div className="flex items-end justify-between gap-4">
-            <h2 id="popular-heading" className="text-xl font-semibold">Popular right now</h2>
-            <Link href="/menu" className="text-sm font-medium text-primary hover:underline">See full menu</Link>
+            <h2 id="popular-heading" className="text-xl ros-heading">Popular right now</h2>
+            <Link href="/menu" className="text-sm font-medium text-link hover:underline">See full menu</Link>
           </div>
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
+          <div className="ros-product-list mt-4">
             {popular.map((p, i) => <ProductCard key={p.id} product={p} currency={config.currency} priority={i < 2} />)}
           </div>
         </section>
       )}
 
       {config.description && (
-        <section aria-labelledby="about-heading" className="mt-10 rounded-[var(--radius-lg)] border border-border bg-surface p-6">
-          <h2 id="about-heading" className="text-xl font-semibold">About {config.name}</h2>
+        <section aria-labelledby="about-heading" className="ros-card mt-10 p-6">
+          <h2 id="about-heading" className="text-xl ros-heading">About {config.name}</h2>
           <p className="mt-2 max-w-3xl leading-relaxed text-muted">{config.description}</p>
           <Link href="/contact" className={buttonClass("outline", "md", "mt-4")}>Hours &amp; location</Link>
         </section>

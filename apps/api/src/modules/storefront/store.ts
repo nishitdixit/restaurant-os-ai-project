@@ -1,5 +1,5 @@
 // Public store context: tenant resolved from a verified brand slug (docs/TENANCY.md).
-import { isOpenAt, nextOpening, type OpeningHours } from "@restaurant-os/domain";
+import { classicTheme, isOpenAt, nextOpening, normalizeTheme, type OpeningHours, type StoreTheme } from "@restaurant-os/domain";
 import type { BrandLinks } from "@restaurant-os/types";
 import type { Db } from "../../db/pool.ts";
 import { ApiError } from "../../lib/errors.ts";
@@ -35,6 +35,8 @@ export interface StoreContext {
   currency: string;
   locale: string;
   metadata: BrandMetadata;
+  theme: unknown;
+  themeDraft: unknown;
   logoAssetId: string | null;
   updatedAt: Date;
   published: boolean;
@@ -47,9 +49,9 @@ export const OUTLET_COLUMNS = `o.id, o.name, o.phone, o.timezone, o.address, o.h
 export async function loadStore(db: Db, slug: string, options: { allowDraft?: boolean } = {}): Promise<StoreContext> {
   const r = await db.query<{
     tenant_id: string; brand_id: string; slug: string; name: string; currency: string; locale: string; metadata: BrandMetadata;
-    logo_asset_id: string | null; updated_at: Date; status: string;
+    logo_asset_id: string | null; updated_at: Date; status: string; theme: unknown; theme_draft: unknown;
   }>(
-    `SELECT b.tenant_id, b.id AS brand_id, b.slug, b.name, t.default_currency AS currency, t.locale, b.metadata, b.logo_asset_id, b.updated_at, b.status
+    `SELECT b.tenant_id, b.id AS brand_id, b.slug, b.name, t.default_currency AS currency, t.locale, b.metadata, b.logo_asset_id, b.updated_at, b.status, b.theme, b.theme_draft
      FROM brands b JOIN tenants t ON t.id = b.tenant_id AND t.status = 'ACTIVE'
      WHERE b.slug = $1 AND ${options.allowDraft ? "b.status IN ('ACTIVE','DRAFT')" : "b.status = 'ACTIVE'"}
      ORDER BY (b.status = 'ACTIVE') DESC LIMIT 1`,
@@ -69,6 +71,8 @@ export async function loadStore(db: Db, slug: string, options: { allowDraft?: bo
     currency: brand.currency.trim(),
     locale: brand.locale,
     metadata: brand.metadata ?? {},
+    theme: brand.theme,
+    themeDraft: brand.theme_draft,
     logoAssetId: brand.logo_asset_id,
     updatedAt: brand.updated_at,
     published: brand.status === "ACTIVE",
@@ -89,4 +93,10 @@ export function outletLocation(outlet: OutletRow | null) {
 export function brandLinks(metadata: BrandMetadata): BrandLinks {
   const l = metadata.links ?? {};
   return { whatsapp: l.whatsapp ?? "", swiggy: l.swiggy ?? "", zomato: l.zomato ?? "", instagram: l.instagram ?? "", website: l.website ?? "" };
+}
+
+/** The theme a brand renders with: its published theme, or the classic look in its existing brand colour. */
+export function publishedTheme(row: { theme: unknown; metadata: BrandMetadata | null }): StoreTheme {
+  const base = classicTheme(row.metadata?.primaryColor);
+  return row.theme ? normalizeTheme(row.theme, base) : base;
 }

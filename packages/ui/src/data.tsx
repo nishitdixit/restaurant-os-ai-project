@@ -42,7 +42,7 @@ export function DataTable<T>({ rows, columns, rowKey, onRowClick, empty, caption
   if (!rows.length && empty) return <>{empty}</>;
   const allSelected = selection && rows.length > 0 && rows.every((r) => selection.selected.has(rowKey(r)));
   return (
-    <div className="overflow-hidden rounded-[var(--radius-lg)] border border-border bg-surface">
+    <div className="overflow-hidden rounded-[var(--ros-radius-lg)] border border-border bg-surface">
       <table className="w-full border-collapse text-sm">
         {caption && <caption className="sr-only">{caption}</caption>}
         <thead className="hidden bg-subtle text-left text-xs font-medium uppercase tracking-wide text-muted md:table-header-group">
@@ -161,7 +161,7 @@ export function CartLine({ name, options, quantity, unitPriceMinor, lineTotalMin
 
 export function Stat({ label, value, delta, hint }: { label: ReactNode; value: ReactNode; delta?: { value: number; label: string } | null; hint?: ReactNode }) {
   return (
-    <div className="rounded-[var(--radius-lg)] border border-border bg-surface p-4 shadow-[var(--shadow-sm)]">
+    <div className="rounded-[var(--ros-radius-lg)] border border-border bg-surface p-4 shadow-[var(--ros-shadow-sm)]">
       <p className="text-sm text-muted">{label}</p>
       <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight">{value}</p>
       {delta && (

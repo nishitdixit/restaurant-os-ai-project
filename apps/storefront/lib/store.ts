@@ -24,7 +24,9 @@ export const isPreview = cache(async (): Promise<boolean> => (await cookies()).g
 /** Store config, including unpublished stores so the layout can show "coming soon" or a preview banner. */
 export const getConfig = cache(async (): Promise<StoreConfig> => {
   const slug = await storeSlug();
-  const config = await serverGet<StoreConfig>(`/v1/storefront/${slug}/config?preview=1`, 30);
+  // A merchant preview shows the saved draft theme immediately (no cache); customers get the published one.
+  const preview = await isPreview();
+  const config = await serverGet<StoreConfig>(`/v1/storefront/${slug}/config?preview=1${preview ? "&theme=draft" : ""}`, preview ? 0 : 30);
   if (!config) notFound();
   return config;
 });
@@ -42,13 +44,6 @@ export const getMenu = cache(async (): Promise<Menu> => {
 /** Brand colour from merchant data, accepted only as a 6-digit hex to keep CSS injection impossible. */
 export function safeColor(value: string | undefined): string {
   return value && /^#[0-9a-fA-F]{6}$/.test(value) ? value : "#b42318";
-}
-
-/** Readable text colour (black/white) for a brand colour, by relative luminance. */
-export function contrastColor(hex: string): string {
-  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
-  const luminance = 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
-  return luminance > 0.45 ? "#111111" : "#ffffff";
 }
 
 export function whatsappUrl(number: string, text?: string): string | null {

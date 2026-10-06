@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import type { StoreConfig } from "@restaurant-os/types";
 import { MapPin, Phone } from "lucide-react";
+import { buttonClass } from "@restaurant-os/ui";
 import { mapsUrl, whatsappUrl } from "@/lib/store";
 import { CartButton } from "./cart-ui";
 
@@ -15,24 +16,24 @@ const NAV = [
 
 export function SiteHeader({ config }: { config: StoreConfig }) {
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/85">
+    <header className="sticky top-0 z-30 border-b border-header-border bg-header/95 text-header-fg backdrop-blur supports-[backdrop-filter]:bg-header/90">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4">
         <Link href="/" className="flex min-w-0 items-center gap-2.5" aria-label={`${config.name} home`}>
           {config.logoUrl
-            ? <Image src={config.logoUrl} alt="" width={36} height={36} className="size-9 rounded-full object-cover" priority />
-            : <span aria-hidden className="flex size-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-contrast">{config.name.slice(0, 1)}</span>}
-          <span className="truncate text-lg font-semibold tracking-tight">{config.name}</span>
+            ? <Image src={config.logoUrl} alt="" width={36} height={36} className="size-9 rounded-chip object-cover" priority />
+            : <span aria-hidden className="flex size-9 items-center justify-center rounded-chip bg-accent text-sm font-bold text-accent-contrast">{config.name.slice(0, 1)}</span>}
+          <span className="ros-heading truncate text-lg">{config.name}</span>
         </Link>
         <nav aria-label="Main" className="ml-auto hidden items-center gap-1 md:flex">
-          {NAV.map((item) => <Link key={item.href} href={item.href} className="rounded-md px-3 py-2 text-sm font-medium text-muted hover:bg-subtle hover:text-text">{item.label}</Link>)}
+          {NAV.map((item) => <Link key={item.href} href={item.href} className="rounded-button px-3 py-2 text-sm font-medium text-header-muted hover:bg-header-chip hover:text-header-fg">{item.label}</Link>)}
         </nav>
         <div className="ml-auto flex items-center gap-2 md:ml-2">
-          <Link href="/search" className="rounded-md px-3 py-2 text-sm font-medium text-muted hover:bg-subtle hover:text-text md:hidden">Search</Link>
+          <Link href="/search" className="rounded-button px-3 py-2 text-sm font-medium text-header-muted hover:bg-header-chip hover:text-header-fg md:hidden">Search</Link>
           <CartButton />
         </div>
       </div>
       <nav aria-label="Sections" className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-3 pb-2 md:hidden">
-        {NAV.map((item) => <Link key={item.href} href={item.href} className="whitespace-nowrap rounded-full bg-subtle px-3 py-1.5 text-sm font-medium text-text">{item.label}</Link>)}
+        {NAV.map((item) => <Link key={item.href} href={item.href} className="whitespace-nowrap rounded-chip bg-header-chip px-3 py-1.5 text-sm font-medium text-header-fg">{item.label}</Link>)}
       </nav>
     </header>
   );
@@ -46,9 +47,9 @@ export function SiteFooter({ config }: { config: StoreConfig }) {
     <footer className="mt-16 border-t border-border bg-surface">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-3">
         <div>
-          <p className="text-lg font-semibold">{config.name}</p>
+          <p className="ros-heading text-lg">{config.name}</p>
           {config.tagline && <p className="mt-1 text-sm text-muted">{config.tagline}</p>}
-          <Link href="/menu" className="mt-4 inline-flex h-10 items-center rounded-[var(--radius-md)] bg-primary px-4 text-sm font-medium text-primary-contrast">Order direct</Link>
+          <Link href="/menu" className={buttonClass("primary", "md", "mt-4")}>Order direct</Link>
         </div>
         <div className="text-sm">
           <p className="font-semibold">Visit or call</p>

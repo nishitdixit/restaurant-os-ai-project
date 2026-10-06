@@ -1,16 +1,19 @@
 // Public catalog reads. Only published (ACTIVE) categories/products of a published brand are visible;
 // availability is computed live so a disabled item can never be served as purchasable.
-import { describePromotion } from "@restaurant-os/domain";
+import { describePromotion, normalizeTheme } from "@restaurant-os/domain";
 import type { Menu, MenuCategory, MenuProduct, PublicOffer, StoreConfig } from "@restaurant-os/types";
 import { pool, type Db } from "../../db/pool.ts";
 import { iso, moneyFormatter } from "../../lib/format.ts";
 import { mediaUrlMap } from "../../integrations/storage.ts";
 import { loadModifierGroups, loadZones, UNAVAILABLE_SQL } from "../checkout/pricing.ts";
-import { brandLinks, loadStore, outletLocation, outletOpenState, type StoreContext } from "./store.ts";
+import { brandLinks, loadStore, outletLocation, outletOpenState, publishedTheme, type StoreContext } from "./store.ts";
 
-export async function storeConfig(slug: string, options: { allowDraft?: boolean } = {}): Promise<StoreConfig> {
+export async function storeConfig(slug: string, options: { allowDraft?: boolean; draftTheme?: boolean } = {}): Promise<StoreConfig> {
   const db = pool();
   const store = await loadStore(db, slug, options);
+  const published = publishedTheme({ theme: store.theme, metadata: store.metadata });
+  // A merchant preview may ask for the saved draft theme; drafts are look-and-feel only, never sensitive.
+  const theme = options.draftTheme && store.themeDraft ? normalizeTheme(store.themeDraft, published) : published;
   const urls = await mediaUrlMap(db, [store.logoAssetId]);
   const zones = await loadZones(db, store.tenantId);
   const o = store.outlet;
@@ -22,7 +25,8 @@ export async function storeConfig(slug: string, options: { allowDraft?: boolean 
     description: store.metadata.description ?? "",
     cuisines: store.metadata.cuisines ?? [],
     logoUrl: store.logoAssetId ? urls.get(store.logoAssetId) ?? null : null,
-    primaryColor: store.metadata.primaryColor ?? "#b42318",
+    primaryColor: theme.colors.primary,
+    theme,
     links: brandLinks(store.metadata),
     currency: store.currency,
     locale: store.locale,

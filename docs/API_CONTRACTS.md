@@ -62,6 +62,11 @@
 
 `GET /v1/admin/analytics/...`
 
+`GET /v1/admin/appearance` · `PUT|DELETE /v1/admin/appearance/draft` · `POST /v1/admin/appearance/publish` ·
+`POST /v1/admin/appearance/restore` — storefront theme draft/publish/history (ADR-012). Publish/restore return
+`422 THEME_NOT_READABLE` with `details.issues` when text contrast fails. The public config endpoint returns the
+normalised `theme`; `?theme=draft` (merchant preview) returns the saved draft instead.
+
 ## Webhooks
 
 Incoming provider webhooks must:

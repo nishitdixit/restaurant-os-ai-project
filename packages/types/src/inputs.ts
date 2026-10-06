@@ -1,6 +1,7 @@
 // Request contracts shared by the API (validation + OpenAPI) and the web apps (form validation).
 // Money is integer minor units (paise for INR) as JSON numbers.
 import { z } from "zod";
+import { PILL_RADIUS, RADIUS_MAX, THEME_COLOR_KEYS, THEME_FONT_IDS, THEME_OPTIONS, THEME_VERSION } from "@restaurant-os/domain";
 
 const id = z.uuid();
 const money = z.number().int().min(0).max(100_000_000);
@@ -97,7 +98,8 @@ export const BrandSettingsSchema = z.object({
   description: optionalText(1000),
   cuisines: z.array(z.string().trim().min(1).max(40)).max(10).default([]),
   logoAssetId: id.nullable().optional(),
-  primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Use a hex colour like #b42318.").default("#b42318"),
+  /** Deprecated: colours now live in the storefront theme (Appearance). Kept optional for older clients. */
+  primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Use a hex colour like #b42318.").optional(),
   links: z.object({
     whatsapp: z.string().trim().max(20).optional().default(""),
     swiggy: url,
@@ -282,3 +284,39 @@ export const PageQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
   cursor: z.string().max(200).optional(),
 });
+
+// Storefront theme (ADR-012) ------------------------------------------------------------------------------
+const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Use a hex colour like #b42318.");
+const radiusPx = z.number().int().min(0).refine((n) => n <= RADIUS_MAX || n === PILL_RADIUS, `Use 0–${RADIUS_MAX} px or ${PILL_RADIUS} for fully rounded.`);
+const literalUnion = <T extends readonly (string | number)[]>(values: T) => z.union(values.map((v) => z.literal(v)) as unknown as [z.ZodLiteral<T[number]>, z.ZodLiteral<T[number]>, ...z.ZodLiteral<T[number]>[]]);
+
+export const StoreThemeSchema = z.object({
+  version: z.literal(THEME_VERSION),
+  presetId: z.string().regex(/^[a-z0-9-]{1,40}$/).nullable(),
+  mode: z.enum(THEME_OPTIONS.mode),
+  colors: z.object(Object.fromEntries(THEME_COLOR_KEYS.map((k) => [k, hexColor])) as Record<(typeof THEME_COLOR_KEYS)[number], typeof hexColor>),
+  typography: z.object({
+    headingFont: z.enum(THEME_FONT_IDS),
+    bodyFont: z.enum(THEME_FONT_IDS),
+    scale: z.enum(THEME_OPTIONS.scale),
+    headingWeight: literalUnion(THEME_OPTIONS.headingWeight),
+    headingCase: z.enum(THEME_OPTIONS.textCase),
+    buttonCase: z.enum(THEME_OPTIONS.textCase),
+  }),
+  shape: z.object({ button: radiusPx, card: radiusPx, input: radiusPx, chip: radiusPx, image: radiusPx }),
+  borderWidth: literalUnion(THEME_OPTIONS.borderWidth),
+  shadow: z.enum(THEME_OPTIONS.shadow),
+  density: z.enum(THEME_OPTIONS.density),
+  components: z.object({
+    button: z.enum(THEME_OPTIONS.button),
+    card: z.enum(THEME_OPTIONS.card),
+    productLayout: z.enum(THEME_OPTIONS.productLayout),
+    categoryNav: z.enum(THEME_OPTIONS.categoryNav),
+    hero: z.enum(THEME_OPTIONS.hero),
+    imageRatio: z.enum(THEME_OPTIONS.imageRatio),
+  }),
+});
+
+export const SaveThemeDraftSchema = z.object({ theme: StoreThemeSchema });
+export const PublishThemeSchema = z.object({ theme: StoreThemeSchema.optional() });
+export const RestoreThemeSchema = z.object({ versionId: id });

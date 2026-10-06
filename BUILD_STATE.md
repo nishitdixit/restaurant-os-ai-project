@@ -53,6 +53,21 @@ Payments and customer messaging run on development providers by product decision
 - Admin: onboarding, setup checklist + publish, order board with sound alerts, order detail (dispatch, delivery updates, cancel + refund, partial refunds, notes), menu (items, categories, option groups, bulk stock/publish, photos), offers, delivery areas, customers, analytics, messages, settings (business, brand, kitchen & hours, team & roles, audit log).
 - Shared design system in `packages/ui`; shared contracts in `packages/types`; domain rules in `packages/domain`.
 
+## Storefront themes (2026-10-06, ADR-012 — V1 "theme editor" pulled forward)
+
+- Admin **Appearance** page: 12 researched one-click styles + Classic (`ui/THEME_PRESETS.md`), a Customise panel
+  for every token (12 colours, 17 fonts, size, weights, case, five radii, borders, shadows, spacing, light/dark,
+  six component variants), a live preview of the real storefront (phone/desktop, any page), autosaved drafts,
+  publish, discard and one-click restore from history.
+- Per-tenant storage (migration 0008: `brands.theme`, `theme_draft`, `brand_theme_versions`); publishing is blocked
+  with `THEME_NOT_READABLE` while WCAG AA text contrast fails, with one-click fixes.
+- Design tokens are runtime CSS variables with defaults equal to the original look (admin unchanged); the
+  storefront renders the theme server-side; dish cards support list / photo grid / compact layouts.
+- Tests: domain (`theme.test.ts`: contrast maths, every preset readable and distinct, injection-safe
+  normalisation), API (`appearance.test.ts`: draft/publish/restore, guardrail, validation, permissions, tenant
+  isolation), E2E (`themes.spec.ts`: every preset on phone and desktop — no sideways scroll, computed contrast of
+  header, dish, add-button, category and checkout button text), recording chapter 06b.
+
 ## Security review findings (2026-10-06 alignment review)
 
 - **Fixed:** the V1-preview endpoints (kitchen tickets, inventory, segments, referrals, reorder, custom domains,

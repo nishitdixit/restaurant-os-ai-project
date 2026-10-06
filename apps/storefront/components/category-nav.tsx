@@ -42,15 +42,18 @@ export function CategoryNav({ categories, className }: { categories: { slug: str
     row.scrollTo({ left: chip.offsetLeft - row.clientWidth / 2 + chip.clientWidth / 2, behavior: "smooth" });
   }, [active]);
   return (
-    <nav ref={navRef} aria-label="Menu categories" className={cx("sticky top-[105px] z-20 -mx-4 border-b border-border bg-bg/95 px-4 py-2 backdrop-blur md:top-16", className)}>
+    <nav ref={navRef} aria-label="Menu categories" className={cx("sticky top-[105px] z-20 -mx-4 border-b border-border bg-bg/95 px-4 py-2 backdrop-blur nav-underline:py-0 md:top-16", className)}>
       <ul ref={listRef} className="relative flex gap-2 overflow-x-auto">
         {categories.map((c) => (
           <li key={c.slug}>
             {/* A tapped chip stays active even when its section is too near the end of the page to reach the top. */}
             <a id={`chip-${c.slug}`} href={`#cat-${c.slug}`} aria-current={active === c.slug ? "true" : undefined}
               onClick={() => { pinnedUntil.current = Date.now() + 1000; setActive(c.slug); }}
-              className={cx("inline-flex h-9 items-center whitespace-nowrap rounded-full px-4 text-sm font-medium transition-colors",
-                active === c.slug ? "bg-primary text-primary-contrast" : "bg-surface text-text ring-1 ring-border hover:bg-subtle")}>
+              className={cx("inline-flex h-9 items-center whitespace-nowrap rounded-chip px-4 text-sm font-medium transition-colors",
+                "nav-underline:h-10 nav-underline:rounded-none nav-underline:border-b-2 nav-underline:bg-transparent nav-underline:px-2 nav-underline:ring-0",
+                active === c.slug
+                  ? "ros-btn-primary nav-underline:border-x-0 nav-underline:border-t-0 nav-underline:border-link nav-underline:text-text nav-underline:shadow-none"
+                  : "bg-surface text-text ring-1 ring-border hover:bg-subtle nav-underline:border-transparent nav-underline:text-muted nav-underline:hover:text-text")}>
               {c.name}
             </a>
           </li>

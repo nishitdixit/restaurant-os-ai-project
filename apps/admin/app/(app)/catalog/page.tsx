@@ -118,7 +118,7 @@ function ItemsTab() {
         <Select aria-label="Stock" value={stock} onChange={(e) => setStock(e.target.value)} className="w-auto"><option value="">Any stock</option><option value="in">In stock</option><option value="out">Out of stock</option></Select>
       </div>
       {chosen.length > 0 && (
-        <div className="sticky top-14 z-10 mb-3 flex flex-wrap items-center gap-2 rounded-[var(--radius-md)] border border-primary/30 bg-primary-soft p-2.5" role="region" aria-label="Bulk actions">
+        <div className="sticky top-14 z-10 mb-3 flex flex-wrap items-center gap-2 rounded-[var(--ros-radius-md)] border border-primary/30 bg-primary-soft p-2.5" role="region" aria-label="Bulk actions">
           <span className="px-1 text-sm font-medium">{chosen.length} selected</span>
           {canStock && <Button size="sm" variant="outline" onClick={() => setStockTarget(chosen)}>Mark out of stock</Button>}
           {canStock && <Button size="sm" variant="outline" onClick={() => availability.mutate({ productIds: chosen.map((c) => c.id), available: true, reason: "" })}>Back in stock</Button>}

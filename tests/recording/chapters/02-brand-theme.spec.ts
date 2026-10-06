@@ -3,7 +3,7 @@ import { chapter, click, env, expect, openStage, point, refreshUntil, sleep, sta
 chapter("02 Business details, brand and theme", async () => {
   const s = state<{ assets: Record<string, string> }>();
   const { admin, store, say, close } = await openStage("02-brand-theme", "Business details, brand and theme",
-    "Business details, then the brand: logo, colour, tagline, story, cuisines and order links — and the storefront re-themes.");
+    "Business details, then the brand: logo, tagline, story, cuisines and order links — and the storefront updates.");
 
   await store.goto(`${env.storefront}/?preview=1`);
   await admin.goto(`${env.admin}/settings`);
@@ -27,8 +27,6 @@ chapter("02 Business details, brand and theme", async () => {
   await type(admin, admin.getByLabel("Tagline"), "Slow-cooked biryanis and North Indian curries, delivered hot");
   await type(admin, admin.getByLabel("About", { exact: true }), "Spice Route is a delivery kitchen in Indiranagar. Every biryani is dum-cooked to order, curries are made fresh each morning, and breads come straight from the tandoor.");
   await type(admin, admin.getByLabel("Cuisines"), "Biryani, North Indian, Mughlai");
-  await say("Brand colour: the storefront theme is generated from this one value", "admin");
-  await type(admin, admin.getByLabel("Brand colour", { exact: true }), "#0f766e");
   await type(admin, admin.getByLabel("WhatsApp number"), "9845001234");
   await type(admin, admin.getByLabel("Swiggy page URL"), "swiggy spice route");
   await click(admin, admin.getByRole("button", { name: "Save brand" }));
@@ -43,7 +41,7 @@ chapter("02 Business details, brand and theme", async () => {
 
   await say("Customer side: store settings are cached for up to ~30 s, so the customer refreshes…", "store");
   const seconds = await refreshUntil(store, store.getByText("Slow-cooked biryanis and North Indian curries, delivered hot"));
-  await say(`…and after ${seconds} s the new colour, logo, tagline and order links appear`, "store");
+  await say(`…and after ${seconds} s the logo, tagline and order links appear`, "store");
   await store.mouse.move(215, 320, { steps: 10 });
   await sleep(2500);
   await store.getByRole("link", { name: "Swiggy", exact: true }).first().scrollIntoViewIfNeeded();

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  BarChart3, Bike, BookOpen, ClipboardList, ExternalLink, Home, Menu as MenuIcon, MessageSquare, Settings, Tag, Users, X,
+  BarChart3, Bike, BookOpen, ClipboardList, ExternalLink, Home, Menu as MenuIcon, MessageSquare, Palette, Settings, Tag, Users, X,
 } from "lucide-react";
 import type { SetupStatus } from "@restaurant-os/types";
 import { Badge, Switch, cx, toast } from "@restaurant-os/ui";
@@ -21,6 +21,7 @@ const NAV = [
   { href: "/customers", label: "Customers", icon: Users, permission: "customer.read" },
   { href: "/analytics", label: "Analytics", icon: BarChart3, permission: "analytics.read" },
   { href: "/messages", label: "Messages", icon: MessageSquare, permission: "order.read" },
+  { href: "/appearance", label: "Appearance", icon: Palette, permission: "tenant.read" },
   { href: "/settings", label: "Settings", icon: Settings, permission: "tenant.read" },
 ];
 
@@ -62,7 +63,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         const Icon = n.icon;
         return (
           <Link key={n.href} href={n.href} onClick={() => setMobileOpen(false)} aria-current={active ? "page" : undefined}
-            className={cx("flex h-10 items-center gap-3 rounded-[var(--radius-md)] px-3 text-sm font-medium transition-colors",
+            className={cx("flex h-10 items-center gap-3 rounded-[var(--ros-radius-md)] px-3 text-sm font-medium transition-colors",
               active ? "bg-primary-soft text-primary" : "text-muted hover:bg-subtle hover:text-text")}>
             <Icon className="size-4.5" aria-hidden />{n.label}
           </Link>
@@ -90,7 +91,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {brand}
         {nav}
         {setup.data && !setup.data.published && (
-          <Link href="/" className="mt-auto rounded-[var(--radius-md)] bg-warning-soft p-3 text-xs text-warning">
+          <Link href="/" className="mt-auto rounded-[var(--ros-radius-md)] bg-warning-soft p-3 text-xs text-warning">
             <span className="font-semibold">Storefront not live yet.</span> Finish setup ({setup.data.progress}%) and publish.
           </Link>
         )}
@@ -99,7 +100,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {mobileOpen && (
         <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Navigation">
           <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
-          <div className="ros-drawer-right absolute inset-y-0 left-0 w-72 bg-surface px-3 py-5 shadow-[var(--shadow-lg)]">
+          <div className="ros-drawer-right absolute inset-y-0 left-0 w-72 bg-surface px-3 py-5 shadow-[var(--ros-shadow-lg)]">
             <button className="absolute right-3 top-3 rounded p-1 hover:bg-subtle" onClick={() => setMobileOpen(false)} aria-label="Close menu"><X className="size-5" /></button>
             {brand}
             {nav}

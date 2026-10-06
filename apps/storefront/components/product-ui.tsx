@@ -54,7 +54,7 @@ export function OptionGroups({ product, selection }: { product: MenuProduct; sel
                 {g.minSelections > 0 ? "Required" : "Optional"}{multi ? ` · up to ${g.maxSelections}` : ""}
               </span>
             </legend>
-            <div className="mt-2 divide-y divide-border rounded-[var(--radius-md)] border border-border">
+            <div className="mt-2 divide-y divide-border rounded-[var(--ros-radius-md)] border border-border">
               {g.modifiers.map((m) => {
                 const checked = (selection.selected[g.id] ?? []).includes(m.id);
                 const full = multi && !checked && (selection.selected[g.id] ?? []).length >= g.maxSelections;
@@ -82,7 +82,7 @@ export function AddToCartButton({ product, size = "md", label = "Add" }: { produ
   const hasOptions = product.modifierGroups.length > 0;
 
   if (!product.available) {
-    return <span className="inline-flex h-10 items-center rounded-[var(--radius-md)] bg-subtle px-3 text-sm font-medium text-muted">{product.unavailableReason ?? "Out of stock"}</span>;
+    return <span className="inline-flex h-10 items-center rounded-[var(--ros-radius-md)] bg-subtle px-3 text-sm font-medium text-muted">{product.unavailableReason ?? "Out of stock"}</span>;
   }
   const quickAdd = () => {
     add({ productId: product.id, slug: product.slug, name: product.name, modifierIds: [], optionLabels: [], unitPriceMinor: product.priceMinor, imageUrl: product.imageUrl });
@@ -125,7 +125,7 @@ function OptionSheet({ product, open, onOpenChange }: { product: MenuProduct; op
         </div>
       }>
       {product.imageUrl && (
-        <div className="relative mb-4 aspect-[16/9] overflow-hidden rounded-[var(--radius-lg)] bg-subtle">
+        <div className="relative mb-4 aspect-[16/9] overflow-hidden rounded-[var(--ros-radius-lg)] bg-subtle">
           <Image src={product.imageUrl} alt={product.name} fill sizes="480px" className="object-cover" />
         </div>
       )}

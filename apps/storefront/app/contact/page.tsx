@@ -24,11 +24,11 @@ export default async function ContactPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <JsonLd data={restaurantJsonLd(config)} />
-      <h1 className="text-2xl font-semibold tracking-tight">Contact &amp; hours</h1>
+      <h1 className="text-2xl ros-heading">Contact &amp; hours</h1>
       {config.description && <p className="mt-2 leading-relaxed text-muted">{config.description}</p>}
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         <Card>
-          <h2 className="font-semibold">Find us</h2>
+          <h2 className="ros-heading">Find us</h2>
           {o && <address className="mt-2 text-sm not-italic text-muted">{[o.address.line1, o.address.line2, o.address.city, o.address.region, o.address.postalCode].filter(Boolean).join(", ")}</address>}
           <div className="mt-4 flex flex-col gap-2">
             {o?.phone && <a href={`tel:${o.phone}`} className={buttonClass("outline", "md", "justify-start")}><Phone className="size-4" aria-hidden />{o.phone}</a>}
@@ -37,7 +37,7 @@ export default async function ContactPage() {
           </div>
         </Card>
         <Card>
-          <h2 className="font-semibold">Opening hours</h2>
+          <h2 className="ros-heading">Opening hours</h2>
           {o ? (
             <table className="mt-2 w-full text-sm">
               <caption className="sr-only">Opening hours ({o.timezone})</caption>

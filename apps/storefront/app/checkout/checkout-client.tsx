@@ -211,16 +211,16 @@ export function CheckoutClient({ config }: { config: StoreConfig }) {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <h1 className="text-2xl font-semibold tracking-tight">Checkout</h1>
+      <h1 className="text-2xl ros-heading">Checkout</h1>
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="space-y-6">
           <Card>
-            <h2 className="text-base font-semibold">How would you like your order?</h2>
+            <h2 className="text-base ros-heading">How would you like your order?</h2>
             <div className="mt-3 grid grid-cols-2 gap-3" role="radiogroup" aria-label="Delivery or pickup">
               {([["DELIVERY", "Delivery", <Bike key="b" className="size-5" />, canDeliver], ["PICKUP", "Pickup", <Store key="s" className="size-5" />, canPickup]] as const).map(([value, label, icon, enabled]) => (
                 <button key={value} type="button" role="radio" aria-checked={fulfillment === value} disabled={!enabled} onClick={() => setFulfillment(value)}
-                  className={cx("flex h-14 items-center justify-center gap-2 rounded-[var(--radius-md)] border-2 text-sm font-semibold transition-colors disabled:opacity-40",
-                    fulfillment === value ? "border-primary bg-primary-soft text-primary" : "border-border bg-surface text-text hover:border-border-strong")}>
+                  className={cx("flex h-14 items-center justify-center gap-2 rounded-[var(--ros-radius-md)] border-2 text-sm font-semibold transition-colors disabled:opacity-40",
+                    fulfillment === value ? "border-primary bg-primary-soft text-link" : "border-border bg-surface text-text hover:border-border-strong")}>
                   {icon}{label}{!enabled && <span className="sr-only"> (unavailable)</span>}
                 </button>
               ))}
@@ -231,7 +231,7 @@ export function CheckoutClient({ config }: { config: StoreConfig }) {
           </Card>
 
           <Card>
-            <h2 className="text-base font-semibold">Your details</h2>
+            <h2 className="text-base ros-heading">Your details</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div data-field="name"><Field label="Name" required error={fieldErrors.name}>{(p) => <Input {...p} autoComplete="name" value={contact.name} onChange={(e) => setContact({ ...contact, name: e.target.value })} />}</Field></div>
               <div data-field="phone"><Field label="Mobile number" required hint="For order updates on WhatsApp/SMS" error={fieldErrors.phone}>{(p) => <Input {...p} type="tel" inputMode="tel" autoComplete="tel" prefix="+91" value={contact.phone} onChange={(e) => setContact({ ...contact, phone: e.target.value })} />}</Field></div>
@@ -242,7 +242,7 @@ export function CheckoutClient({ config }: { config: StoreConfig }) {
           {fulfillment === "DELIVERY" && (
             <Card>
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-base font-semibold">Delivery address</h2>
+                <h2 className="text-base ros-heading">Delivery address</h2>
                 <Button variant="ghost" size="sm" loading={locating} onClick={useMyLocation} icon={<Crosshair className="size-4" aria-hidden />}>
                   {address.location ? "Location added" : "Use my location"}
                 </Button>
@@ -277,7 +277,7 @@ export function CheckoutClient({ config }: { config: StoreConfig }) {
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
           <Card>
-            <h2 className="text-base font-semibold">Order summary</h2>
+            <h2 className="text-base ros-heading">Order summary</h2>
             <ul className="mt-2 divide-y divide-border">
               {items.map((item) => {
                 const line = quote?.lines.find((l) => l.productId === item.productId && l.modifiers.map((m) => m.modifierId).sort().join() === [...item.modifierIds].sort().join());
@@ -294,9 +294,9 @@ export function CheckoutClient({ config }: { config: StoreConfig }) {
 
             <div className="mt-3 border-t border-border pt-3">
               {appliedCoupon ? (
-                <div className="flex items-center justify-between rounded-[var(--radius-md)] bg-success-soft px-3 py-2 text-sm text-success">
+                <div className="flex items-center justify-between rounded-[var(--ros-radius-md)] bg-success-soft px-3 py-2 text-sm text-success">
                   <span className="inline-flex items-center gap-2 font-medium"><Tag className="size-4" aria-hidden />{appliedCoupon} applied</span>
-                  <button type="button" onClick={() => setAppliedCoupon("")} aria-label={`Remove ${appliedCoupon}`} className="rounded p-1 hover:bg-white/60"><X className="size-4" /></button>
+                  <button type="button" onClick={() => setAppliedCoupon("")} aria-label={`Remove ${appliedCoupon}`} className="rounded p-1 hover:bg-surface/60"><X className="size-4" /></button>
                 </div>
               ) : (
                 <form className="flex flex-col gap-1.5" onSubmit={(e) => { e.preventDefault(); void applyCoupon(); }}>

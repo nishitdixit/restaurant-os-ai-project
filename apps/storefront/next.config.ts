@@ -14,10 +14,15 @@ const mediaHosts = [process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:40
     }
   });
 
+// Only this site and the admin (its live Appearance preview) may embed the storefront in a frame.
+const adminOrigin = (() => {
+  try { return new URL(process.env.NEXT_PUBLIC_ADMIN_URL ?? "http://localhost:3001").origin; } catch { return ""; }
+})();
+
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+  { key: "Content-Security-Policy", value: `frame-ancestors 'self'${adminOrigin ? ` ${adminOrigin}` : ""}` },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(self)" },
 ];
 

@@ -28,7 +28,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 });
 
 
-const controlBase = "w-full rounded-[var(--radius-md)] border bg-surface px-3 text-[15px] text-text placeholder:text-faint transition-colors focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:bg-subtle disabled:text-muted";
+const controlBase = "w-full rounded-input border-[length:var(--ros-control-border-width)] bg-surface px-3 text-[15px] text-text placeholder:text-faint transition-colors focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:bg-subtle disabled:text-muted";
 const controlState = (invalid?: boolean) => (invalid ? "border-danger" : "border-border-strong");
 
 export interface FieldProps {
@@ -109,7 +109,7 @@ export function Switch({ checked, onCheckedChange, label, ariaLabel, description
     <RadixSwitch.Root id={id} checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} aria-label={ariaLabel ?? (typeof label === "string" ? label : undefined)}
       className={cx("relative shrink-0 rounded-full transition-colors data-[state=checked]:bg-success data-[state=unchecked]:bg-border-strong disabled:opacity-50",
         size === "sm" ? "h-5 w-9" : "h-6 w-11")}>
-      <RadixSwitch.Thumb className={cx("block rounded-full bg-white shadow-[var(--shadow-sm)] transition-transform",
+      <RadixSwitch.Thumb className={cx("block rounded-full bg-white shadow-[var(--ros-shadow-sm)] transition-transform",
         size === "sm" ? "size-4 translate-x-0.5 data-[state=checked]:translate-x-[18px]" : "size-5 translate-x-0.5 data-[state=checked]:translate-x-[22px]")} />
     </RadixSwitch.Root>
   );
@@ -126,7 +126,7 @@ export function Switch({ checked, onCheckedChange, label, ariaLabel, description
 }
 
 export function Card({ className, children, padded = true, as: Tag = "section" }: { className?: string; children: ReactNode; padded?: boolean; as?: "section" | "div" | "article" }) {
-  return <Tag className={cx("rounded-[var(--radius-lg)] border border-border bg-surface shadow-[var(--shadow-sm)]", padded && "p-4 sm:p-5", className)}>{children}</Tag>;
+  return <Tag className={cx("ros-card", padded && "p-4 sm:p-5", className)}>{children}</Tag>;
 }
 
 export function CardHeader({ title, description, action }: { title: ReactNode; description?: ReactNode; action?: ReactNode }) {

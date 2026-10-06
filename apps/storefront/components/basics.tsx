@@ -44,7 +44,7 @@ export function StoreStatusBanner({ config }: { config: StoreConfig }) {
   if (!o) return null;
   if (!o.acceptingOrders) {
     return (
-      <div role="status" className="flex items-center gap-3 rounded-[var(--radius-lg)] border border-warning/30 bg-warning-soft px-4 py-3 text-sm text-warning">
+      <div role="status" className="flex items-center gap-3 rounded-[var(--ros-radius-lg)] border border-warning/30 bg-warning-soft px-4 py-3 text-sm text-warning">
         <PauseCircle className="size-5 shrink-0" aria-hidden />
         <p><span className="font-semibold">Online orders are paused for a little while.</span> You can still browse the menu{o.phone ? <> or call us on <a className="underline" href={`tel:${o.phone}`}>{o.phone}</a></> : null}.</p>
       </div>
@@ -52,7 +52,7 @@ export function StoreStatusBanner({ config }: { config: StoreConfig }) {
   }
   if (!o.openNow) {
     return (
-      <div role="status" className="flex items-center gap-3 rounded-[var(--radius-lg)] border border-border bg-subtle px-4 py-3 text-sm text-text">
+      <div role="status" className="flex items-center gap-3 rounded-[var(--ros-radius-lg)] border border-border bg-subtle px-4 py-3 text-sm text-text">
         <Clock className="size-5 shrink-0 text-muted" aria-hidden />
         <p><span className="font-semibold">We&apos;re closed right now.</span>{o.nextOpening ? ` We open ${o.nextOpening}.` : ""} Browse the menu and order once we&apos;re open.</p>
       </div>

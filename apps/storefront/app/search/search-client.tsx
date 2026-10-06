@@ -41,7 +41,7 @@ export function SearchClient() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-2xl font-semibold tracking-tight">Search the menu</h1>
+      <h1 className="text-2xl ros-heading">Search the menu</h1>
       <div className="relative mt-4">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted" aria-hidden />
         <Input type="search" autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Try “biryani” or “paneer”" aria-label="Search dishes" className="h-12 pl-10 text-base" />
@@ -54,7 +54,7 @@ export function SearchClient() {
             action={<Link href="/menu" className={buttonClass("primary")}>Browse the menu</Link>} />
         )}
         {!loading && !error && results && results.length > 0 && (
-          <ul className="divide-y divide-border rounded-[var(--radius-lg)] border border-border bg-surface">
+          <ul className="divide-y divide-border rounded-[var(--ros-radius-lg)] border border-border bg-surface">
             {results.map((p) => (
               <li key={p.id} className="flex items-center gap-3 p-3">
                 <DietMark dietary={p.dietary} />

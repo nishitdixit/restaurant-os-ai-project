@@ -41,7 +41,7 @@ function SetupChecklist({ setup }: { setup: SetupStatus }) {
         ))}
       </ol>
       {can("tenant.manage") && (
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-md)] bg-subtle p-4">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[var(--ros-radius-md)] bg-subtle p-4">
           <p className="text-sm">{remaining.length ? `${remaining.length} step${remaining.length === 1 ? "" : "s"} left before you can publish.` : "Everything is ready."}</p>
           <Button icon={<Rocket className="size-4" aria-hidden />} disabled={remaining.length > 0} loading={publish.isPending} onClick={() => publish.mutate()}>Publish storefront</Button>
         </div>

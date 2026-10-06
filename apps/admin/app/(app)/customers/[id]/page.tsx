@@ -32,8 +32,8 @@ export default function CustomerPage({ params }: { params: Promise<{ id: string 
       <PageHeader title={c.name} description={`Customer since ${formatDateTime(c.createdAt, { dateStyle: "medium" })}`}
         back={<Link href="/customers" className="mb-2 inline-flex items-center gap-1 text-sm text-muted hover:text-text"><ArrowLeft className="size-4" aria-hidden />Customers</Link>}
         actions={c.phone && <>
-          <a href={`tel:${c.phone}`} className="inline-flex h-10 items-center gap-2 rounded-[var(--radius-md)] border border-border-strong px-3 text-sm font-medium hover:bg-subtle"><Phone className="size-4" aria-hidden />{c.phone}</a>
-          <a href={`https://wa.me/${c.phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-2 rounded-[var(--radius-md)] border border-border-strong px-3 text-sm font-medium hover:bg-subtle"><MessageSquare className="size-4" aria-hidden />WhatsApp</a>
+          <a href={`tel:${c.phone}`} className="inline-flex h-10 items-center gap-2 rounded-[var(--ros-radius-md)] border border-border-strong px-3 text-sm font-medium hover:bg-subtle"><Phone className="size-4" aria-hidden />{c.phone}</a>
+          <a href={`https://wa.me/${c.phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-2 rounded-[var(--ros-radius-md)] border border-border-strong px-3 text-sm font-medium hover:bg-subtle"><MessageSquare className="size-4" aria-hidden />WhatsApp</a>
         </>} />
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="Paid orders" value={c.orderCount} />
