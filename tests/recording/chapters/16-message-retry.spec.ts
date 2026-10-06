@@ -1,11 +1,12 @@
 import { ensureSignedIn, type TestPerson } from "../lib/auth.ts";
-import { chapter, click, env, expect, openStage, restartWorker, sleep, state } from "../lib/stage.ts";
+import { afterChapter, chapter, click, env, expect, openStage, restartWorker, sleep, state } from "../lib/stage.ts";
 import { addSimple, contact, placeAndPay } from "../lib/shop.ts";
 
 chapter("16 A failing message provider, retries and manual retry", async () => {
   const s = state<{ owner: TestPerson }>();
   // Restart the worker with the development provider set to fail every send (retries: 3 attempts).
   await restartWorker("fail");
+  afterChapter(() => restartWorker("succeed"));
   const { admin, store, say, close } = await openStage("16-message-retry", "When a message can't be delivered",
     "The messaging provider is down: sends are retried with back-off, then marked Failed and flagged; once it recovers, one click retries.",
     { freshStore: true });
