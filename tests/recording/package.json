@@ -1,0 +1,23 @@
+{
+  "name": "@restaurant-os/recording",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "record": "node run.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@clerk/backend": "^2.33.0",
+    "@clerk/testing": "^1.14.10",
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^22.10.0",
+    "@types/pg": "^8.15.5",
+    "embedded-postgres": "18.4.0-beta.17",
+    "ffmpeg-static": "^5.2.0",
+    "pg": "^8.16.3",
+    "redis-memory-server": "^0.17.1",
+    "typescript": "^5.9.2"
+  }
+}

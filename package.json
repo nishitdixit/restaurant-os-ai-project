@@ -1,0 +1,40 @@
+{
+  "name": "restaurant-os",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.12.4",
+  "scripts": {
+    "dev": "pnpm --parallel --filter @restaurant-os/api --filter @restaurant-os/storefront --filter @restaurant-os/admin dev",
+    "dev:api": "pnpm --filter @restaurant-os/api dev",
+    "dev:worker": "pnpm --filter @restaurant-os/api dev:worker",
+    "dev:storefront": "pnpm --filter @restaurant-os/storefront dev",
+    "dev:admin": "pnpm --filter @restaurant-os/admin dev",
+    "build": "pnpm -r --filter=!@restaurant-os/e2e build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm --filter @restaurant-os/domain test && pnpm --filter @restaurant-os/api test",
+    "test:e2e": "pnpm --filter @restaurant-os/e2e test",
+    "db:status": "node db/scripts/migrate.mjs --status",
+    "db:migrate": "node db/scripts/migrate.mjs",
+    "db:seed": "node db/scripts/seed.mjs",
+    "db:setup": "pnpm db:migrate && pnpm db:seed",
+    "record": "pnpm --filter @restaurant-os/recording record --"
+  },
+  "type": "module",
+  "devDependencies": {
+    "pg": "^8.23.1"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@embedded-postgres/darwin-arm64",
+      "@embedded-postgres/darwin-x64",
+      "@embedded-postgres/linux-x64",
+      "@embedded-postgres/linux-arm64",
+      "embedded-postgres",
+      "esbuild",
+      "@clerk/shared",
+      "ffmpeg-static",
+      "redis-memory-server"
+    ]
+  }
+}

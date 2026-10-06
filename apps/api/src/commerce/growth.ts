@@ -1,0 +1,11 @@
+// NOT EXPOSED. V1/V2 groundwork (kitchen tickets, inventory, segments, referrals, reorder, custom domains,
+// campaigns, entitlements) kept for later phases. Before any route uses it, fix the tenant checks: several
+// functions accept ids (orders, inventory items, customers, segments) without verifying they belong to the
+// tenant, and custom-domain verification has no DNS proof. See BUILD_STATE.md "Security review findings".
+import { pool } from "../db/pool.ts";
+import { randomUUID } from "node:crypto";
+export async function createCustomDomain(tenantId:string,hostname:string){const token=randomUUID();const r=await pool().query(`INSERT INTO custom_domains(tenant_id,hostname,verification_token) VALUES($1,$2,$3) RETURNING id,hostname,status,verification_token`,[tenantId,hostname,token]);return r.rows[0];}
+export async function verifyCustomDomain(tenantId:string,hostname:string,token:string){const r=await pool().query(`UPDATE custom_domains SET status='VERIFIED',verified_at=now() WHERE tenant_id=$1 AND hostname=$2 AND verification_token=$3 RETURNING *`,[tenantId,hostname,token]);return r.rows[0]??null;}
+export async function createSegment(tenantId:string,name:string,ruleConfig:unknown){const r=await pool().query(`INSERT INTO customer_segments(tenant_id,name,rule_config) VALUES($1,$2,$3) RETURNING *`,[tenantId,name,JSON.stringify(ruleConfig)]);return r.rows[0];}
+export async function createCampaign(tenantId:string,input:{name:string;channel:string;segmentId?:string;messageTemplate:string}){const r=await pool().query(`INSERT INTO messaging_campaigns(tenant_id,name,channel,segment_id,message_template) VALUES($1,$2,$3,$4,$5) RETURNING *`,[tenantId,input.name,input.channel,input.segmentId??null,input.messageTemplate]);return r.rows[0];}
+export async function upsertEntitlement(tenantId:string,featureCode:string,enabled:boolean,limitValue?:number){const r=await pool().query(`INSERT INTO tenant_entitlements(tenant_id,feature_code,enabled,limit_value) VALUES($1,$2,$3,$4) ON CONFLICT(tenant_id,feature_code) DO UPDATE SET enabled=excluded.enabled,limit_value=excluded.limit_value,updated_at=now() RETURNING *`,[tenantId,featureCode,enabled,limitValue??null]);return r.rows[0];}

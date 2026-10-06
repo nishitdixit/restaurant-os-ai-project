@@ -1,0 +1,55 @@
+# Local infrastructure: `docker compose up -d postgres redis`.
+# The full stack (API, worker, storefront, admin) can also run in containers: `docker compose --profile app up --build`.
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: restaurant_os
+      POSTGRES_USER: restaurant_os
+      POSTGRES_PASSWORD: restaurant_os_local
+    ports: ["5432:5432"]
+    volumes: [restaurant-os-postgres:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U restaurant_os"], interval: 5s, retries: 10 }
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    volumes: [restaurant-os-redis:/data]
+
+  migrate:
+    profiles: [app]
+    build: { context: ., target: api }
+    command: ["sh", "-c", "node db/scripts/migrate.mjs && node db/scripts/seed.mjs"]
+    environment: &api-env
+      DATABASE_URL: postgresql://restaurant_os:restaurant_os_local@postgres:5432/restaurant_os
+      REDIS_URL: redis://redis:6379
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:-}
+      CORS_ORIGINS: http://localhost:3000,http://localhost:3001
+      STOREFRONT_URL: http://localhost:3000
+      API_PUBLIC_URL: http://localhost:4000
+      NODE_ENV: development
+    depends_on: { postgres: { condition: service_healthy } }
+
+  api:
+    profiles: [app]
+    build: { context: ., target: api }
+    environment: *api-env
+    ports: ["4000:4000"]
+    depends_on: { migrate: { condition: service_completed_successfully }, redis: { condition: service_started } }
+
+  worker:
+    profiles: [app]
+    build: { context: ., target: worker }
+    environment: *api-env
+    depends_on: { migrate: { condition: service_completed_successfully }, redis: { condition: service_started } }
+
+  storefront:
+    profiles: [app]
+    build: { context: ., target: storefront }
+    environment: { API_INTERNAL_URL: http://api:4000 }
+    ports: ["3000:3000"]
+    depends_on: [api]
+
+volumes:
+  restaurant-os-postgres:
+  restaurant-os-redis:

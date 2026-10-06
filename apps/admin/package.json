@@ -1,0 +1,33 @@
+{
+  "name": "@restaurant-os/admin",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "next dev -p 3001",
+    "build": "next build",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "node -e \"console.log('Admin flows are covered by the API integration suite and tests/e2e')\""
+  },
+  "dependencies": {
+    "@clerk/nextjs": "^6.34.0",
+    "@restaurant-os/domain": "workspace:*",
+    "@restaurant-os/types": "workspace:*",
+    "@restaurant-os/ui": "workspace:*",
+    "@tanstack/react-query": "^5.104.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.52.0",
+    "next": "^15.5.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "postcss": "^8.5.29",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.2"
+  }
+}

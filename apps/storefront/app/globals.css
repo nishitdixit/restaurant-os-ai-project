@@ -1,0 +1,6 @@
+@import "tailwindcss";
+@import "../../../packages/ui/src/styles.css";
+@source "../../../packages/ui/src";
+
+html { scroll-padding-top: 8rem; }
+body { background: var(--color-bg); }
