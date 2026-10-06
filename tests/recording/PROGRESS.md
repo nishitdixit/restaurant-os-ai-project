@@ -5,9 +5,23 @@ every flow, re-runnable after any development. Recordings are committed (not git
 
 ## Status (2026-10-06)
 - All 17 chapters (15 in two parts) pass in one full run: `recordings/2026-10-06_1753/` (23:16 walkthrough).
+- With storefront themes (ADR-012): all 18 chapters incl. 06b Appearance pass — `recordings/2026-10-06_2250/` (24:21).
+- Harness: `type` retries once if a field is replaced mid-action (Clerk sign-in); the run refuses to start if a port is
+  still taken by an interrupted run.
 - `pnpm record` wired at the root; docs in `tests/recording/README.md` and `recordings/README.md`.
 - Harness fixes from full runs: Playwright runs async so the control channel (worker restarts) and server log
   pipes keep working; `caffeinate` keeps macOS awake (a sleeping Mac freezes the browsers and times out chapters).
+
+## Bug reporting (2026-10-06)
+- Every run writes `BUGS.md` (failures linked to the video at the failure time, repro steps from captions, last
+  actions, screenshots, traces, browser errors, server log lines) and warnings from passing chapters.
+- A failure no longer stops the run (`maxFailures` removed): dependents in `chapters.json` are reported blocked,
+  everything else runs. Failed chapters don't carry their browser session forward; `afterChapter` undoes
+  environment changes (chapter 16's failing worker).
+- Traces are now actually written on failure (`context.tracing` in `lib/stage.ts`; the config's `trace` option
+  never applied to the chapters' own contexts, so earlier runs had none).
+- `--flows` (with dependencies), `--headed`, `--keep N` (prunes only fully passing runs), `run.json` per run and
+  the run list in `recordings/README.md`.
 
 ## Dev loop (for changing chapters)
 `node run.mjs --serve` keeps the stack up; export the RECORD_* variables shown in run.mjs `testEnv`
