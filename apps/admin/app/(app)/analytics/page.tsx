@@ -24,7 +24,7 @@ function Definition({ text }: { text: string }) {
   return (
     <span className="group relative inline-flex align-middle">
       <button type="button" className="rounded text-faint hover:text-muted" aria-label={text}><Info className="size-3.5" /></button>
-      <span role="tooltip" className="pointer-events-none absolute left-1/2 top-5 z-10 hidden w-56 -translate-x-1/2 rounded-md border border-border bg-surface p-2 text-xs font-normal text-muted shadow-[var(--shadow-md)] group-focus-within:block group-hover:block">{text}</span>
+      <span role="tooltip" className="pointer-events-none absolute left-1/2 top-5 z-10 hidden w-56 -translate-x-1/2 rounded-md border border-border bg-surface p-2 text-xs font-normal text-muted shadow-[var(--ros-shadow-md)] group-focus-within:block group-hover:block">{text}</span>
     </span>
   );
 }

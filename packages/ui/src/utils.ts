@@ -6,11 +6,11 @@ export const cx = clsx;
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "outline";
 export type ButtonSize = "sm" | "md" | "lg";
 
-export const buttonBase = "inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] font-medium transition-colors duration-[var(--animate-duration-fast)] disabled:opacity-50 select-none whitespace-nowrap";
+export const buttonBase = "ros-button-text inline-flex items-center justify-center gap-2 rounded-button font-medium transition-colors duration-[var(--animate-duration-fast)] disabled:opacity-50 select-none whitespace-nowrap";
 export const buttonVariants: Record<ButtonVariant, string> = {
-  primary: "bg-primary text-primary-contrast hover:brightness-95 active:brightness-90 shadow-[var(--shadow-sm)]",
+  primary: "ros-btn-primary hover:brightness-95 active:brightness-90",
   secondary: "bg-subtle text-text hover:bg-border",
-  outline: "border border-border-strong bg-surface text-text hover:bg-subtle",
+  outline: "ros-btn-outline hover:bg-subtle",
   ghost: "text-text hover:bg-subtle",
   danger: "bg-danger text-white hover:brightness-95",
 };

@@ -20,7 +20,7 @@ export default async function DeliveryAreasPage() {
   const o = config.outlet;
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="text-2xl font-semibold tracking-tight">Where we deliver</h1>
+      <h1 className="text-2xl ros-heading">Where we deliver</h1>
       <p className="mt-1 text-muted">Enter your pincode at checkout and we&apos;ll confirm the fee before you pay.</p>
       {!o?.deliveryEnabled || config.deliveryAreas.length === 0 ? (
         <EmptyState className="mt-6" icon={<Store className="size-6" />} title={o?.pickupEnabled ? "Pickup only for now" : "Delivery isn't available right now"}
@@ -31,7 +31,7 @@ export default async function DeliveryAreasPage() {
           {config.deliveryAreas.map((area) => (
             <Card key={area.name} as="article">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex items-center gap-2"><Bike className="size-5 text-primary" aria-hidden /><h2 className="font-semibold">{area.name}</h2></div>
+                <div className="flex items-center gap-2"><Bike className="size-5 text-link" aria-hidden /><h2 className="ros-heading">{area.name}</h2></div>
                 <p className="text-sm text-muted">{area.etaMin}–{area.etaMax} min</p>
               </div>
               <dl className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">

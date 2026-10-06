@@ -243,3 +243,14 @@ All additive (`db/migrations/0007_mvp_completion.sql`).
 - **notifications**: `audience` (CUSTOMER/MERCHANT), `subject`, `body`, `attempt_count`, `last_error`, `sent_at`, `updated_at`.
 - **domain_events**: transactional outbox (`event_type`, `aggregate_type`, `aggregate_id`, `payload`, `published_at`, `publish_attempts`).
 - **schema_migrations**: applied versions with checksums (`db/scripts/migrate.mjs`).
+
+## Migration 0008 additions (storefront themes, ADR-012)
+
+All additive (`db/migrations/0008_storefront_theme.sql`).
+
+- **brands**: `theme` (published theme, jsonb; NULL = Classic look in the brand colour), `theme_draft`
+  (unpublished edits), `theme_draft_updated_at`, `theme_published_at`. Themes are always read through
+  `normalizeTheme()` (packages/domain), so older or partial values get safe defaults.
+- **brand_theme_versions**: every published theme (`tenant_id`, `brand_id`, `theme`, `published_by`, `created_at`)
+  for one-click restore.
+

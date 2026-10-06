@@ -42,17 +42,17 @@ export default async function CategoryPage({ params }: Params) {
           <li aria-current="page" className="text-text">{category.name}</li>
         </ol>
       </nav>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight">{category.name}</h1>
+      <h1 className="mt-2 text-2xl ros-heading">{category.name}</h1>
       {category.description && <p className="mt-1 text-muted">{category.description}</p>}
       <div className="mt-4"><StoreStatusBanner config={config} /></div>
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
+      <div className="ros-product-list mt-4">
         {category.products.map((p, i) => <ProductCard key={p.id} product={p} currency={config.currency} priority={i < 2} />)}
       </div>
       <section aria-labelledby="more" className="mt-10">
-        <h2 id="more" className="text-lg font-semibold">More from the menu</h2>
+        <h2 id="more" className="text-lg ros-heading">More from the menu</h2>
         <ul className="mt-3 flex flex-wrap gap-2">
           {menu.categories.filter((c) => c.id !== category.id).map((c) => (
-            <li key={c.id}><Link href={`/${c.slug}`} className="inline-flex h-9 items-center rounded-full bg-surface px-4 text-sm ring-1 ring-border hover:bg-subtle">{c.name}</Link></li>
+            <li key={c.id}><Link href={`/${c.slug}`} className="inline-flex h-9 items-center rounded-chip bg-surface px-4 text-sm ring-1 ring-border hover:bg-subtle">{c.name}</Link></li>
           ))}
         </ul>
       </section>

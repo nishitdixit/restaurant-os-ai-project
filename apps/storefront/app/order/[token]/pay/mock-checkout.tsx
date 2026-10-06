@@ -37,7 +37,7 @@ export function MockCheckout({ order }: { order: PublicOrder }) {
           <p className="text-sm text-muted">Paying {name}</p>
           <p className="mt-1 text-3xl font-semibold tabular-nums">{formatMoney(order.totalMinor, order.currency)}</p>
           <p className="mt-1 text-sm text-muted">Order #{order.number} · {order.items.reduce((n, i) => n + i.quantity, 0)} items</p>
-          <div className="mt-6 flex items-center gap-3 rounded-[var(--radius-md)] border border-border p-3">
+          <div className="mt-6 flex items-center gap-3 rounded-[var(--ros-radius-md)] border border-border p-3">
             <CreditCard className="size-5 text-muted" aria-hidden />
             <span className="text-sm">UPI, cards and netbanking</span>
           </div>

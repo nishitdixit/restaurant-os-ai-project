@@ -53,7 +53,7 @@ function BoardCard({ order, onOpen }: { order: AdminOrderSummary; onOpen: () => 
   const late = order.etaMax !== null && order.acceptedAt && !["DELIVERED"].includes(order.status) && minutesSince(order.acceptedAt) > order.etaMax;
   const waiting = order.status === "NEW" && minutesSince(order.paidAt ?? order.createdAt) > 5;
   return (
-    <article className={cx("rounded-[var(--radius-lg)] border bg-surface p-3 shadow-[var(--shadow-sm)]", order.status === "NEW" ? "border-info/50 ring-1 ring-info/20" : "border-border")}>
+    <article className={cx("rounded-[var(--ros-radius-lg)] border bg-surface p-3 shadow-[var(--ros-shadow-sm)]", order.status === "NEW" ? "border-info/50 ring-1 ring-info/20" : "border-border")}>
       <button type="button" onClick={onOpen} className="block w-full text-left" aria-label={`Open order ${order.number}`}>
         <div className="flex items-center justify-between gap-2">
           <span className="font-semibold">#{order.number}</span>
@@ -132,7 +132,7 @@ function Board({ onOpen }: { onOpen: (id: string) => void }) {
           {COLUMNS.map((col) => {
             const orders = items.filter((o) => col.statuses.includes(o.status));
             return (
-              <section key={col.key} aria-labelledby={`col-${col.key}`} className="flex w-72 shrink-0 flex-col rounded-[var(--radius-lg)] bg-subtle p-2 lg:w-auto">
+              <section key={col.key} aria-labelledby={`col-${col.key}`} className="flex w-72 shrink-0 flex-col rounded-[var(--ros-radius-lg)] bg-subtle p-2 lg:w-auto">
                 <h2 id={`col-${col.key}`} className="flex items-center justify-between px-1.5 pb-2 pt-1 text-sm font-semibold">
                   {col.title}<span className="rounded-full bg-surface px-2 text-xs text-muted">{orders.length}</span>
                 </h2>

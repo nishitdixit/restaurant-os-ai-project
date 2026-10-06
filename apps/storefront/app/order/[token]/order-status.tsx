@@ -103,7 +103,7 @@ export function OrderStatus({ initial }: { initial: PublicOrder }) {
       <div className="mt-6 grid gap-6 md:grid-cols-[1fr_320px]">
         <Card>
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-base font-semibold">Progress</h2>
+            <h2 className="text-base ros-heading">Progress</h2>
             {live && paid && <span className="text-xs text-muted" aria-live="polite">Updates automatically</span>}
           </div>
           <div className="mt-4">
@@ -115,7 +115,7 @@ export function OrderStatus({ initial }: { initial: PublicOrder }) {
 
         <div className="space-y-6">
           <Card>
-            <h2 className="text-base font-semibold">Need help?</h2>
+            <h2 className="text-base ros-heading">Need help?</h2>
             <div className="mt-3 flex flex-col gap-2">
               {order.store.phone && <a href={`tel:${order.store.phone}`} className={buttonClass("outline", "md", "justify-start")}><Phone className="size-4" aria-hidden />Call {order.store.name}</a>}
               {waUrl && <a href={waUrl} target="_blank" rel="noopener noreferrer" className={buttonClass("outline", "md", "justify-start")}><MessageCircle className="size-4" aria-hidden />WhatsApp us</a>}
@@ -123,7 +123,7 @@ export function OrderStatus({ initial }: { initial: PublicOrder }) {
           </Card>
           {order.address && (
             <Card>
-              <h2 className="text-base font-semibold">Delivering to</h2>
+              <h2 className="text-base ros-heading">Delivering to</h2>
               <address className="mt-2 text-sm not-italic text-muted">{[order.address.line1, order.address.line2, order.address.landmark, order.address.city, order.address.postalCode].filter(Boolean).join(", ")}</address>
             </Card>
           )}
@@ -131,7 +131,7 @@ export function OrderStatus({ initial }: { initial: PublicOrder }) {
       </div>
 
       <Card className="mt-6">
-        <h2 className="text-base font-semibold">Your order</h2>
+        <h2 className="text-base ros-heading">Your order</h2>
         <ul className="mt-1 divide-y divide-border">
           {order.items.map((item, i) => (
             <li key={i}><CartLine name={item.name} options={item.modifiers.map((m) => m.name)} quantity={item.quantity} unitPriceMinor={item.unitPriceMinor} lineTotalMinor={item.lineTotalMinor} currency={order.currency} /></li>
@@ -144,7 +144,7 @@ export function OrderStatus({ initial }: { initial: PublicOrder }) {
           <div className="flex justify-between text-base font-semibold"><dt>{paid ? "Paid" : "Total"}</dt><dd>{formatMoney(order.totalMinor, order.currency)}</dd></div>
           {order.refundedMinor > 0 && <div className="flex justify-between text-muted"><dt>Refunded</dt><dd>−{formatMoney(order.refundedMinor, order.currency)}</dd></div>}
         </dl>
-        {order.customerNote && <p className="mt-3 rounded-[var(--radius-md)] bg-subtle p-3 text-sm"><span className="font-medium">Your note:</span> {order.customerNote}</p>}
+        {order.customerNote && <p className="mt-3 rounded-[var(--ros-radius-md)] bg-subtle p-3 text-sm"><span className="font-medium">Your note:</span> {order.customerNote}</p>}
         <div className="mt-4 flex flex-wrap gap-2">
           <Button variant="outline" onClick={reorder} icon={<RotateCcw className="size-4" aria-hidden />}>Order again</Button>
           <Link href="/menu" className={buttonClass("ghost")}>Back to menu</Link>
@@ -160,7 +160,7 @@ function Header({ icon, title, subtitle }: { icon: React.ReactNode; title: strin
     <div className="flex items-start gap-3">
       {icon}
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+        <h1 className="text-2xl ros-heading">{title}</h1>
         {subtitle && <p className="mt-1 text-muted">{subtitle}</p>}
       </div>
     </div>

@@ -48,14 +48,14 @@ export default async function ProductPage({ params }: Params) {
         </ol>
       </nav>
       <div className="mt-4 grid gap-8 md:grid-cols-2">
-        <div className="relative aspect-square overflow-hidden rounded-[var(--radius-xl)] bg-subtle">
+        <div className="relative aspect-square overflow-hidden rounded-[var(--ros-radius-xl)] bg-subtle">
           {product.imageUrl
             ? <Image src={product.imageUrl} alt={product.name} fill sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" priority />
             : <div className="flex h-full items-center justify-center text-6xl font-bold text-faint" aria-hidden>{product.name.slice(0, 1)}</div>}
         </div>
         <div>
           <div className="flex items-center gap-2"><DietMark dietary={product.dietary} /><SpiceLevel level={product.spiceLevel} /></div>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">{product.name}</h1>
+          <h1 className="mt-2 text-3xl ros-heading">{product.name}</h1>
           <p className="mt-2 text-xl font-semibold tabular-nums">{formatMoney(product.priceMinor, config.currency)}</p>
           {product.description && <p className="mt-3 text-muted">{product.description}</p>}
           {product.longDescription && <p className="mt-3 whitespace-pre-line leading-relaxed text-muted">{product.longDescription}</p>}

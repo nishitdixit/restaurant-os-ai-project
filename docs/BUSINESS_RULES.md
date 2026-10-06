@@ -70,6 +70,15 @@
 - Analytics failures must not block order creation.
 - Revenue metrics use a documented source of truth and reconciliation logic.
 
+## Storefront themes
+
+- A restaurant's look is per tenant: one published theme and at most one draft on its brand (ADR-012).
+- Customers only ever see the published theme; drafts are visible only in the merchant preview.
+- A theme cannot be published (or restored) while any text would fail WCAG 2.2 AA contrast (4.5:1) — main and
+  secondary text, button text, accent text and header text.
+- Only roles with `tenant.manage` (Owner) can change the look; roles with `tenant.read` can view it.
+- Every published theme is kept and can be restored in one step.
+
 ## Implemented rule details — PENDING OWNER SIGN-OFF
 
 These decisions affect money, customers or operations. They were made during MVP implementation without

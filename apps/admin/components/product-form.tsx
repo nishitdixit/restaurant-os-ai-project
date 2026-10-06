@@ -154,7 +154,7 @@ export function ProductForm({ product }: { product: AdminProduct | null }) {
         <div className="space-y-6">
           <Card>
             <h2 className="text-base font-semibold">Photo</h2>
-            <div className={cx("relative mt-3 flex aspect-square items-center justify-center overflow-hidden rounded-[var(--radius-lg)] border border-dashed border-border-strong bg-subtle")}>
+            <div className={cx("relative mt-3 flex aspect-square items-center justify-center overflow-hidden rounded-[var(--ros-radius-lg)] border border-dashed border-border-strong bg-subtle")}>
               {form.imageUrl ? (
                 <>
                   {/* eslint-disable-next-line @next/next/no-img-element */}

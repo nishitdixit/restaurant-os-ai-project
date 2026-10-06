@@ -10,10 +10,10 @@ import { cx, DELIVERY, ORDER, PAYMENT, type Tone } from "./utils.ts";
 
 export { toast };
 
-export function Toaster() {
+export function Toaster({ theme = "light" }: { theme?: "light" | "dark" } = {}) {
   // Offset clears the sticky header (64px; 105px on phones, where the storefront adds a row of section links)
   // so a toast never covers the cart, menu or page actions.
-  return <SonnerToaster position="top-center" richColors closeButton offset={{ top: 76 }} mobileOffset={{ top: 112 }} toastOptions={{ duration: 4000 }} />;
+  return <SonnerToaster theme={theme} position="top-center" richColors closeButton offset={{ top: 76 }} mobileOffset={{ top: 112 }} toastOptions={{ duration: 4000 }} />;
 }
 
 export function Modal({ open, onOpenChange, title, description, children, footer, size = "md" }: {
@@ -23,7 +23,7 @@ export function Modal({ open, onOpenChange, title, description, children, footer
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="ros-overlay fixed inset-0 z-40 bg-black/40" />
-        <Dialog.Content className={cx("ros-modal fixed left-1/2 top-1/2 z-50 flex max-h-[90dvh] w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-[var(--radius-xl)] bg-surface shadow-[var(--shadow-lg)] focus:outline-none",
+        <Dialog.Content className={cx("ros-modal fixed left-1/2 top-1/2 z-50 flex max-h-[90dvh] w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-[var(--ros-radius-xl)] bg-surface shadow-[var(--ros-shadow-lg)] focus:outline-none",
           size === "sm" ? "max-w-md" : size === "lg" ? "max-w-3xl" : "max-w-xl")}>
           <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
             <div>
@@ -49,9 +49,9 @@ export function Drawer({ open, onOpenChange, title, description, children, foote
       <Dialog.Portal>
         <Dialog.Overlay className="ros-overlay fixed inset-0 z-40 bg-black/40" />
         <Dialog.Content className={cx(
-          "fixed z-50 flex flex-col bg-surface shadow-[var(--shadow-lg)] focus:outline-none",
-          "ros-drawer-bottom inset-x-0 bottom-0 max-h-[92dvh] rounded-t-[var(--radius-xl)]",
-          "sm:ros-drawer-right sm:inset-y-0 sm:left-auto sm:right-0 sm:max-h-none sm:rounded-none sm:rounded-l-[var(--radius-xl)]",
+          "fixed z-50 flex flex-col bg-surface shadow-[var(--ros-shadow-lg)] focus:outline-none",
+          "ros-drawer-bottom inset-x-0 bottom-0 max-h-[92dvh] rounded-t-[var(--ros-radius-xl)]",
+          "sm:ros-drawer-right sm:inset-y-0 sm:left-auto sm:right-0 sm:max-h-none sm:rounded-none sm:rounded-l-[var(--ros-radius-xl)]",
           width === "lg" ? "sm:w-[min(720px,100vw)]" : "sm:w-[min(480px,100vw)]",
         )}>
           <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
@@ -86,7 +86,7 @@ export function ConfirmDialog({ open, onOpenChange, title, description, confirmL
 
 export function EmptyState({ icon, title, description, action, className }: { icon?: ReactNode; title: ReactNode; description?: ReactNode; action?: ReactNode; className?: string }) {
   return (
-    <div className={cx("flex flex-col items-center justify-center gap-3 rounded-[var(--radius-lg)] border border-dashed border-border-strong px-6 py-12 text-center", className)}>
+    <div className={cx("flex flex-col items-center justify-center gap-3 rounded-[var(--ros-radius-lg)] border border-dashed border-border-strong px-6 py-12 text-center", className)}>
       <div className="flex size-12 items-center justify-center rounded-full bg-subtle text-muted">{icon ?? <Inbox className="size-6" aria-hidden />}</div>
       <div>
         <p className="font-semibold text-text">{title}</p>
@@ -99,7 +99,7 @@ export function EmptyState({ icon, title, description, action, className }: { ic
 
 export function ErrorState({ title = "Something went wrong", description, onRetry, requestId }: { title?: ReactNode; description?: ReactNode; onRetry?: () => void; requestId?: string | null }) {
   return (
-    <div role="alert" className="flex flex-col items-center gap-3 rounded-[var(--radius-lg)] border border-danger/30 bg-danger-soft px-6 py-10 text-center">
+    <div role="alert" className="flex flex-col items-center gap-3 rounded-[var(--ros-radius-lg)] border border-danger/30 bg-danger-soft px-6 py-10 text-center">
       <AlertTriangle className="size-6 text-danger" aria-hidden />
       <div>
         <p className="font-semibold text-text">{title}</p>
@@ -113,7 +113,7 @@ export function ErrorState({ title = "Something went wrong", description, onRetr
 
 export function Alert({ tone = "info", title, children, action, className }: { tone?: Tone; title?: ReactNode; children?: ReactNode; action?: ReactNode; className?: string }) {
   return (
-    <div role={tone === "danger" ? "alert" : "status"} className={cx("flex flex-wrap items-start justify-between gap-3 rounded-[var(--radius-md)] border px-4 py-3 text-sm", toneBox[tone], className)}>
+    <div role={tone === "danger" ? "alert" : "status"} className={cx("flex flex-wrap items-start justify-between gap-3 rounded-[var(--ros-radius-md)] border px-4 py-3 text-sm", toneBox[tone], className)}>
       <div className="min-w-0">
         {title && <p className="font-semibold">{title}</p>}
         {children && <div className={cx(title && "mt-0.5", "text-text/80")}>{children}</div>}
@@ -124,7 +124,7 @@ export function Alert({ tone = "info", title, children, action, className }: { t
 }
 
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={cx("ros-skeleton rounded-[var(--radius-md)] bg-subtle", className)} aria-hidden />;
+  return <div className={cx("ros-skeleton rounded-[var(--ros-radius-md)] bg-subtle", className)} aria-hidden />;
 }
 
 

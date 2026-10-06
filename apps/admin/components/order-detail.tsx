@@ -225,7 +225,7 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([order.address.line1, order.address.city, order.address.postalCode].join(", "))}`}><MapPin className="size-3.5" aria-hidden />Open in Maps</a>
             </div>
           )}
-          {order.customerNote && <p className="mt-3 rounded-[var(--radius-md)] bg-warning-soft p-2.5 text-sm"><span className="font-semibold">Customer note:</span> {order.customerNote}</p>}
+          {order.customerNote && <p className="mt-3 rounded-[var(--ros-radius-md)] bg-warning-soft p-2.5 text-sm"><span className="font-semibold">Customer note:</span> {order.customerNote}</p>}
         </Card>
         <Card>
           <h3 className="text-sm font-semibold">{order.delivery ? "Delivery" : order.fulfillmentType === "DELIVERY" ? "Delivery" : "Pickup"}</h3>

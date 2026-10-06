@@ -38,7 +38,7 @@ export function DailyColumns({ data, currency, title }: { data: { date: string; 
         <button type="button" className="text-xs font-medium text-primary hover:underline" onClick={() => setTable(!table)}>{table ? "Show chart" : "View as table"}</button>
       </div>
       {table ? (
-        <div className="max-h-72 overflow-y-auto rounded-[var(--radius-md)] border border-border">
+        <div className="max-h-72 overflow-y-auto rounded-[var(--ros-radius-md)] border border-border">
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-subtle text-left text-xs text-muted"><tr><th className="px-3 py-2 font-medium">Date</th><th className="px-3 py-2 text-right font-medium">Paid orders</th><th className="px-3 py-2 text-right font-medium">Sales</th></tr></thead>
             <tbody className="divide-y divide-border">{data.map((d) => <tr key={d.date}><td className="px-3 py-1.5">{formatDateTime(`${d.date}T12:00:00Z`, { dateStyle: "medium" })}</td><td className="px-3 py-1.5 text-right tabular-nums">{d.orders}</td><td className="px-3 py-1.5 text-right tabular-nums">{formatMoney(d.grossSalesMinor, currency)}</td></tr>)}</tbody>
@@ -73,7 +73,7 @@ export function DailyColumns({ data, currency, title }: { data: { date: string; 
             <line x1={left} x2={width - 8} y1={top + plotH} y2={top + plotH} stroke="var(--color-border-strong)" strokeWidth={1} />
           </svg>
           {a && active !== null && (
-            <div className="pointer-events-none absolute top-0 z-10 -translate-x-1/2 rounded-[var(--radius-md)] border border-border bg-surface px-3 py-2 text-xs shadow-[var(--shadow-md)]"
+            <div className="pointer-events-none absolute top-0 z-10 -translate-x-1/2 rounded-[var(--ros-radius-md)] border border-border bg-surface px-3 py-2 text-xs shadow-[var(--ros-shadow-md)]"
               style={{ left: `${((left + active * band + band / 2) / width) * 100}%` }}>
               <p className="text-sm font-semibold tabular-nums">{formatMoney(a.grossSalesMinor, currency)}</p>
               <p className="text-muted">{a.orders} paid order{a.orders === 1 ? "" : "s"} · {formatDateTime(`${a.date}T12:00:00Z`, { weekday: "short", day: "numeric", month: "short" })}</p>

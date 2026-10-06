@@ -24,8 +24,8 @@ export default async function MenuPage() {
     <>
       <JsonLd data={menuJsonLd(config, menu)} />
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">Menu</h1>
-        <Link href="/search" className="inline-flex h-10 items-center gap-2 rounded-full border border-border-strong bg-surface px-4 text-sm text-muted hover:text-text">
+        <h1 className="text-2xl ros-heading">Menu</h1>
+        <Link href="/search" className="inline-flex h-10 items-center gap-2 rounded-chip border border-border-strong bg-surface px-4 text-sm text-muted hover:text-text">
           <Search className="size-4" aria-hidden />Search dishes
         </Link>
       </div>
@@ -37,13 +37,13 @@ export default async function MenuPage() {
           {/* Rendered directly (not in a wrapper): a sticky element only sticks within its parent. */}
           <CategoryNav className="mt-4" categories={menu.categories.map((c) => ({ slug: c.slug, name: c.name }))} />
           {menu.categories.map((category, ci) => (
-            <section key={category.id} id={`cat-${category.slug}`} aria-labelledby={`h-${category.slug}`} className="mt-8 scroll-mt-40 md:scroll-mt-32">
-              <h2 id={`h-${category.slug}`} className="text-xl font-semibold">
+            <section key={category.id} id={`cat-${category.slug}`} aria-labelledby={`h-${category.slug}`} className="mt-8">
+              <h2 id={`h-${category.slug}`} className="text-xl ros-heading">
                 <Link href={`/${category.slug}`} className="hover:underline">{category.name}</Link>
                 <span className="ml-2 text-sm font-normal text-muted">{category.products.length}</span>
               </h2>
               {category.description && <p className="mt-1 text-sm text-muted">{category.description}</p>}
-              <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <div className="ros-product-list mt-3">
                 {category.products.map((p, pi) => <ProductCard key={p.id} product={p} currency={config.currency} priority={ci === 0 && pi < 2} />)}
               </div>
             </section>

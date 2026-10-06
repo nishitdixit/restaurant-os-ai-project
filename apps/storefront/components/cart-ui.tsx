@@ -10,11 +10,11 @@ import { useStore } from "./providers";
 export function CartButton() {
   const { count, setOpen, ready } = useCart();
   return (
-    <button type="button" onClick={() => setOpen(true)} className="relative inline-flex h-10 items-center gap-2 rounded-full border border-border-strong bg-surface px-3 text-sm font-medium hover:bg-subtle"
+    <button type="button" onClick={() => setOpen(true)} className="relative inline-flex h-10 items-center gap-2 rounded-chip border border-header-border bg-header px-3 text-sm font-medium text-header-fg hover:bg-header-chip"
       aria-label={`Open cart, ${count} item${count === 1 ? "" : "s"}`}>
       <ShoppingBag className="size-5" aria-hidden />
       <span className="hidden sm:inline">Cart</span>
-      {ready && count > 0 && <span className="flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-contrast">{count}</span>}
+      {ready && count > 0 && <span className="flex min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-xs font-semibold text-accent-contrast">{count}</span>}
     </button>
   );
 }

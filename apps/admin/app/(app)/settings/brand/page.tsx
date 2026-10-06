@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImagePlus } from "lucide-react";
@@ -39,7 +40,7 @@ export default function BrandSettingsPage() {
   };
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const body = { name: f.name, slug: f.slug, tagline: f.tagline, description: f.description, cuisines: f.cuisinesText.split(",").map((s) => s.trim()).filter(Boolean), logoAssetId: f.logoAssetId, primaryColor: f.primaryColor, links: f.links };
+    const body = { name: f.name, slug: f.slug, tagline: f.tagline, description: f.description, cuisines: f.cuisinesText.split(",").map((s) => s.trim()).filter(Boolean), logoAssetId: f.logoAssetId, links: f.links };
     const parsed = BrandSettingsSchema.safeParse(body);
     if (!parsed.success) { setErrors(Object.fromEntries(parsed.error.issues.map((i) => [String(i.path.at(-1)), i.message]))); return; }
     save.mutate(parsed.data);
@@ -77,12 +78,12 @@ export default function BrandSettingsPage() {
           <Field label="Tagline" error={errors.tagline} hint="One line under your name" className="sm:col-span-2">{(p) => <Input {...p} maxLength={140} value={f.tagline} onChange={(e) => setF({ ...f, tagline: e.target.value })} />}</Field>
           <Field label="About" error={errors.description} hint="Your story — shown on the home and contact pages and used by search engines" className="sm:col-span-2">{(p) => <Textarea {...p} rows={4} maxLength={1000} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} />}</Field>
           <Field label="Cuisines" hint="Comma separated, e.g. Biryani, North Indian">{(p) => <Input {...p} value={f.cuisinesText} onChange={(e) => setF({ ...f, cuisinesText: e.target.value })} />}</Field>
-          <Field label="Brand colour" error={errors.primaryColor}>{(p) => (
-            <div className="flex items-center gap-2">
-              <input type="color" aria-label="Pick brand colour" value={f.primaryColor} onChange={(e) => setF({ ...f, primaryColor: e.target.value })} className="h-11 w-14 cursor-pointer rounded-md border border-border-strong bg-surface p-1" />
-              <Input {...p} value={f.primaryColor} onChange={(e) => setF({ ...f, primaryColor: e.target.value })} className="font-mono" />
-            </div>
-          )}</Field>
+          <div className="flex flex-col gap-1.5">
+            <p className="text-sm font-medium">Colours, fonts &amp; style</p>
+            <Link href="/appearance" className="inline-flex h-11 items-center gap-2 rounded-[var(--ros-radius-md)] border border-border-strong bg-surface px-3 text-sm hover:bg-subtle">
+              <span className="size-5 rounded-full ring-1 ring-border" style={{ background: f.primaryColor }} aria-hidden />Edit in Appearance →
+            </Link>
+          </div>
         </fieldset>
       </Card>
       <Card>

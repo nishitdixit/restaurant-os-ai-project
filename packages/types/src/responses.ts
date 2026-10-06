@@ -16,6 +16,9 @@ export interface Page<T> {
   nextCursor: string | null;
 }
 
+import type { StoreTheme, ThemeCheck } from "@restaurant-os/domain";
+export type { StoreTheme, ThemeCheck, ThemeIssue } from "@restaurant-os/domain";
+
 // Storefront ---------------------------------------------------------------------------------
 
 export interface BrandLinks { whatsapp: string; swiggy: string; zomato: string; instagram: string; website: string }
@@ -27,7 +30,10 @@ export interface StoreConfig {
   description: string;
   cuisines: string[];
   logoUrl: string | null;
+  /** The theme's brand colour (kept for share images and the browser theme colour). */
   primaryColor: string;
+  /** Published theme, or the saved draft when requested by a merchant preview. Always normalised. */
+  theme: StoreTheme;
   links: BrandLinks;
   currency: string;
   locale: string;
@@ -431,4 +437,22 @@ export interface MediaAsset {
   url: string;
   contentType: string;
   byteSize: number;
+}
+
+// Appearance (storefront theme editor) ---------------------------------------------------------------------
+export interface ThemeVersionSummary {
+  id: string;
+  presetId: string | null;
+  publishedAt: string;
+  publishedBy: string | null;
+}
+
+export interface AppearanceState {
+  published: StoreTheme;
+  /** Unpublished edits; null when there are none. */
+  draft: StoreTheme | null;
+  draftUpdatedAt: string | null;
+  publishedAt: string | null;
+  check: ThemeCheck;
+  versions: ThemeVersionSummary[];
 }

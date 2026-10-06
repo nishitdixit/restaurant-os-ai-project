@@ -19,14 +19,14 @@ export function useStore(): StoreInfo {
   return ctx;
 }
 
-export function Providers({ store, children }: { store: StoreInfo; children: ReactNode }) {
+export function Providers({ store, mode = "light", children }: { store: StoreInfo; mode?: "light" | "dark"; children: ReactNode }) {
   return (
     <StoreContext.Provider value={store}>
       <CartProvider storeSlug={store.slug}>
         {children}
         <CartDrawer />
         <StickyCartBar />
-        <Toaster />
+        <Toaster theme={mode} />
       </CartProvider>
     </StoreContext.Provider>
   );

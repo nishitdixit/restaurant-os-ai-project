@@ -10,13 +10,13 @@ import { audit } from "../../lib/events.ts";
 import { iso } from "../../lib/format.ts";
 import { mediaUrlMap } from "../../integrations/storage.ts";
 import { actorOf, requirePermission, tenantOf } from "../../auth/context.ts";
-import { OUTLET_COLUMNS, type OutletRow, type BrandMetadata } from "../storefront/store.ts";
+import { OUTLET_COLUMNS, publishedTheme, type OutletRow, type BrandMetadata } from "../storefront/store.ts";
 
 const tags = ["settings"];
 
 async function primaryBrand(db: Db, tenantId: string) {
-  const r = await db.query<{ id: string; name: string; slug: string; status: string; metadata: BrandMetadata; logo_asset_id: string | null; published_at: Date | null }>(
-    `SELECT id, name, slug, status, metadata, logo_asset_id, published_at FROM brands WHERE tenant_id = $1 ORDER BY created_at LIMIT 1`, [tenantId]);
+  const r = await db.query<{ id: string; name: string; slug: string; status: string; metadata: BrandMetadata; logo_asset_id: string | null; published_at: Date | null; theme: unknown }>(
+    `SELECT id, name, slug, status, metadata, logo_asset_id, published_at, theme FROM brands WHERE tenant_id = $1 ORDER BY created_at LIMIT 1`, [tenantId]);
   if (!r.rowCount) throw new ApiError(404, "BRAND_NOT_FOUND", "No brand is set up for this restaurant.");
   return r.rows[0]!;
 }
@@ -79,7 +79,7 @@ export async function settingsRoutes(app: FastifyInstance) {
       brand: {
         name: brand.name, slug: brand.slug, tagline: m.tagline ?? "", description: m.description ?? "", cuisines: m.cuisines ?? [],
         logoAssetId: brand.logo_asset_id, logoUrl: brand.logo_asset_id ? logo.get(brand.logo_asset_id) ?? null : null,
-        primaryColor: m.primaryColor ?? "#b42318",
+        primaryColor: publishedTheme(brand).colors.primary,
         links: { whatsapp: m.links?.whatsapp ?? "", swiggy: m.links?.swiggy ?? "", zomato: m.links?.zomato ?? "", instagram: m.links?.instagram ?? "", website: m.links?.website ?? "" },
         status: brand.status, publishedAt: iso(brand.published_at),
       },
@@ -121,7 +121,7 @@ export async function settingsRoutes(app: FastifyInstance) {
       }
       await tx.query(
         `UPDATE brands SET name = $2, slug = $3, logo_asset_id = $4, metadata = $5, updated_at = now() WHERE id = $1`,
-        [brand.id, b.name, b.slug, b.logoAssetId ?? null, JSON.stringify({ ...(brand.metadata ?? {}), tagline: b.tagline, description: b.description, cuisines: b.cuisines, primaryColor: b.primaryColor, links: b.links })]);
+        [brand.id, b.name, b.slug, b.logoAssetId ?? null, JSON.stringify({ ...(brand.metadata ?? {}), tagline: b.tagline, description: b.description, cuisines: b.cuisines, links: b.links })]);
       await audit(tx, actor, "BrandSettingsUpdated", { type: "Brand", id: brand.id }, { slugChanged: b.slug !== brand.slug, slug: b.slug });
     });
     return { ok: true };

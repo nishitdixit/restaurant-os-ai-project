@@ -10,8 +10,12 @@ export function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
   url.searchParams.delete("preview");
   const response = NextResponse.redirect(url);
-  if (preview === "1") response.cookies.set("ros_preview", "1", { httpOnly: true, sameSite: "lax", path: "/" });
-  else response.cookies.delete("ros_preview");
+  // Over HTTPS the cookie is partitioned + SameSite=None so the preview also works inside the admin's iframe
+  // (a different site in production); locally the admin and storefront are the same site, so Lax is enough.
+  const secure = request.nextUrl.protocol === "https:";
+  const attributes = secure ? { httpOnly: true, sameSite: "none" as const, secure: true, partitioned: true, path: "/" } : { httpOnly: true, sameSite: "lax" as const, path: "/" };
+  // Clearing must repeat the same attributes, or a partitioned cookie would survive.
+  response.cookies.set("ros_preview", preview === "1" ? "1" : "", preview === "1" ? attributes : { ...attributes, maxAge: 0 });
   return response;
 }
 
