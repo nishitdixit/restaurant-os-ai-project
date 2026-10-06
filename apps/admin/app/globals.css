@@ -1,0 +1,5 @@
+@import "tailwindcss";
+@import "../../../packages/ui/src/styles.css";
+@source "../../../packages/ui/src";
+
+:root { --brand-primary: #175cd3; }

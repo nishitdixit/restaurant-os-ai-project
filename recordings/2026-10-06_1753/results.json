@@ -1,0 +1,838 @@
+{
+  "config": {
+    "argv": [
+      "/usr/local/bin/node",
+      "/Users/nishitdixit/project/restaurant-os-ai-project/tests/recording/node_modules/@playwright/test/cli.js",
+      "test",
+      "-c",
+      "/Users/nishitdixit/project/restaurant-os-ai-project/tests/recording/playwright.config.ts"
+    ],
+    "configFile": "/Users/nishitdixit/project/restaurant-os-ai-project/tests/recording/playwright.config.ts",
+    "rootDir": "/Users/nishitdixit/project/restaurant-os-ai-project/tests/recording/chapters",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "/Users/nishitdixit/project/restaurant-os-ai-project/tests/recording/global-setup.ts",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 1,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/nishitdixit/project/restaurant-os-ai-project/recordings/2026-10-06_1753/traces",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/nishitdixit/project/restaurant-os-ai-project/tests/recording/chapters",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 1200000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/Users/nishitdixit/project/restaurant-os-ai-project/recordings/2026-10-06_1753/results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "01-onboarding.spec.ts",
+      "file": "01-onboarding.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "01 Owner onboarding",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 1200000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 75697,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[refreshUntil] visible after 0s: getByText('Coming soon')\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-06T12:24:00.775Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "dacac6177a7cb5257661-9c03a8854ccb854adacf",
+          "file": "../lib/stage.ts",
+          "line": 57,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "02-brand-theme.spec.ts",
+      "file": "02-brand-theme.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "02 Business details, brand and theme",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 1200000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 71081,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[refreshUntil] visible after 5s: getByText('Slow-cooked biryanis and North Indian curries, delivered hot')\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-06T12:25:16.498Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c99cff48aebf1190f766-758b3c65df2ffbe3d078",
+          "file": "../lib/stage.ts",
+          "line": 57,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "03-kitchen-hours.spec.ts",
+      "file": "03-kitchen-hours.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "03 Kitchen address, ordering options and opening hours",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 1200000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 44127,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[refreshUntil] visible after 0s: getByText('Open now')\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-06T12:26:27.589Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b2d9194d6da043bee80d-1c6e627175e675f9f36b",
+          "file": "../lib/stage.ts",
+          "line": 57,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "04-delivery-areas.spec.ts",
+      "file": "04-delivery-areas.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "04 Delivery areas",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 1200000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 58796,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[refreshUntil] visible after 5s: getByText('Indiranagar & nearby')\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-06T12:27:11.737Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d197d9899609927118cd-1fdd183c6c83d5f2e1ce",
+          "file": "../lib/stage.ts",
+          "line": 57,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "05-menu-building.spec.ts",
+      "file": "05-menu-building.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "05 Menu building",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 1200000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 161310,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[refreshUntil] visible after 0s: getByRole('link', { name: 'Mango Lassi', exact: true })\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-06T12:28:10.547Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "2e8878cb0382bcfffa75-fc3fda9c8f2d169e7169",
+          "file": "../lib/stage.ts",
+          "line": 57,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "06-publish.spec.ts",
+      "file": "06-publish.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "06 Publishing the storefront",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 1200000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 22313,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[refreshUntil] visible after 0s: getByRole('link', { name: 'Order direct' })\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-06T12:30:51.863Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "2e8184d80e726b505354-ffbed346ebb0dde47560",
+          "file": "../lib/stage.ts",
+          "line": 57,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "07-offers.spec.ts",
+      "file": "07-offers.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "07 Offers",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 1200000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 81393,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[refreshUntil] visible after 5s: getByText('₹50 off your first order')\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-06T12:31:14.194Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ae03f090c03cf4390927-95eaac146ac3afaff4af",
+          "file": "../lib/stage.ts",
+          "line": 57,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "08-customer-browsing.spec.ts",
+      "file": "08-customer-browsing.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "08 Customer browsing",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 1200000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 60871,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-06T12:32:35.600Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "bd47b3db3f7de331c184-af6523b787f72f9c7437",
+          "file": "../lib/stage.ts",
+          "line": 57,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "09-live-sync.spec.ts",
+      "file": "09-live-sync.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "09 Live changes: admin to storefront",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 1200000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 134496,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[refreshUntil] visible after 10s: getByText('₹299')\n"
+                    },
+                    {
+                      "text": "[refreshUntil] visible after 21s: getByText('Sold out for today')\n"
+                    },
+                    {
+                      "text": "[refreshUntil] visible after 5s: getByText('Online orders are paused for a little while.')\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-06T12:33:36.484Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5975992166e62f368a31-a59618a796483909d616",
+          "file": "../lib/stage.ts",
+          "line": 57,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "10-checkout-edge-cases.spec.ts",
+      "file": "10-checkout-edge-cases.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "10 Checkout: every problem explained before payment",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 1200000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 89386,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-06T12:35:50.991Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "914bfab6109adcae7567-fc50d71f145097fa5f4a",
+          "file": "../lib/stage.ts",
+          "line": 57,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "11-order-lifecycle.spec.ts",
+      "file": "11-order-lifecycle.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "11 Order lifecycle with live customer updates",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 1200000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 105737,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-06T12:37:20.389Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "664d3da24d681fba4f46-71d4517ef360249b06c8",
+          "file": "../lib/stage.ts",
+          "line": 57,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "12-cancel-refund.spec.ts",
+      "file": "12-cancel-refund.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "12 Cancellations, refunds, notes and reordering",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 1200000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 84685,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-06T12:39:06.121Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ddb712b3ffb4b7af494a-b1ce93509c34cf4af1bd",
+          "file": "../lib/stage.ts",
+          "line": 57,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "13-team-roles.spec.ts",
+      "file": "13-team-roles.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "13 Team and roles",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 1200000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 118493,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-06T12:40:30.817Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "db1fbc1c267495ff14e6-12bddec5c27da5a988fb",
+          "file": "../lib/stage.ts",
+          "line": 57,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "14-insight.spec.ts",
+      "file": "14-insight.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "14 Analytics, customers, messages and audit log",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 1200000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 57581,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-06T12:42:29.319Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8861d6c7543e83e32053-7f261eb0d511e3caa404",
+          "file": "../lib/stage.ts",
+          "line": 57,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "15-payment-expiry.spec.ts",
+      "file": "15-payment-expiry.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "15 Unpaid orders expire automatically",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 1200000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 439838,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-06T12:43:26.911Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "df4b6bd348f71f2c3092-4b5c18ff6d032fc0d867",
+          "file": "../lib/stage.ts",
+          "line": 57,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "16-message-retry.spec.ts",
+      "file": "16-message-retry.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "16 A failing message provider, retries and manual retry",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 1200000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 67565,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-06T12:50:46.749Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "be5f503a9be128c96a8e-97c39cad57d5ce94c8eb",
+          "file": "../lib/stage.ts",
+          "line": 57,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "17-unpublish.spec.ts",
+      "file": "17-unpublish.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "17 Taking the storefront offline and back",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 1200000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 83783,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[refreshUntil] visible after 26s: getByText('Coming soon')\n"
+                    },
+                    {
+                      "text": "[refreshUntil] visible after 31s: getByRole('link', { name: 'Order direct' })\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-06T12:51:54.325Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "3f735650278dafc7dfec-eb6f96aec6da63e0d16d",
+          "file": "../lib/stage.ts",
+          "line": 57,
+          "column": 3
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-06T12:23:59.855Z",
+    "duration": 1759735.2140000002,
+    "expected": 17,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

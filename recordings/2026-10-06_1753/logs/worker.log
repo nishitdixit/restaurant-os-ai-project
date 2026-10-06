@@ -1,0 +1,3 @@
+{"level":30,"time":1791291101481,"service":"restaurant-os-worker","queues":["ros-events","ros-notifications","ros-maintenance"],"msg":"worker started"}
+{"level":30,"time":1791291107511,"service":"restaurant-os-worker","published":1,"msg":"outbox relayed"}
+{"level":30,"time":1791291248050,"service":"restaurant-os-worker","signal":"SIGTERM","msg":"worker shutting down"}

@@ -1,0 +1,128 @@
+[
+  {
+    "id": "01-onboarding",
+    "title": "Owner onboarding",
+    "summary": "A restaurant owner signs up, creates her restaurant and lands on the setup checklist. The storefront isn't public yet.",
+    "admin": "raw/01-onboarding/admin.webm",
+    "store": "raw/01-onboarding/store.webm"
+  },
+  {
+    "id": "02-brand-theme",
+    "title": "Business details, brand and theme",
+    "summary": "Business details, then the brand: logo, colour, tagline, story, cuisines and order links — and the storefront re-themes.",
+    "admin": "raw/02-brand-theme/admin.webm",
+    "store": "raw/02-brand-theme/store.webm"
+  },
+  {
+    "id": "03-kitchen-hours",
+    "title": "Kitchen, ordering options and hours",
+    "summary": "Kitchen address and map location, delivery/pickup switches, preparation time and the weekly opening-hours editor.",
+    "admin": "raw/03-kitchen-hours/admin.webm",
+    "store": "raw/03-kitchen-hours/store.webm"
+  },
+  {
+    "id": "04-delivery-areas",
+    "title": "Delivery areas",
+    "summary": "Pincode-based and distance-based delivery areas with fee, minimum order and delivery time; validation, edit, deactivate and remove.",
+    "admin": "raw/04-delivery-areas/admin.webm",
+    "store": "raw/04-delivery-areas/store.webm"
+  },
+  {
+    "id": "05-menu-building",
+    "title": "Building the menu",
+    "summary": "Categories, option groups (portion size, add-ons), items with photos, food type and spice; drafts vs published; duplicate, reorder and bulk publish.",
+    "admin": "raw/05-menu-building/admin.webm",
+    "store": "raw/05-menu-building/store.webm"
+  },
+  {
+    "id": "06-publish",
+    "title": "Publishing the storefront",
+    "summary": "With every setup step complete, the owner publishes; the storefront goes live for customers.",
+    "admin": "raw/06-publish/admin.webm",
+    "store": "raw/06-publish/store.webm"
+  },
+  {
+    "id": "07-offers",
+    "title": "Offers and coupon codes",
+    "summary": "Fixed and percentage coupons with minimums, caps, first-order-only and hidden codes; validation; pause and resume; the customer offers page.",
+    "admin": "raw/07-offers/admin.webm",
+    "store": "raw/07-offers/store.webm"
+  },
+  {
+    "id": "08-customer-browsing",
+    "title": "A customer browsing the storefront",
+    "summary": "Home, category chips, category and dish pages, search, options, cart drawer and sticky cart bar, delivery areas, contact and the not-found page.",
+    "admin": "raw/08-customer-browsing/admin.webm",
+    "store": "raw/08-customer-browsing/store.webm"
+  },
+  {
+    "id": "09-live-sync",
+    "title": "Live changes from the admin to the storefront",
+    "summary": "Price change, out of stock (with automatic return), bulk stock changes, pausing orders, and a price change in the middle of a customer's checkout.",
+    "admin": "raw/09-live-sync/admin.webm",
+    "store": "raw/09-live-sync/store.webm"
+  },
+  {
+    "id": "10-checkout-edge-cases",
+    "title": "Checkout edge cases",
+    "summary": "Missing details, an address outside the delivery area, location-based delivery, minimum order, coupon rules, a failed payment and a retry.",
+    "admin": "raw/10-checkout-edge-cases/admin.webm",
+    "store": "raw/10-checkout-edge-cases/store.webm"
+  },
+  {
+    "id": "11-order-lifecycle",
+    "title": "From new order to delivered",
+    "summary": "New-order alert on the board, accept → preparing → ready → dispatch with a rider; a failed delivery and reassignment; delivered — while the customer's order page updates by itself. Plus a pickup order through to collected.",
+    "admin": "raw/11-order-lifecycle/admin.webm",
+    "store": "raw/11-order-lifecycle/store.webm"
+  },
+  {
+    "id": "12-cancel-refund",
+    "title": "Cancellations, refunds, notes and reordering",
+    "summary": "Cancelling a paid order with a reason and refund, a partial refund, internal notes, and the customer reordering a past order.",
+    "admin": "raw/12-cancel-refund/admin.webm",
+    "store": "raw/12-cancel-refund/store.webm"
+  },
+  {
+    "id": "13-team-roles",
+    "title": "Team and roles",
+    "summary": "The owner invites kitchen staff; the cook signs up and sees only what the Kitchen role allows; the owner changes the role, removes and restores access.",
+    "admin": "raw/13-team-roles/admin.webm",
+    "store": "raw/13-team-roles/store.webm"
+  },
+  {
+    "id": "14-insight",
+    "title": "Analytics, customers, messages and audit log",
+    "summary": "Sales figures that reconcile with orders, the daily chart and its table view, customer history and consent, every customer message, and who changed what.",
+    "admin": "raw/14-insight/admin.webm",
+    "store": "raw/14-insight/store.webm"
+  },
+  {
+    "id": "15a-payment-expiry",
+    "title": "Unpaid orders expire (part 1)",
+    "summary": "A customer places an order and leaves without paying. It waits under “Awaiting payment”, never on the kitchen board.",
+    "admin": "raw/15a-payment-expiry/admin.webm",
+    "store": "raw/15a-payment-expiry/store.webm"
+  },
+  {
+    "id": "15b-payment-expiry",
+    "title": "Unpaid orders expire (part 2)",
+    "summary": "Six minutes later: the order was cancelled automatically, coupon usage released, and both sides show why.",
+    "admin": "raw/15b-payment-expiry/admin.webm",
+    "store": "raw/15b-payment-expiry/store.webm"
+  },
+  {
+    "id": "16-message-retry",
+    "title": "When a message can't be delivered",
+    "summary": "The messaging provider is down: sends are retried with back-off, then marked Failed and flagged; once it recovers, one click retries.",
+    "admin": "raw/16-message-retry/admin.webm",
+    "store": "raw/16-message-retry/store.webm"
+  },
+  {
+    "id": "17-unpublish",
+    "title": "Taking the storefront offline and back",
+    "summary": "Unpublishing shows customers “Coming soon”; publishing again restores the live store.",
+    "admin": "raw/17-unpublish/admin.webm",
+    "store": "raw/17-unpublish/store.webm"
+  }
+]
