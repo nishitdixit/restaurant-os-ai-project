@@ -5,7 +5,7 @@ import type { PublicOffer } from "@restaurant-os/types";
 import { EmptyState, buttonClass, formatDateTime } from "@restaurant-os/ui";
 import { serverGet } from "@/lib/api";
 import { getConfig, previewQuery, storeSlug } from "@/lib/store";
-import { CopyCode } from "./copy-code";
+import { CopyCode } from "@/components/copy-code";
 
 export async function generateMetadata(): Promise<Metadata> {
   const config = await getConfig();

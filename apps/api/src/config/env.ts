@@ -40,6 +40,10 @@ const EnvSchema = z.object({
   S3_PUBLIC_BASE_URL: z.string().optional(),
   S3_FORCE_PATH_STYLE: bool.default(true),
 
+  /** Signs merchant preview links (unpublished stores and draft looks). Must be unique in production. */
+  PREVIEW_SECRET: z.string().min(16).default("restaurant-os-preview-secret-dev"),
+  PREVIEW_TTL_MINUTES: z.coerce.number().int().min(5).max(7 * 24 * 60).default(12 * 60),
+
   MOCK_NOTIFICATION_MODE: z.enum(["succeed", "fail", "flaky"]).default("succeed"),
   NOTIFICATION_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(20).default(5),
 });
@@ -60,6 +64,7 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
       throw new Error("PAYMENT_PROVIDER=mock is refused in production. Set ALLOW_MOCK_PAYMENTS_IN_PRODUCTION=true only for a supervised pilot without real payments.");
     }
     if (!env.CLERK_SECRET_KEY) throw new Error("CLERK_SECRET_KEY is required in production.");
+    if (env.PREVIEW_SECRET === "restaurant-os-preview-secret-dev") throw new Error("Set a unique PREVIEW_SECRET in production.");
     if (env.MOCK_PAYMENT_SECRET === "restaurant-os-mock-payment-secret" && env.PAYMENT_PROVIDER === "mock") {
       throw new Error("Set a unique MOCK_PAYMENT_SECRET in production.");
     }

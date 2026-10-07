@@ -9,11 +9,12 @@
     "lint": "tsc --noEmit"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.63.0",
+    "@restaurant-os/domain": "workspace:*",
     "@types/node": "^22.10.0",
-    "pg": "^8.16.3",
     "@types/pg": "^8.15.5",
-    "typescript": "^5.9.2",
-    "@restaurant-os/domain": "workspace:*"
+    "pg": "^8.16.3",
+    "typescript": "^5.9.2"
   }
 }

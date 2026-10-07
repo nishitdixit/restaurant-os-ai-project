@@ -26,6 +26,10 @@ before(async () => {
 });
 
 const config = async (query = "") => (await app.inject(`/v1/storefront/pilot/config${query}`)).json();
+const preview = async (slug = "pilot") => {
+  const { issuePreviewToken } = await import("../src/lib/preview.ts");
+  return `?preview=${issuePreviewToken(slug).token}`;
+};
 
 test("a restaurant without a theme renders the classic look in its brand colour", async () => {
   const c = await config();
@@ -43,7 +47,8 @@ test("drafts are private to the preview until published, then go live with histo
   assert.equal(saved.statusCode, 200, saved.body);
   assert.equal(saved.json().draft.presetId, "rapid");
   assert.equal((await config()).theme.presetId, "classic", "the live storefront is unchanged");
-  assert.equal((await config("?preview=1&theme=draft")).theme.presetId, "rapid", "merchant preview sees the draft");
+  assert.equal((await config(await preview())).theme.presetId, "rapid", "merchant preview sees the draft");
+  assert.equal((await config("?preview=1")).theme.presetId, "classic", "an unsigned preview sees only the live look");
 
   const published = await app.inject({ method: "POST", url: "/v1/admin/appearance/publish", headers: headers(owner), payload: {} });
   assert.equal(published.statusCode, 200, published.body);
@@ -102,7 +107,7 @@ test("themes are strictly per restaurant", async () => {
   const b = await app.inject({ method: "POST", url: "/v1/admin/appearance/publish", headers: headers(ownerB, tenantB), payload: { theme: presetById("sugar-bloom")!.theme } });
   assert.equal(b.statusCode, 200, b.body);
   assert.equal((await config()).theme.presetId, "rapid", "tenant A's storefront is unaffected");
-  assert.equal((await app.inject("/v1/storefront/bee-kitchen/config?preview=1")).json().theme.presetId, "sugar-bloom");
+  assert.equal((await app.inject(`/v1/storefront/bee-kitchen/config${await preview("bee-kitchen")}`)).json().theme.presetId, "sugar-bloom");
   // B's version ids are not usable from A.
   const bVersion = b.json().versions[0].id;
   const cross = await app.inject({ method: "POST", url: "/v1/admin/appearance/restore", headers: headers(owner), payload: { versionId: bVersion } });

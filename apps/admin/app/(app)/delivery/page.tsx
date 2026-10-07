@@ -16,7 +16,7 @@ function ZoneEditor({ zone, hasLocation, onClose }: { zone: AdminDeliveryZone | 
   const key = useTenantKey("zones");
   const [f, setF] = useState({
     name: zone?.name ?? "", ruleType: zone?.ruleType ?? "POSTAL_CODE", postalCodes: zone?.postalCodes.join(", ") ?? "", radiusKm: zone?.radiusKm ? String(zone.radiusKm) : "3",
-    fee: fromMinor(zone?.feeMinor ?? 3000), minimum: fromMinor(zone?.minimumOrderMinor ?? 0), etaMin: String(zone?.etaMin ?? 30), etaMax: String(zone?.etaMax ?? 45), active: zone?.active ?? true,
+    fee: fromMinor(zone?.feeMinor ?? 3000), minimum: fromMinor(zone?.minimumOrderMinor ?? 0), free: fromMinor(zone?.freeDeliveryMinimumMinor ?? null), etaMin: String(zone?.etaMin ?? 30), etaMax: String(zone?.etaMax ?? 45), active: zone?.active ?? true,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -29,7 +29,7 @@ function ZoneEditor({ zone, hasLocation, onClose }: { zone: AdminDeliveryZone | 
     const codes = f.postalCodes.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean);
     const body = {
       name: f.name.trim(), ruleType: f.ruleType, postalCodes: f.ruleType === "POSTAL_CODE" ? codes : [], radiusKm: f.ruleType === "RADIUS" ? Number(f.radiusKm) : null,
-      feeMinor: toMinor(f.fee || "0") ?? NaN, minimumOrderMinor: toMinor(f.minimum || "0") ?? NaN, etaMin: Number(f.etaMin), etaMax: Number(f.etaMax), active: f.active,
+      feeMinor: toMinor(f.fee || "0") ?? NaN, minimumOrderMinor: toMinor(f.minimum || "0") ?? NaN, freeDeliveryMinimumMinor: f.free.trim() ? toMinor(f.free) ?? NaN : null, etaMin: Number(f.etaMin), etaMax: Number(f.etaMax), active: f.active,
     };
     const parsed = DeliveryZoneInputSchema.safeParse(body);
     if (!parsed.success) { setErrors(Object.fromEntries(parsed.error.issues.map((i) => [String(i.path[0]), i.message]))); return; }
@@ -58,6 +58,7 @@ function ZoneEditor({ zone, hasLocation, onClose }: { zone: AdminDeliveryZone | 
         )}
         <Field label="Delivery fee" error={errors.feeMinor} hint="0 for free delivery">{(p) => <Input {...p} inputMode="decimal" prefix="₹" value={f.fee} onChange={(e) => setF({ ...f, fee: e.target.value })} />}</Field>
         <Field label="Minimum order" error={errors.minimumOrderMinor}>{(p) => <Input {...p} inputMode="decimal" prefix="₹" value={f.minimum} onChange={(e) => setF({ ...f, minimum: e.target.value })} />}</Field>
+        <Field label="Free delivery above (optional)" error={errors.freeDeliveryMinimumMinor} hint="Item total before discounts. Customers see how much more they need in their cart.">{(p) => <Input {...p} inputMode="decimal" prefix="₹" value={f.free} onChange={(e) => setF({ ...f, free: e.target.value })} />}</Field>
         <Field label="Delivery time from (min)" error={errors.etaMin}>{(p) => <Input {...p} type="number" min={0} value={f.etaMin} onChange={(e) => setF({ ...f, etaMin: e.target.value })} />}</Field>
         <Field label="to (min)" error={errors.etaMax}>{(p) => <Input {...p} type="number" min={0} value={f.etaMax} onChange={(e) => setF({ ...f, etaMax: e.target.value })} />}</Field>
         <div className="sm:col-span-2"><Switch checked={f.active} onCheckedChange={(v) => setF({ ...f, active: v })} label="Active" description="Inactive areas are ignored at checkout" /></div>
@@ -107,6 +108,7 @@ export default function DeliveryPage() {
                 <dl className="mt-3 grid grid-cols-3 gap-3 text-sm">
                   <div><dt className="text-muted">Fee</dt><dd className="font-medium">{z.feeMinor ? formatMoney(z.feeMinor) : "Free"}</dd></div>
                   <div><dt className="text-muted">Minimum</dt><dd className="font-medium">{z.minimumOrderMinor ? formatMoney(z.minimumOrderMinor) : "None"}</dd></div>
+                  {z.freeDeliveryMinimumMinor !== null && <div><dt className="text-muted">Free delivery</dt><dd className="font-medium">above {formatMoney(z.freeDeliveryMinimumMinor)}</dd></div>}
                   <div><dt className="text-muted">Time</dt><dd className="font-medium">{z.etaMin}–{z.etaMax} min</dd></div>
                 </dl>
                 {z.ruleType === "POSTAL_CODE" && <p className="mt-3 text-xs text-muted">{z.postalCodes.join(", ")}</p>}

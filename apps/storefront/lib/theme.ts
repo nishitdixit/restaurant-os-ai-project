@@ -3,6 +3,7 @@
 import type { CSSProperties } from "react";
 import { classicTheme, themeAttributes, themeVariables, type StoreTheme } from "@restaurant-os/domain";
 import type { StoreConfig } from "@restaurant-os/types";
+import { experienceVariables } from "./experience";
 
 /** The admin origin allowed to drive the live theme preview (it embeds the storefront in an iframe). */
 export const ADMIN_ORIGIN = (process.env.NEXT_PUBLIC_ADMIN_URL ?? "http://localhost:3001").replace(/\/$/, "");
@@ -11,7 +12,7 @@ export function storeTheme(config: StoreConfig): StoreTheme {
   return config.theme ?? classicTheme(config.primaryColor);
 }
 
-export function themeHtmlProps(theme: StoreTheme): { style: CSSProperties } & Record<string, string | CSSProperties> {
+export function themeHtmlProps(theme: StoreTheme, experience?: StoreConfig["experience"]): { style: CSSProperties } & Record<string, string | CSSProperties> {
   const { "color-scheme": colorScheme, ...vars } = themeVariables(theme);
-  return { style: { ...vars, colorScheme } as CSSProperties, ...themeAttributes(theme) };
+  return { style: { ...vars, ...(experience ? experienceVariables(experience) : {}), colorScheme } as CSSProperties, ...themeAttributes(theme) };
 }

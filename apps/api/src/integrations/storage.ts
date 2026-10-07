@@ -1,12 +1,13 @@
 // Object storage for uploaded images (docs/ARCHITECTURE.md "Files/media"). Local disk for
 // development, any S3-compatible bucket (Supabase Storage, R2, S3) for deployed environments.
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, resolve } from "node:path";
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { env } from "../config/env.ts";
 
 export interface MediaStorage {
   put(key: string, body: Buffer, contentType: string): Promise<void>;
+  remove(key: string): Promise<void>;
   publicUrl(key: string): string;
 }
 
@@ -20,6 +21,9 @@ class LocalStorage implements MediaStorage {
     const path = join(mediaRoot(), key);
     await mkdir(dirname(path), { recursive: true });
     await writeFile(path, body);
+  }
+  async remove(key: string) {
+    await rm(join(mediaRoot(), key), { force: true });
   }
   publicUrl(key: string) {
     return `${env().API_PUBLIC_URL.replace(/\/$/, "")}/media/${key}`;
@@ -39,6 +43,9 @@ class S3Storage implements MediaStorage {
   }
   async put(key: string, body: Buffer, contentType: string) {
     await this.client.send(new PutObjectCommand({ Bucket: env().S3_BUCKET, Key: key, Body: body, ContentType: contentType, CacheControl: "public, max-age=31536000, immutable" }));
+  }
+  async remove(key: string) {
+    await this.client.send(new DeleteObjectCommand({ Bucket: env().S3_BUCKET, Key: key }));
   }
   publicUrl(key: string) {
     return `${env().S3_PUBLIC_BASE_URL!.replace(/\/$/, "")}/${key}`;
@@ -64,4 +71,12 @@ export async function mediaUrlMap(db: { query: (sql: string, params: unknown[]) 
   if (!unique.length) return new Map();
   const r = await db.query(`SELECT id, storage_key FROM media_assets WHERE id = ANY($1::uuid[])`, [unique]);
   return new Map(r.rows.map((row) => [row.id, storage().publicUrl(row.storage_key)]));
+}
+
+/** URL + alt text for a restaurant's own media (ids from other restaurants are ignored). */
+export async function mediaRefMap(db: { query: (sql: string, params: unknown[]) => Promise<{ rows: { id: string; storage_key: string; alt_text: string }[] }> }, tenantId: string, ids: (string | null | undefined)[]): Promise<Map<string, { url: string; alt: string }>> {
+  const unique = [...new Set(ids.filter((id): id is string => typeof id === "string" && /^[0-9a-f-]{36}$/i.test(id)))];
+  if (!unique.length) return new Map();
+  const r = await db.query(`SELECT id, storage_key, alt_text FROM media_assets WHERE tenant_id = $1 AND id = ANY($2::uuid[])`, [tenantId, unique]);
+  return new Map(r.rows.map((row) => [row.id, { url: storage().publicUrl(row.storage_key), alt: row.alt_text }]));
 }

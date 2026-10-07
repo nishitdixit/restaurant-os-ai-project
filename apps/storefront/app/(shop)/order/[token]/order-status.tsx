@@ -109,7 +109,7 @@ export function OrderStatus({ initial }: { initial: PublicOrder }) {
           <div className="mt-4">
             {order.status === "CANCELLED" || !paid
               ? <OrderTimeline items={[{ label: "Order placed", at: order.createdAt, state: "done" }, order.status === "CANCELLED" ? { label: "Cancelled", state: "error", detail: order.cancelReason } : { label: "Payment pending", state: "current" }]} />
-              : <OrderTimeline items={timeline(order)} />}
+              : <div key={order.status} className="ros-fade-up"><OrderTimeline items={timeline(order)} /></div>}
           </div>
         </Card>
 
@@ -156,8 +156,9 @@ export function OrderStatus({ initial }: { initial: PublicOrder }) {
 }
 
 function Header({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle?: string | null }) {
+  // Keyed by title: when the order moves on (e.g. "Out for delivery"), the new state fades in (theme motion).
   return (
-    <div className="flex items-start gap-3">
+    <div key={title} className="ros-fade-up flex items-start gap-3">
       {icon}
       <div>
         <h1 className="text-2xl ros-heading">{title}</h1>

@@ -12,7 +12,7 @@ import { FONT_VARIABLE_CLASS } from "@/lib/fonts";
 
 type Update = (fn: (theme: StoreTheme) => StoreTheme) => void;
 
-function Section({ title, description, children, defaultOpen = false }: { title: string; description?: string; children: ReactNode; defaultOpen?: boolean }) {
+export function Section({ title, description, children, defaultOpen = false }: { title: string; description?: string; children: ReactNode; defaultOpen?: boolean }) {
   return (
     <details open={defaultOpen} className="group rounded-[var(--ros-radius-lg)] border border-border bg-surface">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
@@ -186,15 +186,16 @@ export function ThemeControls({ theme, update, issues, onFix }: { theme: StoreTh
         <Segmented label="Spacing" value={theme.density} onChange={(v) => set("density", v)} options={[{ value: "compact", label: "Compact" }, { value: "comfortable", label: "Comfortable" }, { value: "airy", label: "Airy" }]} />
       </Section>
 
-      <Section title="Components" description="Buttons, cards, dishes and the hero">
+      <Section title="Components" description="Buttons, cards and the banner colour">
         <Segmented label="Main buttons" value={theme.components.button} onChange={(v) => comp("button", v)} options={[{ value: "solid", label: "Solid" }, { value: "soft", label: "Soft" }, { value: "outline", label: "Outline" }]} />
         <Segmented label="Cards" value={theme.components.card} onChange={(v) => comp("card", v)} options={[{ value: "bordered", label: "Bordered" }, { value: "elevated", label: "Raised" }, { value: "flat", label: "Flat" }]} />
-        <Segmented label="Dish layout" value={theme.components.productLayout} onChange={(v) => comp("productLayout", v)}
-          options={[{ value: "list", label: "List" }, { value: "grid", label: "Photo grid" }, { value: "compact", label: "Compact" }]}
-          hint={theme.components.productLayout === "compact" ? "Text-only rows: best for long menus without photos." : theme.components.productLayout === "grid" ? "Big photos, two per row on phones." : undefined} />
-        <Segmented label="Category bar" value={theme.components.categoryNav} onChange={(v) => comp("categoryNav", v)} options={[{ value: "pills", label: "Pills" }, { value: "underline", label: "Tabs" }]} />
-        <Segmented label="Home banner" value={theme.components.hero} onChange={(v) => comp("hero", v)} options={[{ value: "gradient", label: "Gradient" }, { value: "solid", label: "Solid" }, { value: "minimal", label: "Minimal" }]} />
-        <Segmented label="Photo shape" value={theme.components.imageRatio} onChange={(v) => comp("imageRatio", v)} options={[{ value: "square", label: "Square" }, { value: "landscape", label: "4:3" }, { value: "wide", label: "16:9" }]} />
+        <Segmented label="Banner without a photo" value={theme.components.hero} onChange={(v) => comp("hero", v)} options={[{ value: "gradient", label: "Gradient" }, { value: "solid", label: "Solid" }, { value: "minimal", label: "Card" }]}
+          hint="Dish layout, category bar, photo shape and badges are under the Menu tab." />
+      </Section>
+
+      <Section title="Motion" description="Small animations when scrolling and adding to the cart">
+        <Segmented label="Motion" value={theme.motion} onChange={(v) => set("motion", v)} options={[{ value: "none", label: "None" }, { value: "subtle", label: "Subtle" }, { value: "expressive", label: "Expressive" }]}
+          hint="Customers who turn off animations on their phone never see any." />
       </Section>
     </div>
   );

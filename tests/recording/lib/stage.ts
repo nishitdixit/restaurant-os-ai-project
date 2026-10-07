@@ -1,5 +1,6 @@
 // A "stage" is one chapter: an admin window (desktop) and a storefront window (phone) recorded at the same
 // time, so admin changes can be watched arriving on the customer side.
+import { createHmac } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { chromium, devices, expect, test, type Browser, type BrowserContext, type Locator, type Page } from "@playwright/test";
@@ -17,6 +18,20 @@ export const env = {
   slug: process.env.RECORD_STORE_SLUG!,
   userPrefix: process.env.RECORD_USER_PREFIX ?? "ros-rec-",
 };
+
+/** Signed merchant preview link (same format as apps/api/src/lib/preview.ts; the stack uses the dev PREVIEW_SECRET). */
+export function previewUrl(path = "/"): string {
+  const secret = process.env.PREVIEW_SECRET ?? "restaurant-os-preview-secret-dev";
+  const payload = `${env.slug}.${Math.floor(Date.now() / 1000) + 3600}`;
+  const token = `${Buffer.from(payload).toString("base64url")}.${createHmac("sha256", secret).update(payload).digest("base64url")}`;
+  return `${env.storefront}${path}${path.includes("?") ? "&" : "?"}preview=${token}`;
+}
+
+/** Phone navigation: pages live in the header's menu sheet. */
+export async function storeNav(store: Page, label: string) {
+  await click(store, store.getByRole("button", { name: "Open navigation" }));
+  await click(store, store.getByRole("dialog").getByRole("link", { name: label, exact: true }));
+}
 
 const ADMIN_SIZE = { width: 1280, height: 800 };
 const STORE_SIZE = { width: 430, height: 800 };

@@ -1,6 +1,6 @@
 import { person, expectAccountLoaded, signUp, type TestPerson } from "../lib/auth.ts";
 import { generateAssets } from "../lib/assets.ts";
-import { chapter, click, env, expect, openStage, refreshUntil, saveAuth, sleep, state, type } from "../lib/stage.ts";
+import { previewUrl, chapter, click, env, expect, openStage, refreshUntil, saveAuth, sleep, state, type } from "../lib/stage.ts";
 import { join } from "node:path";
 
 chapter("01 Owner onboarding", async () => {
@@ -43,7 +43,7 @@ chapter("01 Owner onboarding", async () => {
   await say(`Storefront${seconds ? ` (after ${seconds} s of caching)` : ""}: the restaurant exists but isn't published — customers see “Coming soon”`, "store");
   await sleep(1500);
   await say("The owner can preview the unpublished storefront at any time", "both");
-  await store.goto(`${env.storefront}/?preview=1`);
+  await store.goto(previewUrl("/"));
   await expect(store.getByText(/Preview — not published yet/)).toBeVisible();
   await sleep(2500);
 

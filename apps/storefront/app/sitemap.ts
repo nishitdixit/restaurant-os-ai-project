@@ -8,6 +8,7 @@ interface SitemapData {
   updatedAt: string | null;
   categories: { slug: string; updatedAt: string | null }[];
   products: { slug: string; updatedAt: string | null }[];
+  policies?: string[];
 }
 
 // Rendered per request (data comes from the API, cached at the fetch level), never baked in at build time.
@@ -26,5 +27,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/contact`, changeFrequency: "monthly", priority: 0.5 },
     ...data.categories.map((c) => ({ url: `${SITE_URL}/${c.slug}`, lastModified: at(c.updatedAt), changeFrequency: "weekly" as const, priority: 0.7 })),
     ...data.products.map((p) => ({ url: `${SITE_URL}/menu/${p.slug}`, lastModified: at(p.updatedAt), changeFrequency: "weekly" as const, priority: 0.6 })),
+    ...(data.policies ?? []).map((key) => ({ url: `${SITE_URL}/policies/${key}`, changeFrequency: "yearly" as const, priority: 0.2 })),
   ];
 }

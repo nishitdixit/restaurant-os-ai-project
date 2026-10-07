@@ -1,4 +1,4 @@
-import { chapter, click, env, expect, openStage, sleep, type } from "../lib/stage.ts";
+import { chapter, click, env, expect, openStage, sleep, storeNav, type } from "../lib/stage.ts";
 
 chapter("08 Customer browsing", async () => {
   const { admin, store, say, close } = await openStage("08-customer-browsing", "A customer browsing the storefront",
@@ -15,7 +15,7 @@ chapter("08 Customer browsing", async () => {
   await say("Each category has its own page (good for search engines)", "store");
   await sleep(1200);
 
-  await click(store, store.getByRole("link", { name: "Menu" }).first());
+  await storeNav(store, "Menu");
   await say("Scrolling the menu: the category chips follow the section on screen", "store");
   // Stay within the menu (the test menu is short; past its end the footer takes over and the bar scrolls away).
   for (let i = 0; i < 3; i++) { await store.mouse.wheel(0, 300); await sleep(700); }
@@ -34,12 +34,17 @@ chapter("08 Customer browsing", async () => {
   await sleep(1500);
 
   await store.getByText("Butter Naan added").waitFor({ state: "hidden", timeout: 10_000 }).catch(() => {});
-  await click(store, store.getByRole("link", { name: "Search", exact: true }).first());
-  await type(store, store.getByLabel("Search dishes"), "biryani");
-  await expect(store.getByRole("link", { name: "Chicken Dum Biryani" })).toBeVisible();
-  await say("Search finds dishes by name, category or tag", "store");
+  await click(store, store.getByRole("link", { name: "Find a dish" }));
+  await type(store, store.getByRole("searchbox", { name: "Search the menu" }), "biryani");
+  await expect(store.getByRole("link", { name: "Chicken Dum Biryani", exact: true })).toBeVisible();
+  await say("Search filters the menu as you type — by name, category or tag", "store");
   await sleep(1200);
-  await click(store, store.getByRole("link", { name: "Chicken Dum Biryani" }));
+  await click(store, store.getByRole("button", { name: "Veg only" }));
+  await expect(store.getByRole("link", { name: "Chicken Dum Biryani", exact: true })).toHaveCount(0);
+  await say("“Veg only” hides non-veg dishes", "store");
+  await sleep(1200);
+  await click(store, store.getByRole("button", { name: "Veg only" }));
+  await click(store, store.getByRole("link", { name: "Chicken Dum Biryani", exact: true }));
 
   await expect(store.getByRole("heading", { name: "Chicken Dum Biryani", level: 1 })).toBeVisible();
   await say("Dish page: photo, food type, spice level, and the options to choose", "store");
@@ -60,10 +65,10 @@ chapter("08 Customer browsing", async () => {
   await sleep(1200);
   await store.keyboard.press("Escape");
 
-  await click(store, store.getByRole("link", { name: "Delivery areas" }).first());
+  await storeNav(store, "Delivery areas");
   await say("Where they deliver, fees and minimums — before checkout", "store");
   await sleep(1800);
-  await click(store, store.getByRole("link", { name: "Contact" }).first());
+  await storeNav(store, "Contact");
   await say("Contact & hours, with call, WhatsApp and directions", "store");
   await sleep(1800);
   await store.goto(`${env.storefront}/menu/does-not-exist`);

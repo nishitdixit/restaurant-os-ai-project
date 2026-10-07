@@ -20,6 +20,7 @@ import { analyticsRoutes } from "./modules/analytics/routes.ts";
 import { catalogRoutes } from "./modules/catalog/routes.ts";
 import { customerRoutes } from "./modules/customers/routes.ts";
 import { marketingRoutes } from "./modules/marketing/routes.ts";
+import { mediaRoutes } from "./modules/media/routes.ts";
 import { orderRoutes } from "./modules/orders/routes.ts";
 import { sessionRoutes } from "./modules/session/routes.ts";
 import { settingsRoutes } from "./modules/settings/routes.ts";
@@ -109,6 +110,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   await app.register(settingsRoutes);
   await app.register(appearanceRoutes);
   await app.register(catalogRoutes);
+  await app.register(mediaRoutes);
   await app.register(marketingRoutes);
   await app.register(orderRoutes);
   await app.register(customerRoutes);

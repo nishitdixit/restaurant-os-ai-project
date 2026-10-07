@@ -1,5 +1,6 @@
 "use client";
 import { createContext, useContext, type ReactNode } from "react";
+import type { LanguageMode } from "@restaurant-os/domain";
 import { Toaster } from "@restaurant-os/ui";
 import { CartProvider } from "@/lib/cart";
 import { CartDrawer, StickyCartBar } from "./cart-ui";
@@ -9,6 +10,12 @@ interface StoreInfo {
   name: string;
   currency: string;
   canOrder: boolean;
+  /** Restaurant copy language (experience site setting). */
+  language: LanguageMode;
+  /** Show dish badges (Bestseller, Signature…). */
+  showBadges: boolean;
+  /** For the cart's delivery hint before an address is known. */
+  delivery: { enabled: boolean; lowestFeeMinor: number | null; freeFromMinor: number | null; sameFreeThresholdEverywhere: boolean };
 }
 
 const StoreContext = createContext<StoreInfo | null>(null);

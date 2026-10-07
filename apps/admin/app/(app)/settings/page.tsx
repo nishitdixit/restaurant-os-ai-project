@@ -30,6 +30,7 @@ export default function BusinessSettingsPage() {
           <Field label="Business name" required error={errors.businessName}>{(p) => <Input {...p} value={f.businessName} onChange={(e) => setF({ ...f, businessName: e.target.value })} />}</Field>
           <Field label="Legal name (optional)" error={errors.legalName}>{(p) => <Input {...p} value={f.legalName} onChange={(e) => setF({ ...f, legalName: e.target.value })} />}</Field>
           <Field label="GSTIN (optional)" error={errors.gstin}>{(p) => <Input {...p} value={f.gstin} maxLength={15} onChange={(e) => setF({ ...f, gstin: e.target.value.toUpperCase() })} />}</Field>
+          <Field label="FSSAI licence number" error={errors.fssai} hint="14 digits. Food businesses selling online must show it; it appears in your storefront footer.">{(p) => <Input {...p} inputMode="numeric" value={f.fssai} maxLength={14} onChange={(e) => setF({ ...f, fssai: e.target.value.replace(/\D/g, "") })} />}</Field>
           <Field label="Currency">{(p) => <Input {...p} value="INR (₹)" disabled />}</Field>
           <Field label="Primary contact" error={errors.contactName}>{(p) => <Input {...p} value={f.contactName} onChange={(e) => setF({ ...f, contactName: e.target.value })} />}</Field>
           <Field label="Contact phone" error={errors.contactPhone}>{(p) => <Input {...p} type="tel" value={f.contactPhone} onChange={(e) => setF({ ...f, contactPhone: e.target.value })} />}</Field>

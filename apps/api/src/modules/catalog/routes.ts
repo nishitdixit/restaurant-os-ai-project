@@ -3,7 +3,7 @@ import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
 import {
-  AvailabilityInputSchema, CategoryInputSchema, ModifierGroupInputSchema, ProductInputSchema, ProductStatusInputSchema, ReorderSchema, type MediaAsset,
+  AvailabilityInputSchema, CategoryInputSchema, MediaKindSchema, ModifierGroupInputSchema, ProductInputSchema, ProductStatusInputSchema, ReorderSchema, type MediaAsset,
 } from "@restaurant-os/types";
 import { env } from "../../config/env.ts";
 import { pool } from "../../db/pool.ts";
@@ -43,7 +43,10 @@ export async function catalogRoutes(app: FastifyInstance) {
   r.delete("/v1/admin/modifier-groups/:id", { preValidation: requirePermission("catalog.manage"), schema: { tags, params: Id } }, async (req, reply) => { await catalog.archiveModifierGroup(actorOf(req), req.params.id); return reply.status(204).send(); });
 
   // Image upload: type sniffed from bytes, size-limited, stored outside the app filesystem in production.
-  r.post("/v1/admin/media", { preValidation: requirePermission("catalog.manage"), schema: { tags: ["media"] } }, async (req, reply): Promise<MediaAsset> => {
+  r.post("/v1/admin/media", {
+    preValidation: requirePermission("catalog.manage"),
+    schema: { tags: ["media"], querystring: z.object({ kind: MediaKindSchema.optional(), alt: z.string().trim().max(250).optional() }) },
+  }, async (req, reply): Promise<MediaAsset> => {
     const file = await req.file({ limits: { fileSize: env().MEDIA_MAX_BYTES, files: 1 } });
     if (!file) throw new ApiError(400, "FILE_REQUIRED", "Choose an image to upload.");
     const buffer = await file.toBuffer();
@@ -54,9 +57,12 @@ export async function catalogRoutes(app: FastifyInstance) {
     const key = `${actor.tenantId}/${randomUUID()}.${type.ext}`;
     await storage().put(key, buffer, type.contentType);
     const row = await pool().query<{ id: string }>(
-      `INSERT INTO media_assets (tenant_id, storage_key, content_type, byte_size, created_by) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-      [actor.tenantId, key, type.contentType, buffer.length, actor.userId]);
-    await audit(pool(), actor, "MediaUploaded", { type: "MediaAsset", id: row.rows[0]!.id }, { contentType: type.contentType, byteSize: buffer.length });
-    return reply.status(201).send({ id: row.rows[0]!.id, url: storage().publicUrl(key), contentType: type.contentType, byteSize: buffer.length });
+      `INSERT INTO media_assets (tenant_id, storage_key, content_type, byte_size, created_by, kind, alt_text) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, created_at`,
+      [actor.tenantId, key, type.contentType, buffer.length, actor.userId, req.query.kind ?? "general", req.query.alt ?? ""]);
+    await audit(pool(), actor, "MediaUploaded", { type: "MediaAsset", id: row.rows[0]!.id }, { contentType: type.contentType, byteSize: buffer.length, kind: req.query.kind ?? "general" });
+    return reply.status(201).send({
+      id: row.rows[0]!.id, url: storage().publicUrl(key), contentType: type.contentType, byteSize: buffer.length,
+      altText: req.query.alt ?? "", kind: req.query.kind ?? "general", createdAt: (row.rows[0] as unknown as { created_at: Date }).created_at.toISOString(), usedIn: [],
+    });
   });
 }

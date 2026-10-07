@@ -42,11 +42,12 @@ export default async function CategoryPage({ params }: Params) {
           <li aria-current="page" className="text-text">{category.name}</li>
         </ol>
       </nav>
-      <h1 className="mt-2 text-2xl ros-heading">{category.name}</h1>
+      <h1 className="mt-2 text-2xl ros-heading">{config.experience.site.language === "hi" && category.nameHi ? category.nameHi : category.name}
+        {config.experience.site.language === "bilingual" && category.nameHi && <span lang="hi" className="mt-1 block text-lg font-medium text-link">{category.nameHi}</span>}</h1>
       {category.description && <p className="mt-1 text-muted">{category.description}</p>}
       <div className="mt-4"><StoreStatusBanner config={config} /></div>
       <div className="ros-product-list mt-4">
-        {category.products.map((p, i) => <ProductCard key={p.id} product={p} currency={config.currency} priority={i < 2} />)}
+        {category.products.map((p, i) => <ProductCard key={p.id} product={p} currency={config.currency} priority={i < 2} language={config.experience.site.language} showBadges={config.experience.menu.showBadges} />)}
       </div>
       <section aria-labelledby="more" className="mt-10">
         <h2 id="more" className="text-lg ros-heading">More from the menu</h2>

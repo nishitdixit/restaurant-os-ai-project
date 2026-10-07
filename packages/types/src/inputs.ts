@@ -1,7 +1,7 @@
 // Request contracts shared by the API (validation + OpenAPI) and the web apps (form validation).
 // Money is integer minor units (paise for INR) as JSON numbers.
 import { z } from "zod";
-import { PILL_RADIUS, RADIUS_MAX, THEME_COLOR_KEYS, THEME_FONT_IDS, THEME_OPTIONS, THEME_VERSION } from "@restaurant-os/domain";
+import { BADGE_KINDS, BADGE_TONES, MAX_BADGES, PILL_RADIUS, RADIUS_MAX, THEME_COLOR_KEYS, THEME_FONT_IDS, THEME_OPTIONS, THEME_VERSION } from "@restaurant-os/domain";
 
 const id = z.uuid();
 const money = z.number().int().min(0).max(100_000_000);
@@ -89,6 +89,8 @@ export const BusinessSettingsSchema = z.object({
   contactEmail: z.union([z.email(), z.literal("")]).optional().default(""),
   currency: z.enum(["INR"]).default("INR"),
   locale: z.enum(["en-IN"]).default("en-IN"),
+  /** FSSAI licence/registration number (14 digits), shown in the storefront footer. */
+  fssai: z.union([z.string().trim().regex(/^[0-9]{14}$/, "FSSAI numbers have 14 digits."), z.literal("")]).optional().default(""),
 });
 
 export const BrandSettingsSchema = z.object({
@@ -133,11 +135,18 @@ export type OutletSettingsInput = z.infer<typeof OutletSettingsSchema>;
 
 export const CatalogStatusSchema = z.enum(["DRAFT", "ACTIVE", "ARCHIVED"]);
 
+/** Storefront routes that a category URL (/{category}) must never shadow. */
+export const RESERVED_SLUGS = ["menu", "offers", "search", "checkout", "order", "contact", "delivery-areas", "policies", "sitemap", "robots", "opengraph-image", "api", "media", "_next"] as const;
+const categorySlug = slug.refine((v) => !(RESERVED_SLUGS as readonly string[]).includes(v), "This web address is used by the store itself. Choose another.");
+
 export const CategoryInputSchema = z.object({
   name: shortText(80),
-  slug: slug.optional(),
+  slug: categorySlug.optional(),
   description: optionalText(300),
   status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
+  nameHi: optionalText(80),
+  descriptionHi: optionalText(300),
+  imageAssetId: id.nullable().optional(),
 });
 export type CategoryInput = z.infer<typeof CategoryInputSchema>;
 
@@ -157,6 +166,15 @@ export const ProductInputSchema = z.object({
   tags: z.array(z.string().trim().min(1).max(40)).max(20).default([]),
   modifierGroupIds: z.array(id).max(20).default([]),
   status: CatalogStatusSchema.default("DRAFT"),
+  nameHi: optionalText(120),
+  descriptionHi: optionalText(300),
+  badges: z.array(z.object({
+    kind: z.enum(BADGE_KINDS),
+    label: z.string().trim().max(24).optional().default(""),
+    tone: z.enum(BADGE_TONES).optional(),
+  }).refine((b) => b.kind !== "custom" || b.label.length > 0, { message: "Give the badge a label.", path: ["label"] })).max(MAX_BADGES, `Up to ${MAX_BADGES} badges.`).default([]),
+  /** Extra photos after the main one, in display order. */
+  galleryAssetIds: z.array(id).max(8, "Up to 8 extra photos.").default([]),
 });
 export type ProductInput = z.infer<typeof ProductInputSchema>;
 
@@ -197,6 +215,8 @@ export const DeliveryZoneInputSchema = z.object({
   radiusKm: z.number().min(0.5).max(50).nullable().optional(),
   feeMinor: money,
   minimumOrderMinor: money,
+  /** Free delivery when the item total reaches this amount (null = always charge the fee). */
+  freeDeliveryMinimumMinor: money.min(1).nullable().optional(),
   etaMin: z.number().int().min(0).max(240),
   etaMax: z.number().int().min(0).max(240),
   active: z.boolean().default(true),
@@ -307,6 +327,8 @@ export const StoreThemeSchema = z.object({
   borderWidth: literalUnion(THEME_OPTIONS.borderWidth),
   shadow: z.enum(THEME_OPTIONS.shadow),
   density: z.enum(THEME_OPTIONS.density),
+  /** Optional for older clients; normalisation fills the default. */
+  motion: z.enum(THEME_OPTIONS.motion).optional(),
   components: z.object({
     button: z.enum(THEME_OPTIONS.button),
     card: z.enum(THEME_OPTIONS.card),
@@ -314,9 +336,36 @@ export const StoreThemeSchema = z.object({
     categoryNav: z.enum(THEME_OPTIONS.categoryNav),
     hero: z.enum(THEME_OPTIONS.hero),
     imageRatio: z.enum(THEME_OPTIONS.imageRatio),
+    /** Optional for older clients; normalisation fills the default. */
+    badge: z.enum(THEME_OPTIONS.badge).optional(),
   }),
 });
 
-export const SaveThemeDraftSchema = z.object({ theme: StoreThemeSchema });
-export const PublishThemeSchema = z.object({ theme: StoreThemeSchema.optional() });
+/**
+ * Brand experience (ADR-013). Validated structurally here (bounded size); every field is then normalised by the
+ * domain (packages/domain normalizeExperience: enums, lengths, ids, per-section limits), and references are
+ * checked against the restaurant's own media, dishes and categories by the API.
+ */
+export const StoreExperienceSchema = z.object({
+  version: z.literal(1),
+  sections: z.array(z.record(z.string(), z.unknown())).max(40),
+}).loose();
+
+export const SaveThemeDraftSchema = z.object({ theme: StoreThemeSchema.optional(), experience: StoreExperienceSchema.optional() })
+  .refine((b) => b.theme || b.experience, { message: "Send a theme or an experience." });
+export const PublishThemeSchema = z.object({ theme: StoreThemeSchema.optional(), experience: StoreExperienceSchema.optional() });
 export const RestoreThemeSchema = z.object({ versionId: id });
+
+// Media library & policies ------------------------------------------------------------------------------------
+export const MediaKindSchema = z.enum(["general", "logo", "hero", "product", "category", "gallery", "story", "banner"]);
+export const MediaUpdateSchema = z.object({
+  altText: z.string().trim().max(250).optional(),
+  kind: MediaKindSchema.optional(),
+});
+export const MediaListQuerySchema = z.object({ kind: MediaKindSchema.optional(), limit: z.coerce.number().int().min(1).max(200).default(100) });
+
+const localized = (max: number) => z.object({ en: z.string().trim().max(max).default(""), hi: z.string().trim().max(max).default("") });
+export const PolicyKeySchema = z.enum(["refund", "terms", "privacy", "delivery"]);
+export const PoliciesInputSchema = z.object({
+  policies: z.partialRecord(PolicyKeySchema, z.object({ body: localized(20_000) })),
+});

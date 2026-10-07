@@ -11,9 +11,47 @@
 @custom-variant theme-dark (&:where([data-ros-mode="dark"] *));
 
 /* Anchor jumps and focus scrolling clear the sticky header + category bar (one offset, not stacked with scroll-margin). */
-html { scroll-padding-top: 10.5rem; }
-@media (min-width: 768px) { html { scroll-padding-top: 8.5rem; } }
+html { scroll-padding-top: 7.5rem; }
 body { background: var(--ros-bg); }
+
+@utility ros-container {
+  width: 100%;
+  max-width: var(--ros-content-width);
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+/* Text and links placed directly on a section's background (tone): readable by construction (sectionToneVariables). */
+@utility ros-section-text { color: var(--ros-section-fg); }
+@utility ros-section-muted { color: var(--ros-section-muted); }
+@utility ros-section-link { color: var(--ros-section-link); }
+
+/* Eyebrow label above a title: small, spaced capitals. */
+@utility ros-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* Horizontal rails (dishes, categories, photos, reviews): swipe on phones, scroll-snap, no scrollbar chrome. */
+@utility ros-rail {
+  /* Positioned so absolutely-positioned children (e.g. screen-reader text) are clipped by the rail, not the page. */
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(14rem, 72%);
+  gap: 0.75rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding-bottom: 0.25rem;
+  & > * { scroll-snap-align: start; }
+  &::-webkit-scrollbar { display: none; }
+  @media (min-width: 640px) { grid-auto-columns: minmax(15rem, 40%); }
+  @media (min-width: 1024px) { grid-auto-columns: minmax(16rem, calc((100% - 2.25rem) / 4)); }
+}
 
 @layer base {
   /* Page and section titles carry the theme's display style; dish names (h3) stay in the readable body font. */
@@ -24,8 +62,13 @@ body { background: var(--ros-bg); }
   }
 }
 
+.ros-section {
+  background: var(--ros-section-bg);
+  color: var(--ros-section-fg);
+}
+
 @layer components {
-  /* Dish card: one markup, three layouts chosen by the theme (list · grid · compact). */
+  /* Dish card: one markup, four layouts chosen by the theme (list · grid · compact · board), or by a section/view. */
   .ros-product {
     display: grid;
     gap: 0.5rem 1rem;
@@ -33,36 +76,131 @@ body { background: var(--ros-bg); }
     grid-template-areas: "info media" "info action";
     align-items: start;
     padding: 1rem;
+    position: relative;
   }
   @media (min-width: 640px) { .ros-product { grid-template-columns: minmax(0, 1fr) 8rem; } }
   .ros-product-info { grid-area: info; min-width: 0; }
-  .ros-product-media { grid-area: media; aspect-ratio: var(--ros-image-ratio); border-radius: var(--ros-radius-image); }
+  .ros-product-media { grid-area: media; aspect-ratio: var(--ros-image-ratio); border-radius: var(--ros-radius-image); position: relative; }
   .ros-product-action { grid-area: action; justify-self: center; }
+  .ros-product-title { display: flex; flex-direction: column; gap: 0.25rem; }
 
-  [data-ros-cards="grid"] .ros-product {
+  .ros-product-list { display: grid; gap: 0.75rem; }
+  @media (min-width: 768px) { .ros-product-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+}
+
+/* The badge copy drawn on the photo is only for the photo grid (the info area shows them otherwise). */
+.ros-product .ros-product-media-badges { display: none; }
+
+/*
+ * Layout selection. A list follows the theme (data-ros-cards on <html>) unless it carries its own data-layout
+ * (a homepage section's variant or the customer's menu view). Unlayered so they win over utility classes.
+ */
+:where([data-ros-cards="grid"]) .ros-product-list:not([data-layout]), .ros-product-list[data-layout="grid"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  @media (min-width: 768px) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  & .ros-product {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "media" "info" "action";
     padding: 0 0 0.875rem;
     overflow: hidden;
   }
-  [data-ros-cards="grid"] .ros-product-media { border-radius: 0; }
-  [data-ros-cards="grid"] .ros-product-info,
-  [data-ros-cards="grid"] .ros-product-action { padding-inline: 0.875rem; }
-  [data-ros-cards="grid"] .ros-product-action { justify-self: stretch; }
-  [data-ros-cards="grid"] .ros-product-action > * { width: 100%; }
+  & .ros-product-media { border-radius: 0; display: flex; }
+  & .ros-product-info, & .ros-product-action { padding-inline: 0.875rem; }
+  & .ros-product-action { justify-self: stretch; }
+  & .ros-product-action > * { width: 100%; }
+  & .ros-product-action .ros-add { width: 100%; }
+  & .ros-product-media-badges { display: flex; }
+  & .ros-product-info .ros-product-badges { display: none; }
+}
+.ros-rail .ros-product-list, .ros-rail.ros-product-list { grid-template-columns: none; }
 
-  [data-ros-cards="compact"] .ros-product {
+:where([data-ros-cards="list"]) .ros-product-list:not([data-layout]), .ros-product-list[data-layout="list"] {
+  @media (min-width: 768px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  & div.ros-product-media { display: none; }
+}
+
+:where([data-ros-cards="compact"]) .ros-product-list:not([data-layout]), .ros-product-list[data-layout="compact"] {
+  gap: 0.5rem;
+  & .ros-product {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas: "info action";
     align-items: center;
     padding: 0.75rem 1rem;
   }
-  [data-ros-cards="compact"] .ros-product-media { display: none; }
+  & .ros-product-media { display: none; }
+  & .ros-product-desc { -webkit-line-clamp: 1; }
+}
 
-  /* Lists of dish cards follow the same layout choice. */
-  .ros-product-list { display: grid; gap: 0.75rem; }
-  @media (min-width: 768px) { .ros-product-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  [data-ros-cards="grid"] .ros-product-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  @media (min-width: 768px) { [data-ros-cards="grid"] .ros-product-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-  [data-ros-cards="compact"] .ros-product-list { gap: 0.5rem; }
+/* Menu board: the printed-menu look — one panel per category, dotted rows, name and price on one line. */
+:where([data-ros-cards="board"]) .ros-product-list:not([data-layout]), .ros-product-list[data-layout="board"] {
+  display: block;
+  padding: 0.25rem 1rem;
+  background: var(--ros-card-bg);
+  border: var(--ros-card-border-width) solid var(--ros-border);
+  border-radius: var(--ros-radius-card);
+  box-shadow: var(--ros-card-shadow);
+  @media (min-width: 768px) { columns: 2; column-gap: 2.5rem; }
+  & .ros-product {
+    break-inside: avoid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "info action";
+    align-items: center;
+    padding: 0.875rem 0;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px dashed var(--ros-border);
+    border-radius: 0;
+    box-shadow: none;
+  }
+  & .ros-product:last-child { border-bottom: 0; }
+  & .ros-product-media { display: none; }
+  & .ros-product-title { flex-direction: row; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
+  & .ros-product-desc { -webkit-line-clamp: 1; }
+}
+
+/* Motion (theme "motion": none · subtle · expressive). Reveals only hide content once JS has marked what is already
+ * on screen (data-ros-reveal), so nothing is ever invisible without JavaScript or for reduced-motion users. */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-ros-motion="subtle"] .ros-reveal { transition: opacity 450ms ease, transform 550ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+  html[data-ros-motion="expressive"] .ros-reveal { transition: opacity 650ms ease, transform 800ms cubic-bezier(0.16, 1, 0.3, 1); }
+  html[data-ros-motion="subtle"][data-ros-reveal] .ros-reveal:not([data-in-view]) { opacity: 0; transform: translateY(14px); }
+  html[data-ros-motion="expressive"][data-ros-reveal] .ros-reveal:not([data-in-view]) { opacity: 0; transform: translateY(32px) scale(0.98); }
+
+  html:not([data-ros-motion="none"]) .ros-press { transition: transform var(--animate-duration-fast) ease; }
+  html[data-ros-motion="subtle"] .ros-press:active { transform: scale(0.97); }
+  html[data-ros-motion="expressive"] .ros-press:active { transform: scale(0.93); }
+
+  html:not([data-ros-motion="none"]) .ros-bump { animation: ros-bump 380ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+  html[data-ros-motion="expressive"] .ros-bump { animation-duration: 520ms; }
+  html:not([data-ros-motion="none"]) .ros-added { animation: ros-added 600ms ease-out; }
+  html:not([data-ros-motion="none"]) .ros-fade-up { animation: ros-fade-up 350ms ease-out both; }
+}
+@keyframes ros-bump { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); } }
+@keyframes ros-added { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand-primary) 45%, transparent); } 100% { box-shadow: 0 0 0 12px transparent; } }
+@keyframes ros-fade-up { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* Merchant preview: the section selected in the builder is outlined. */
+[data-section-id][data-preview-focus] { outline: 3px dashed var(--brand-primary); outline-offset: -3px; }
+
+/* Dish badges (theme "badge"): solid pill (default), a quiet label for premium looks, or a tilted sticker. */
+html[data-ros-badge="quiet"] .ros-badge {
+  background: transparent;
+  color: var(--ros-link);
+  padding-inline: 0;
+  border-radius: 0;
+  border-bottom: 1px solid currentColor;
+  letter-spacing: 0.14em;
+}
+/* On a photo a quiet label needs its own backing to stay readable. */
+html[data-ros-badge="quiet"] .ros-product-media-badges .ros-badge {
+  background: var(--ros-surface);
+  color: var(--ros-text);
+  padding-inline: 0.5rem;
+  border-bottom: 0;
+}
+html[data-ros-badge="sticker"] .ros-badge {
+  transform: rotate(-3deg);
+  border: 2px solid var(--ros-text);
+  box-shadow: 2px 2px 0 var(--ros-text);
+  font-weight: 800;
 }

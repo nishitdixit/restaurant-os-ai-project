@@ -16,8 +16,16 @@ export interface Page<T> {
   nextCursor: string | null;
 }
 
-import type { StoreTheme, ThemeCheck } from "@restaurant-os/domain";
-export type { StoreTheme, ThemeCheck, ThemeIssue } from "@restaurant-os/domain";
+import type { DisplayBadge, ExperienceCheck, LocalizedText, ProductBadge, StoreExperience, StoreTheme, ThemeCheck } from "@restaurant-os/domain";
+export type { DisplayBadge, ExperienceCheck, ExperienceIssue, LocalizedText, ProductBadge, Section, SectionType, StoreExperience, StoreTheme, ThemeCheck, ThemeIssue } from "@restaurant-os/domain";
+
+/** A media asset as referenced by storefront content: URL plus alt text. */
+export interface MediaRef {
+  url: string;
+  alt: string;
+}
+
+export type PolicyKey = "refund" | "terms" | "privacy" | "delivery";
 
 // Storefront ---------------------------------------------------------------------------------
 
@@ -34,6 +42,15 @@ export interface StoreConfig {
   primaryColor: string;
   /** Published theme, or the saved draft when requested by a merchant preview. Always normalised. */
   theme: StoreTheme;
+  /** Published experience (homepage composition, menu and site settings), or the saved draft in a merchant preview. */
+  experience: StoreExperience;
+  /** Every image the experience uses, by media id. */
+  media: Record<string, MediaRef>;
+  /** Real figures for highlights; null when there isn't enough data to show honestly. */
+  stats: { paidOrders: number | null };
+  credentials: { legalName: string; fssai: string; gstin: string };
+  /** Policy pages the restaurant has written. */
+  policies: { key: PolicyKey; title: string }[];
   links: BrandLinks;
   currency: string;
   locale: string;
@@ -51,9 +68,18 @@ export interface StoreConfig {
     pickupEnabled: boolean;
     prepMinutes: number;
   } | null;
-  deliveryAreas: { name: string; postalCodes: string[]; radiusKm: number | null; feeMinor: number; minimumOrderMinor: number; etaMin: number; etaMax: number }[];
+  deliveryAreas: { name: string; postalCodes: string[]; radiusKm: number | null; feeMinor: number; minimumOrderMinor: number; freeDeliveryMinimumMinor: number | null; etaMin: number; etaMax: number }[];
   updatedAt: string;
   published: boolean;
+  /** True when this response was rendered for a verified merchant preview. */
+  preview: boolean;
+}
+
+export interface PolicyPage {
+  key: PolicyKey;
+  title: string;
+  body: LocalizedText;
+  updatedAt: string | null;
 }
 
 export interface MenuModifierGroup {
@@ -69,6 +95,9 @@ export interface MenuProduct {
   id: string;
   slug: string;
   name: string;
+  /** Hindi name/description ("" when not translated). */
+  nameHi: string;
+  descriptionHi: string;
   description: string;
   longDescription: string;
   priceMinor: number;
@@ -84,6 +113,11 @@ export interface MenuProduct {
   available: boolean;
   unavailableReason: string | null;
   modifierGroups: MenuModifierGroup[];
+  /** Bestseller (computed from paid orders) first, then the merchant's badges. */
+  badges: DisplayBadge[];
+  bestseller: boolean;
+  /** Extra photos after the main one. */
+  gallery: MediaRef[];
   updatedAt: string;
 }
 
@@ -91,12 +125,17 @@ export interface MenuCategory {
   id: string;
   slug: string;
   name: string;
+  nameHi: string;
   description: string;
+  descriptionHi: string;
+  imageUrl: string | null;
   products: MenuProduct[];
 }
 
 export interface Menu {
   categories: MenuCategory[];
+  /** Dish ids ranked by real sales (empty until enough paid orders exist). */
+  bestsellerIds: string[];
 }
 
 export interface PublicOffer {
@@ -106,6 +145,7 @@ export interface PublicOffer {
   summary: string;
   endsAt: string;
   newCustomerOnly: boolean;
+  minimumOrderMinor: number;
 }
 
 export interface QuoteLine {
@@ -135,7 +175,7 @@ export interface Quote {
   totalMinor: number;
   promotion: { code: string; title: string; discountMinor: number } | null;
   promotionError: string | null;
-  delivery: { zoneName: string; feeMinor: number; minimumOrderMinor: number; etaMin: number; etaMax: number } | null;
+  delivery: { zoneName: string; feeMinor: number; minimumOrderMinor: number; freeDeliveryMinimumMinor: number | null; etaMin: number; etaMax: number } | null;
   /** Blocking problems; the order cannot be placed while any exist. */
   issues: QuoteIssue[];
   canPlaceOrder: boolean;
@@ -231,6 +271,10 @@ export interface AdminCategory {
   status: "ACTIVE" | "INACTIVE" | "DRAFT" | "ARCHIVED";
   sortOrder: number;
   productCount: number;
+  nameHi: string;
+  descriptionHi: string;
+  imageAssetId: string | null;
+  imageUrl: string | null;
 }
 
 export interface AdminProduct {
@@ -255,6 +299,11 @@ export interface AdminProduct {
   unavailableReason: string | null;
   unavailableUntil: string | null;
   modifierGroupIds: string[];
+  nameHi: string;
+  descriptionHi: string;
+  badges: ProductBadge[];
+  /** Extra photos after the main one, in order. */
+  gallery: { id: string; url: string; alt: string }[];
   updatedAt: string;
 }
 
@@ -276,6 +325,7 @@ export interface AdminDeliveryZone {
   radiusKm: number | null;
   feeMinor: number;
   minimumOrderMinor: number;
+  freeDeliveryMinimumMinor: number | null;
   etaMin: number;
   etaMax: number;
   active: boolean;
@@ -432,11 +482,18 @@ export interface NotificationEntry {
   sentAt: string | null;
 }
 
+export type MediaKind = "general" | "logo" | "hero" | "product" | "category" | "gallery" | "story" | "banner";
+
 export interface MediaAsset {
   id: string;
   url: string;
   contentType: string;
   byteSize: number;
+  altText: string;
+  kind: MediaKind;
+  createdAt: string;
+  /** Where it is used ("Hero banner", "Dish: Paneer tikka", …); empty = safe to delete. */
+  usedIn: string[];
 }
 
 // Appearance (storefront theme editor) ---------------------------------------------------------------------
@@ -448,11 +505,22 @@ export interface ThemeVersionSummary {
 }
 
 export interface AppearanceState {
+  /** Live theme. */
   published: StoreTheme;
-  /** Unpublished edits; null when there are none. */
+  /** Unpublished theme edits; null when there are none. */
   draft: StoreTheme | null;
   draftUpdatedAt: string | null;
   publishedAt: string | null;
+  /** Readability check of the theme being edited (draft, else live). */
   check: ThemeCheck;
+  /** Homepage composition, content and site/menu settings; published together with the theme (ADR-013). */
+  experience: {
+    published: StoreExperience;
+    draft: StoreExperience | null;
+    /** Check of the experience being edited (draft, else live). */
+    check: ExperienceCheck;
+  };
+  /** Images referenced by the live or draft experience, by media id. */
+  media: Record<string, MediaRef>;
   versions: ThemeVersionSummary[];
 }

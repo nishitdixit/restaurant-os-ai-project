@@ -1,11 +1,11 @@
-import { chapter, click, env, expect, openStage, point, refreshUntil, sleep, state, type } from "../lib/stage.ts";
+import { chapter, click, env, expect, openStage, point, previewUrl, refreshUntil, sleep, state, type } from "../lib/stage.ts";
 
 chapter("02 Business details, brand and theme", async () => {
   const s = state<{ assets: Record<string, string> }>();
   const { admin, store, say, close } = await openStage("02-brand-theme", "Business details, brand and theme",
     "Business details, then the brand: logo, tagline, story, cuisines and order links — and the storefront updates.");
 
-  await store.goto(`${env.storefront}/?preview=1`);
+  await store.goto(previewUrl("/"));
   await admin.goto(`${env.admin}/settings`);
   await expect(admin.getByRole("heading", { name: "Business details" })).toBeVisible();
   await say("Settings → Business: legal details and the primary contact (not shown publicly)", "admin");
@@ -44,8 +44,11 @@ chapter("02 Business details, brand and theme", async () => {
   await say(`…and after ${seconds} s the logo, tagline and order links appear`, "store");
   await store.mouse.move(215, 320, { steps: 10 });
   await sleep(2500);
-  await store.getByRole("link", { name: "Swiggy", exact: true }).first().scrollIntoViewIfNeeded();
-  await sleep(1500);
+  await click(store, store.getByRole("button", { name: "More ways to order" }).first());
+  await expect(store.getByRole("dialog").getByText("Swiggy", { exact: true })).toBeVisible();
+  await say("Other ways to order (WhatsApp, Swiggy, Zomato, call) sit in one sheet, so “Order direct” stays the main button", "store");
+  await sleep(2000);
+  await store.keyboard.press("Escape");
   await store.evaluate(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }));
   await say("The footer and contact links come from the same settings", "store");
   await sleep(2000);

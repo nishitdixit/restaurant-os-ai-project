@@ -1,7 +1,7 @@
 // Server-authoritative checkout calculation (docs/BUSINESS_RULES.md "Cart"). The same function backs
 // the live quote shown to the customer and the order-creation transaction.
 import {
-  CartValidationError, evaluatePromotion, findServiceableZone, normalizePhone, normalizePromotionCode, parseZoneRule,
+  CartValidationError, deliveryFeeFor, evaluatePromotion, findServiceableZone, normalizePhone, normalizePromotionCode, parseZoneRule,
   resolveModifierSelection, unitPriceWithModifiers, type DeliveryZone, type ModifierGroupRule, type PromotionRule, type SelectedModifier,
 } from "@restaurant-os/domain";
 import type { QuoteInput, Quote, QuoteIssue } from "@restaurant-os/types";
@@ -85,13 +85,13 @@ export async function priceLines(db: Db, tenantId: string, lines: QuoteInput["li
 }
 
 export async function loadZones(db: Db, tenantId: string): Promise<(DeliveryZone & { sortOrder: number })[]> {
-  const r = await db.query<{ id: string; name: string; rule_type: string; rule_config: unknown; fee_minor: number; minimum_order_minor: number; eta_min: number; eta_max: number; status: string; sort_order: number }>(
-    `SELECT id, name, rule_type, rule_config, fee_minor, minimum_order_minor, eta_min, eta_max, status, sort_order FROM delivery_zones WHERE tenant_id = $1 ORDER BY sort_order, name`,
+  const r = await db.query<{ id: string; name: string; rule_type: string; rule_config: unknown; fee_minor: number; minimum_order_minor: number; free_delivery_minimum_minor: number | null; eta_min: number; eta_max: number; status: string; sort_order: number }>(
+    `SELECT id, name, rule_type, rule_config, fee_minor, minimum_order_minor, free_delivery_minimum_minor, eta_min, eta_max, status, sort_order FROM delivery_zones WHERE tenant_id = $1 ORDER BY sort_order, name`,
     [tenantId],
   );
   return r.rows.flatMap((z) => {
     const rule = parseZoneRule(z.rule_type, z.rule_config);
-    return rule ? [{ id: z.id, name: z.name, rule, feeMinor: BigInt(z.fee_minor), minimumOrderMinor: BigInt(z.minimum_order_minor), etaMin: z.eta_min, etaMax: z.eta_max, active: z.status === "ACTIVE", sortOrder: z.sort_order }] : [];
+    return rule ? [{ id: z.id, name: z.name, rule, feeMinor: BigInt(z.fee_minor), minimumOrderMinor: BigInt(z.minimum_order_minor), freeDeliveryMinimumMinor: z.free_delivery_minimum_minor === null ? null : BigInt(z.free_delivery_minimum_minor), etaMin: z.eta_min, etaMax: z.eta_max, active: z.status === "ACTIVE", sortOrder: z.sort_order }] : [];
   });
 }
 
@@ -168,7 +168,7 @@ export async function computeQuote(db: Db, store: StoreContext, input: QuoteInpu
       if (!result.serviceable) issues.push({ code: "ADDRESS_NOT_SERVICEABLE", message: result.message, field: "address.postalCode" });
       else {
         zone = result.zone;
-        fee = zone.feeMinor;
+        fee = deliveryFeeFor(zone, subtotal);
         if (subtotal < zone.minimumOrderMinor) {
           issues.push({ code: "MINIMUM_ORDER_NOT_MET", message: `Add ${fmt(zone.minimumOrderMinor - subtotal)} more to order delivery to this area (minimum ${fmt(zone.minimumOrderMinor)}).` });
         }
@@ -211,7 +211,7 @@ export async function computeQuote(db: Db, store: StoreContext, input: QuoteInpu
     totalMinor: Number(total),
     promotion: promotion ? { code: promotion.code, title: promotion.title, discountMinor: Number(discount) } : null,
     promotionError,
-    delivery: zone ? { zoneName: zone.name, feeMinor: Number(zone.feeMinor), minimumOrderMinor: Number(zone.minimumOrderMinor), etaMin: zone.etaMin, etaMax: zone.etaMax } : null,
+    delivery: zone ? { zoneName: zone.name, feeMinor: Number(fee), minimumOrderMinor: Number(zone.minimumOrderMinor), freeDeliveryMinimumMinor: zone.freeDeliveryMinimumMinor == null ? null : Number(zone.freeDeliveryMinimumMinor), etaMin: zone.etaMin, etaMax: zone.etaMax } : null,
     issues,
     canPlaceOrder: issues.length === 0,
   };

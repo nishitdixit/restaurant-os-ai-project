@@ -1,15 +1,19 @@
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
-import { MockPaymentCompleteSchema, PlaceOrderInputSchema, QuoteInputSchema } from "@restaurant-os/types";
+import { MockPaymentCompleteSchema, PlaceOrderInputSchema, PolicyKeySchema, QuoteInputSchema } from "@restaurant-os/types";
 import { ApiError, notFound } from "../../lib/errors.ts";
 import { placeOrder, publicOrder, orderByToken, quote } from "../checkout/service.ts";
 import { completeMockPayment, handlePaymentWebhook, startPayment, verifyPayment } from "../payments/service.ts";
-import { menu, offers, product, search, sitemapEntries, storeConfig } from "./catalog.ts";
+import { verifyPreviewToken } from "../../lib/preview.ts";
+import { menu, offers, policyPage, product, search, sitemapEntries, storeConfig, type Access } from "./catalog.ts";
 
 const Store = z.object({ store: z.string().regex(/^[a-z0-9-]{1,80}$/) });
-// ?preview=1 lets a merchant see an unpublished storefront; draft products stay hidden either way.
-const Preview = z.object({ preview: z.enum(["1"]).optional() });
+// ?preview=<signed token> (issued by the admin, lib/preview.ts) lets a merchant see an unpublished storefront and
+// the draft look and layout; anything else — including the old ?preview=1 — gets the public view. Draft dishes
+// stay hidden either way.
+const Preview = z.object({ preview: z.string().max(400).optional() });
+const access = (store: string, token: string | undefined): Access => ({ preview: verifyPreviewToken(token, store) });
 const tags = ["storefront"];
 // Public, abuse-prone endpoints are rate-limited per client IP (docs/SECURITY.md).
 const limit = (max: number) => ({ rateLimit: { max, timeWindow: "1 minute" } });
@@ -17,23 +21,31 @@ const limit = (max: number) => ({ rateLimit: { max, timeWindow: "1 minute" } });
 export async function storefrontRoutes(app: FastifyInstance) {
   const r = app.withTypeProvider<ZodTypeProvider>();
 
-  r.get("/v1/storefront/:store/config", { schema: { tags, params: Store, querystring: z.object({ preview: z.enum(["1"]).optional(), theme: z.enum(["draft"]).optional() }) } }, async (req) => {
-    return storeConfig(req.params.store, { allowDraft: req.query.preview === "1", draftTheme: req.query.theme === "draft" });
+  r.get("/v1/storefront/:store/config", { schema: { tags, params: Store, querystring: Preview } }, async (req, reply) => {
+    const a = access(req.params.store, req.query.preview);
+    if (a.preview) reply.header("cache-control", "no-store");
+    return storeConfig(req.params.store, a);
   });
 
-  r.get("/v1/storefront/:store/menu", { schema: { tags, params: Store, querystring: Preview } }, async (req) => menu(req.params.store, req.query.preview === "1"));
+  r.get("/v1/storefront/:store/menu", { schema: { tags, params: Store, querystring: Preview } }, async (req) => menu(req.params.store, access(req.params.store, req.query.preview)));
 
   r.get("/v1/storefront/:store/products/:slug", { schema: { tags, params: Store.extend({ slug: z.string().max(80) }), querystring: Preview } }, async (req) => {
-    const p = await product(req.params.store, req.params.slug, req.query.preview === "1");
+    const p = await product(req.params.store, req.params.slug, access(req.params.store, req.query.preview));
     if (!p) throw notFound("Product", "PRODUCT_NOT_FOUND");
     return p;
   });
 
   r.get("/v1/storefront/:store/search", { config: limit(120), schema: { tags, params: Store, querystring: Preview.extend({ q: z.string().max(80).default("") }) } }, async (req) => {
-    return { items: await search(req.params.store, req.query.q, req.query.preview === "1") };
+    return { items: await search(req.params.store, req.query.q, access(req.params.store, req.query.preview)) };
   });
 
-  r.get("/v1/storefront/:store/offers", { schema: { tags, params: Store, querystring: Preview } }, async (req) => ({ items: await offers(req.params.store, req.query.preview === "1") }));
+  r.get("/v1/storefront/:store/offers", { schema: { tags, params: Store, querystring: Preview } }, async (req) => ({ items: await offers(req.params.store, access(req.params.store, req.query.preview)) }));
+
+  r.get("/v1/storefront/:store/policies/:key", { schema: { tags, params: Store.extend({ key: PolicyKeySchema }), querystring: Preview } }, async (req) => {
+    const page = await policyPage(req.params.store, req.params.key, access(req.params.store, req.query.preview));
+    if (!page) throw notFound("Policy", "POLICY_NOT_FOUND");
+    return page;
+  });
 
   r.get("/v1/storefront/:store/sitemap", { schema: { tags, params: Store } }, async (req) => sitemapEntries(req.params.store));
 

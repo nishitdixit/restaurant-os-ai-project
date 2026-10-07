@@ -16,11 +16,11 @@ function zoneConfig(input: DeliveryZoneInput) {
 }
 
 async function listZones(tenantId: string): Promise<AdminDeliveryZone[]> {
-  const r = await pool().query<{ id: string; name: string; rule_type: "POSTAL_CODE" | "RADIUS"; rule_config: { postalCodes?: string[]; radiusKm?: number }; fee_minor: number; minimum_order_minor: number; eta_min: number; eta_max: number; status: string }>(
-    `SELECT id, name, rule_type, rule_config, fee_minor, minimum_order_minor, eta_min, eta_max, status FROM delivery_zones WHERE tenant_id = $1 AND status <> 'ARCHIVED' ORDER BY sort_order, name`, [tenantId]);
+  const r = await pool().query<{ id: string; name: string; rule_type: "POSTAL_CODE" | "RADIUS"; rule_config: { postalCodes?: string[]; radiusKm?: number }; fee_minor: number; minimum_order_minor: number; free_delivery_minimum_minor: number | null; eta_min: number; eta_max: number; status: string }>(
+    `SELECT id, name, rule_type, rule_config, fee_minor, minimum_order_minor, free_delivery_minimum_minor, eta_min, eta_max, status FROM delivery_zones WHERE tenant_id = $1 AND status <> 'ARCHIVED' ORDER BY sort_order, name`, [tenantId]);
   return r.rows.map((z) => ({
     id: z.id, name: z.name, ruleType: z.rule_type, postalCodes: z.rule_config?.postalCodes ?? [], radiusKm: z.rule_config?.radiusKm ?? null,
-    feeMinor: z.fee_minor, minimumOrderMinor: z.minimum_order_minor, etaMin: z.eta_min, etaMax: z.eta_max, active: z.status === "ACTIVE",
+    feeMinor: z.fee_minor, minimumOrderMinor: z.minimum_order_minor, freeDeliveryMinimumMinor: z.free_delivery_minimum_minor === null ? null : Number(z.free_delivery_minimum_minor), etaMin: z.eta_min, etaMax: z.eta_max, active: z.status === "ACTIVE",
   }));
 }
 
@@ -61,9 +61,9 @@ export async function marketingRoutes(app: FastifyInstance) {
     const z = req.body;
     const id = await withTransaction(async (tx) => {
       const row = await tx.query<{ id: string }>(
-        `INSERT INTO delivery_zones (tenant_id, name, rule_type, rule_config, fee_minor, minimum_order_minor, eta_min, eta_max, status, sort_order)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::business_object_status, coalesce((SELECT max(sort_order) + 10 FROM delivery_zones WHERE tenant_id = $1), 10)) RETURNING id`,
-        [actor.tenantId, z.name, z.ruleType, JSON.stringify(zoneConfig(z)), z.feeMinor, z.minimumOrderMinor, z.etaMin, z.etaMax, z.active ? "ACTIVE" : "INACTIVE"]);
+        `INSERT INTO delivery_zones (tenant_id, name, rule_type, rule_config, fee_minor, minimum_order_minor, eta_min, eta_max, status, sort_order, free_delivery_minimum_minor)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::business_object_status, coalesce((SELECT max(sort_order) + 10 FROM delivery_zones WHERE tenant_id = $1), 10), $10) RETURNING id`,
+        [actor.tenantId, z.name, z.ruleType, JSON.stringify(zoneConfig(z)), z.feeMinor, z.minimumOrderMinor, z.etaMin, z.etaMax, z.active ? "ACTIVE" : "INACTIVE", z.freeDeliveryMinimumMinor ?? null]);
       await audit(tx, actor, "DeliveryZoneCreated", { type: "DeliveryZone", id: row.rows[0]!.id }, { ...z });
       return row.rows[0]!.id;
     });
@@ -76,8 +76,8 @@ export async function marketingRoutes(app: FastifyInstance) {
     await withTransaction(async (tx) => {
       const row = await tx.query(
         `UPDATE delivery_zones SET name = $3, rule_type = $4, rule_config = $5, fee_minor = $6, minimum_order_minor = $7, eta_min = $8, eta_max = $9,
-           status = $10::business_object_status, updated_at = now() WHERE id = $1 AND tenant_id = $2`,
-        [req.params.id, actor.tenantId, z.name, z.ruleType, JSON.stringify(zoneConfig(z)), z.feeMinor, z.minimumOrderMinor, z.etaMin, z.etaMax, z.active ? "ACTIVE" : "INACTIVE"]);
+           status = $10::business_object_status, free_delivery_minimum_minor = $11, updated_at = now() WHERE id = $1 AND tenant_id = $2`,
+        [req.params.id, actor.tenantId, z.name, z.ruleType, JSON.stringify(zoneConfig(z)), z.feeMinor, z.minimumOrderMinor, z.etaMin, z.etaMax, z.active ? "ACTIVE" : "INACTIVE", z.freeDeliveryMinimumMinor ?? null]);
       if (!row.rowCount) throw notFound("Delivery area");
       await audit(tx, actor, "DeliveryZoneUpdated", { type: "DeliveryZone", id: req.params.id }, { ...z });
     });

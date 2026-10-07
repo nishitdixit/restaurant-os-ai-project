@@ -42,7 +42,7 @@ export function CategoryNav({ categories, className }: { categories: { slug: str
     row.scrollTo({ left: chip.offsetLeft - row.clientWidth / 2 + chip.clientWidth / 2, behavior: "smooth" });
   }, [active]);
   return (
-    <nav ref={navRef} aria-label="Menu categories" className={cx("sticky top-[105px] z-20 -mx-4 border-b border-border bg-bg/95 px-4 py-2 backdrop-blur nav-underline:py-0 md:top-16", className)}>
+    <nav ref={navRef} aria-label="Menu categories" className={cx("sticky top-16 z-20 -mx-4 border-b border-border bg-bg/95 px-4 py-2 backdrop-blur nav-underline:py-0", className)}>
       <ul ref={listRef} className="relative flex gap-2 overflow-x-auto">
         {categories.map((c) => (
           <li key={c.slug}>

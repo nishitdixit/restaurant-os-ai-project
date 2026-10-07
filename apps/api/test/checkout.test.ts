@@ -45,7 +45,14 @@ describe("storefront catalog", () => {
     const d = await db();
     await d.query(`UPDATE brands SET status = 'DRAFT' WHERE slug = 'pilot'`);
     assert.equal((await app.inject("/v1/storefront/pilot/menu")).statusCode, 404);
-    assert.equal((await app.inject("/v1/storefront/pilot/config?preview=1")).statusCode, 200);
+    // The old open ?preview=1 no longer reveals an unpublished store; only a signed merchant preview token does.
+    assert.equal((await app.inject("/v1/storefront/pilot/menu?preview=1")).statusCode, 404);
+    const { issuePreviewToken } = await import("../src/lib/preview.ts");
+    assert.equal((await app.inject(`/v1/storefront/pilot/menu?preview=${issuePreviewToken("pilot").token}`)).statusCode, 200);
+    assert.equal((await app.inject(`/v1/storefront/pilot/menu?preview=${issuePreviewToken("other-store").token}`)).statusCode, 404, "a token is only valid for its own store");
+    const config = await app.inject("/v1/storefront/pilot/config");
+    assert.equal(config.statusCode, 200, "config stays public so the storefront can show Coming soon");
+    assert.equal(config.json().published, false);
     await d.query(`UPDATE brands SET status = 'ACTIVE' WHERE slug = 'pilot'`);
   });
 

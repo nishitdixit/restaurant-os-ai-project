@@ -5,6 +5,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
+import { defaultExperience } from "@restaurant-os/domain";
 import type { Menu, StoreConfig } from "@restaurant-os/types";
 import { serverGet } from "./api";
 
@@ -18,27 +19,56 @@ export const storeSlug = cache(async (): Promise<string> => {
   return DEFAULT_SLUG;
 });
 
-/** Merchant preview of an unpublished storefront; set by middleware from ?preview=1. Never indexed. */
-export const isPreview = cache(async (): Promise<boolean> => (await cookies()).get("ros_preview")?.value === "1");
+/**
+ * The signed merchant preview token (set by middleware from ?preview=<token>, issued by the admin). Its validity is
+ * decided by the API, never here: a forged or expired token simply gets the public view.
+ */
+const previewToken = cache(async (): Promise<string | null> => {
+  const value = (await cookies()).get("ros_preview")?.value;
+  return value && /^[A-Za-z0-9_.-]{20,400}$/.test(value) ? value : null;
+});
+
+/** Query string that asks the API for the merchant preview ("" for customers). */
+export async function previewQuery(): Promise<string> {
+  const token = await previewToken();
+  return token ? `?preview=${encodeURIComponent(token)}` : "";
+}
 
 /** Store config, including unpublished stores so the layout can show "coming soon" or a preview banner. */
 export const getConfig = cache(async (): Promise<StoreConfig> => {
   const slug = await storeSlug();
-  // A merchant preview shows the saved draft theme immediately (no cache); customers get the published one.
-  const preview = await isPreview();
-  const config = await serverGet<StoreConfig>(`/v1/storefront/${slug}/config?preview=1${preview ? "&theme=draft" : ""}`, preview ? 0 : 30);
+  // A merchant preview shows the saved draft look and layout immediately (no cache); customers get the published one.
+  const pq = await previewQuery();
+  const config = await serverGet<StoreConfig>(`/v1/storefront/${slug}/config${pq}`, pq ? 0 : 30);
   if (!config) notFound();
-  return config;
+  // Tolerate a cached response from an older API version (e.g. right after a deploy): fill the newer fields.
+  return {
+    ...config,
+    experience: config.experience ?? defaultExperience(),
+    media: config.media ?? {},
+    stats: config.stats ?? { paidOrders: null },
+    credentials: config.credentials ?? { legalName: "", fssai: "", gstin: "" },
+    policies: config.policies ?? [],
+    preview: config.preview ?? false,
+    deliveryAreas: (config.deliveryAreas ?? []).map((a) => ({ ...a, freeDeliveryMinimumMinor: a.freeDeliveryMinimumMinor ?? null })),
+  };
 });
 
-export async function previewQuery(): Promise<string> {
-  return (await isPreview()) ? "?preview=1" : "";
-}
+/** True only for a preview the API has verified. Never indexed. */
+export const isPreview = cache(async (): Promise<boolean> => (await getConfig()).preview);
 
 export const getMenu = cache(async (): Promise<Menu> => {
   const slug = await storeSlug();
-  const preview = await isPreview();
-  return (await serverGet<Menu>(`/v1/storefront/${slug}/menu${preview ? "?preview=1" : ""}`, preview ? 0 : 15)) ?? { categories: [] };
+  const pq = await previewQuery();
+  const menu = (await serverGet<Menu>(`/v1/storefront/${slug}/menu${pq}`, pq ? 0 : 15)) ?? { categories: [], bestsellerIds: [] };
+  // Same tolerance for older cached menu responses.
+  return {
+    bestsellerIds: menu.bestsellerIds ?? [],
+    categories: menu.categories.map((c) => ({
+      ...c, nameHi: c.nameHi ?? "", descriptionHi: c.descriptionHi ?? "", imageUrl: c.imageUrl ?? null,
+      products: c.products.map((p) => ({ ...p, nameHi: p.nameHi ?? "", descriptionHi: p.descriptionHi ?? "", badges: p.badges ?? [], bestseller: p.bestseller ?? false, gallery: p.gallery ?? [] })),
+    })),
+  };
 });
 
 /** Brand colour from merchant data, accepted only as a 6-digit hex to keep CSS injection impossible. */

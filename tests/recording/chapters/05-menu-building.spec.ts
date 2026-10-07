@@ -12,7 +12,7 @@ async function createItem(admin: Page, item: Item, assets: Record<string, string
   await type(admin, admin.getByRole("textbox", { name: "Name", exact: true }), item.name);
   await admin.getByLabel("Category").selectOption({ label: item.category });
   await type(admin, admin.getByLabel("Price"), item.price);
-  await type(admin, admin.getByLabel("Short description"), item.description);
+  await type(admin, admin.getByRole("textbox", { name: "Short description", exact: true }), item.description);
   if (item.photo) {
     await point(admin, admin.getByRole("button", { name: /Add a photo/ }));
     await admin.locator('input[type="file"]').setInputFiles(assets[item.photo]!);
@@ -30,8 +30,8 @@ async function createItem(admin: Page, item: Item, assets: Record<string, string
 
 async function addCategory(admin: Page, name: string, description = "") {
   await click(admin, admin.getByRole("button", { name: "Add category" }));
-  await type(admin, admin.getByRole("dialog").getByLabel("Name"), name);
-  if (description) await type(admin, admin.getByRole("dialog").getByLabel("Description"), description);
+  await type(admin, admin.getByRole("dialog").getByRole("textbox", { name: "Name", exact: true }), name);
+  if (description) await type(admin, admin.getByRole("dialog").getByRole("textbox", { name: "Description", exact: true }), description);
   await click(admin, admin.getByRole("dialog").getByRole("button", { name: "Save" }));
   await expect(admin.getByText("Category saved").first()).toBeVisible();
 }
@@ -105,7 +105,7 @@ chapter("05 Menu building", async () => {
   await expect(admin.getByRole("heading", { name: "Chicken Dum Biryani (copy)" })).toBeVisible();
   await type(admin, admin.getByRole("textbox", { name: "Name", exact: true }), "Hyderabadi Mutton Biryani");
   await type(admin, admin.getByLabel("Price"), "429");
-  await type(admin, admin.getByLabel("Short description"), "Tender mutton layered with saffron rice.");
+  await type(admin, admin.getByRole("textbox", { name: "Short description", exact: true }), "Tender mutton layered with saffron rice.");
   await click(admin, admin.getByRole("button", { name: "Save as draft" }));
   await expect(admin.getByText("Item saved").first()).toBeVisible();
 

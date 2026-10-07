@@ -2,7 +2,7 @@
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
-import { BrandSettingsSchema, BusinessSettingsSchema, OutletSettingsSchema, type ChecklistStep, type SetupStatus } from "@restaurant-os/types";
+import { BrandSettingsSchema, BusinessSettingsSchema, OutletSettingsSchema, PoliciesInputSchema, type ChecklistStep, type SetupStatus } from "@restaurant-os/types";
 import { env } from "../../config/env.ts";
 import { pool, withTransaction, type Db } from "../../db/pool.ts";
 import { ApiError } from "../../lib/errors.ts";
@@ -72,7 +72,7 @@ export async function settingsRoutes(app: FastifyInstance) {
     const m = brand.metadata ?? {};
     return {
       business: {
-        businessName: tenant.name, legalName: tenant.legal_name ?? "", gstin: tenant.metadata?.gstin ?? "",
+        businessName: tenant.name, legalName: tenant.legal_name ?? "", gstin: tenant.metadata?.gstin ?? "", fssai: tenant.metadata?.fssai ?? "",
         contactName: tenant.primary_contact?.name ?? "", contactPhone: tenant.primary_contact?.phone ?? "", contactEmail: tenant.primary_contact?.email ?? "",
         currency: tenant.default_currency, locale: tenant.locale,
       },
@@ -100,8 +100,32 @@ export async function settingsRoutes(app: FastifyInstance) {
       await tx.query(
         `UPDATE tenants SET name = $2, legal_name = nullif($3, ''), default_currency = $4, locale = $5,
            primary_contact = $6, metadata = metadata || $7, updated_at = now() WHERE id = $1`,
-        [actor.tenantId, b.businessName, b.legalName, b.currency, b.locale, JSON.stringify({ name: b.contactName, phone: b.contactPhone, email: b.contactEmail }), JSON.stringify({ gstin: b.gstin })]);
+        [actor.tenantId, b.businessName, b.legalName, b.currency, b.locale, JSON.stringify({ name: b.contactName, phone: b.contactPhone, email: b.contactEmail }), JSON.stringify({ gstin: b.gstin, fssai: b.fssai })]);
       await audit(tx, actor, "BusinessSettingsUpdated", { type: "Tenant", id: actor.tenantId }, { businessName: b.businessName });
+    });
+    return { ok: true };
+  });
+
+  // Policy pages (refund, terms, privacy, delivery): plain text written by the restaurant, shown at /policies/{key}.
+  r.get("/v1/admin/settings/policies", { preValidation: requirePermission("tenant.read"), schema: { tags } }, async (req) => {
+    const brand = await primaryBrand(pool(), tenantOf(req).tenantId);
+    const r = await pool().query<{ policies: Record<string, { body?: { en?: string; hi?: string }; updatedAt?: string }> }>(`SELECT policies FROM brands WHERE id = $1`, [brand.id]);
+    const stored = r.rows[0]?.policies ?? {};
+    return {
+      policies: Object.fromEntries((["refund", "terms", "privacy", "delivery"] as const).map((k) => [k, {
+        body: { en: stored[k]?.body?.en ?? "", hi: stored[k]?.body?.hi ?? "" }, updatedAt: stored[k]?.updatedAt ?? null,
+      }])),
+    };
+  });
+
+  r.put("/v1/admin/settings/policies", { preValidation: requirePermission("tenant.manage"), schema: { tags, body: PoliciesInputSchema } }, async (req) => {
+    const actor = actorOf(req);
+    await withTransaction(async (tx) => {
+      const brand = await primaryBrand(tx, actor.tenantId);
+      const now = new Date().toISOString();
+      const patch = Object.fromEntries(Object.entries(req.body.policies).map(([k, v]) => [k, { body: { en: v!.body.en, hi: v!.body.hi }, updatedAt: now }]));
+      await tx.query(`UPDATE brands SET policies = policies || $2::jsonb, updated_at = now() WHERE id = $1`, [brand.id, JSON.stringify(patch)]);
+      await audit(tx, actor, "PoliciesUpdated", { type: "Brand", id: brand.id }, { keys: Object.keys(patch) });
     });
     return { ok: true };
   });

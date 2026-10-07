@@ -1,5 +1,6 @@
 // Small presentational pieces shared by storefront pages (server-safe).
-import type { Dietary, StoreConfig } from "@restaurant-os/types";
+import type { DisplayBadge, Dietary, StoreConfig } from "@restaurant-os/types";
+import { cx } from "@restaurant-os/ui";
 import { Clock, Flame, PauseCircle } from "lucide-react";
 import { jsonLdScript } from "@/lib/seo";
 
@@ -72,4 +73,24 @@ export function etaText(config: StoreConfig): string | null {
   }
   if (o.pickupEnabled) return `Pickup in about ${o.prepMinutes} min`;
   return null;
+}
+
+const BADGE_TONE: Record<DisplayBadge["tone"], string> = {
+  brand: "bg-primary text-primary-contrast",
+  accent: "bg-accent text-accent-contrast",
+  success: "bg-success-soft text-success",
+  warning: "bg-warning-soft text-warning",
+  neutral: "bg-subtle text-text",
+};
+
+/** Dish badges: Bestseller (earned from real orders) and the restaurant's own (Signature, New, "Royal Feast"…). */
+export function DishBadges({ badges, className, max = 2 }: { badges: DisplayBadge[]; className?: string; max?: number }) {
+  if (!badges.length) return null;
+  return (
+    <ul className={cx("flex flex-wrap gap-1", className)} aria-label="Highlights">
+      {badges.slice(0, max).map((b) => (
+        <li key={`${b.kind}-${b.label}`} className={cx("ros-badge rounded-chip px-2 py-0.5 text-[11px] font-semibold uppercase leading-4 tracking-wide", BADGE_TONE[b.tone])}>{b.label}</li>
+      ))}
+    </ul>
+  );
 }

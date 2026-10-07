@@ -1,9 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-// ?preview=1 lets a merchant browse an unpublished storefront; ?preview=0 ends the preview.
+// ?preview=<signed token> (links from the admin) lets a merchant browse an unpublished storefront and the draft look;
+// ?preview=0 ends the preview. The token is only stored here — the API decides whether it is valid.
+const TOKEN = /^[A-Za-z0-9_.-]{20,400}$/;
+
 export function middleware(request: NextRequest) {
   const preview = request.nextUrl.searchParams.get("preview");
-  if (preview !== "1" && preview !== "0") return NextResponse.next();
+  if (preview === null || (preview !== "0" && !TOKEN.test(preview))) return NextResponse.next();
   // Link prefetches must never change the preview state; only a real navigation does.
   const h = request.headers;
   if (h.get("next-router-prefetch") || h.get("purpose") === "prefetch" || h.get("sec-purpose")?.includes("prefetch")) return NextResponse.next();
@@ -15,7 +18,8 @@ export function middleware(request: NextRequest) {
   const secure = request.nextUrl.protocol === "https:";
   const attributes = secure ? { httpOnly: true, sameSite: "none" as const, secure: true, partitioned: true, path: "/" } : { httpOnly: true, sameSite: "lax" as const, path: "/" };
   // Clearing must repeat the same attributes, or a partitioned cookie would survive.
-  response.cookies.set("ros_preview", preview === "1" ? "1" : "", preview === "1" ? attributes : { ...attributes, maxAge: 0 });
+  const on = preview !== "0";
+  response.cookies.set("ros_preview", on ? preview : "", on ? { ...attributes, maxAge: 12 * 60 * 60 } : { ...attributes, maxAge: 0 });
   return response;
 }
 

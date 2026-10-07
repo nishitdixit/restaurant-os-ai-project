@@ -30,8 +30,8 @@ export const THEME_PRESETS: ThemePreset[] = [
     },
     typography: { headingFont: "playfair", bodyFont: "dm-sans", scale: "md", headingWeight: 700, headingCase: "normal", buttonCase: "normal" },
     shape: { button: 10, card: 16, input: 10, chip: 999, image: 12 },
-    borderWidth: 1, shadow: "soft", density: "comfortable",
-    components: { button: "solid", card: "elevated", productLayout: "list", categoryNav: "pills", hero: "gradient", imageRatio: "square" },
+    borderWidth: 1, shadow: "soft", density: "comfortable", motion: "subtle",
+    components: { button: "solid", card: "elevated", productLayout: "list", categoryNav: "pills", hero: "gradient", imageRatio: "square", badge: "pill" },
   }),
 
   preset("rapid", "Rapid", "Quick service: burgers, rolls, pizza", "Bold red and yellow, heavy uppercase type and pill buttons — fast and high-energy.", {
@@ -42,8 +42,8 @@ export const THEME_PRESETS: ThemePreset[] = [
     },
     typography: { headingFont: "rubik", bodyFont: "rubik", scale: "lg", headingWeight: 800, headingCase: "uppercase", buttonCase: "uppercase" },
     shape: { button: 999, card: 18, input: 12, chip: 999, image: 14 },
-    borderWidth: 1, shadow: "strong", density: "comfortable",
-    components: { button: "solid", card: "elevated", productLayout: "grid", categoryNav: "pills", hero: "solid", imageRatio: "landscape" },
+    borderWidth: 1, shadow: "strong", density: "comfortable", motion: "expressive",
+    components: { button: "solid", card: "elevated", productLayout: "grid", categoryNav: "pills", hero: "solid", imageRatio: "landscape", badge: "pill" },
   }),
 
   preset("cafe-linen", "Café Linen", "Cafés & brunch", "Linen whites, charcoal and latte with a soft serif and fine lines — calm and considered.", {
@@ -54,8 +54,8 @@ export const THEME_PRESETS: ThemePreset[] = [
     },
     typography: { headingFont: "fraunces", bodyFont: "work-sans", scale: "md", headingWeight: 500, headingCase: "normal", buttonCase: "normal" },
     shape: { button: 6, card: 8, input: 6, chip: 6, image: 6 },
-    borderWidth: 1, shadow: "none", density: "airy",
-    components: { button: "outline", card: "bordered", productLayout: "list", categoryNav: "underline", hero: "minimal", imageRatio: "landscape" },
+    borderWidth: 1, shadow: "none", density: "airy", motion: "subtle",
+    components: { button: "outline", card: "bordered", productLayout: "list", categoryNav: "underline", hero: "minimal", imageRatio: "landscape", badge: "quiet" },
   }),
 
   preset("noir", "Noir", "Fine dining & premium", "Near-black, gold and an elegant serif with sharp corners — understated luxury.", {
@@ -66,8 +66,8 @@ export const THEME_PRESETS: ThemePreset[] = [
     },
     typography: { headingFont: "cormorant", bodyFont: "manrope", scale: "md", headingWeight: 600, headingCase: "normal", buttonCase: "uppercase" },
     shape: { button: 0, card: 0, input: 0, chip: 0, image: 0 },
-    borderWidth: 1, shadow: "none", density: "airy",
-    components: { button: "outline", card: "bordered", productLayout: "grid", categoryNav: "underline", hero: "minimal", imageRatio: "wide" },
+    borderWidth: 1, shadow: "none", density: "airy", motion: "subtle",
+    components: { button: "outline", card: "bordered", productLayout: "grid", categoryNav: "underline", hero: "minimal", imageRatio: "wide", badge: "quiet" },
   }),
 
   preset("fresh-bowl", "Fresh Bowl", "Healthy food, salads & juices", "Leafy greens, citrus and soft rounded shapes — light, friendly and fresh.", {
@@ -78,8 +78,8 @@ export const THEME_PRESETS: ThemePreset[] = [
     },
     typography: { headingFont: "outfit", bodyFont: "nunito", scale: "md", headingWeight: 600, headingCase: "normal", buttonCase: "normal" },
     shape: { button: 999, card: 20, input: 14, chip: 999, image: 18 },
-    borderWidth: 1, shadow: "soft", density: "airy",
-    components: { button: "solid", card: "elevated", productLayout: "grid", categoryNav: "pills", hero: "solid", imageRatio: "landscape" },
+    borderWidth: 1, shadow: "soft", density: "airy", motion: "subtle",
+    components: { button: "solid", card: "elevated", productLayout: "grid", categoryNav: "pills", hero: "solid", imageRatio: "landscape", badge: "pill" },
   }),
 
   preset("sugar-bloom", "Sugar Bloom", "Bakeries, cakes & desserts", "Blush pink, cream and a playful rounded display face — sweet without being childish.", {
@@ -90,8 +90,8 @@ export const THEME_PRESETS: ThemePreset[] = [
     },
     typography: { headingFont: "baloo", bodyFont: "nunito", scale: "md", headingWeight: 700, headingCase: "normal", buttonCase: "normal" },
     shape: { button: 999, card: 24, input: 16, chip: 999, image: 22 },
-    borderWidth: 1, shadow: "soft", density: "comfortable",
-    components: { button: "solid", card: "bordered", productLayout: "grid", categoryNav: "pills", hero: "gradient", imageRatio: "square" },
+    borderWidth: 1, shadow: "soft", density: "comfortable", motion: "expressive",
+    components: { button: "solid", card: "bordered", productLayout: "grid", categoryNav: "pills", hero: "gradient", imageRatio: "square", badge: "sticker" },
   }),
 
   preset("banana-leaf", "Banana Leaf", "South Indian, tiffin & meals", "Leaf green, turmeric and rice-paper cream — traditional warmth, cleanly organised for long menus.", {
@@ -102,8 +102,8 @@ export const THEME_PRESETS: ThemePreset[] = [
     },
     typography: { headingFont: "lora", bodyFont: "poppins", scale: "md", headingWeight: 700, headingCase: "normal", buttonCase: "normal" },
     shape: { button: 8, card: 12, input: 8, chip: 999, image: 10 },
-    borderWidth: 1, shadow: "soft", density: "compact",
-    components: { button: "solid", card: "bordered", productLayout: "list", categoryNav: "pills", hero: "solid", imageRatio: "square" },
+    borderWidth: 1, shadow: "soft", density: "compact", motion: "none",
+    components: { button: "solid", card: "bordered", productLayout: "list", categoryNav: "underline", hero: "solid", imageRatio: "square", badge: "pill" },
   }),
 
   preset("street-pop", "Street Pop", "Street food, chaat & food trucks", "Sunny yellow, thick outlines and offset shadows — loud, fun and impossible to miss.", {
@@ -114,8 +114,8 @@ export const THEME_PRESETS: ThemePreset[] = [
     },
     typography: { headingFont: "bricolage", bodyFont: "space-grotesk", scale: "md", headingWeight: 800, headingCase: "uppercase", buttonCase: "uppercase" },
     shape: { button: 8, card: 10, input: 8, chip: 8, image: 8 },
-    borderWidth: 2, shadow: "offset", density: "comfortable",
-    components: { button: "solid", card: "bordered", productLayout: "grid", categoryNav: "pills", hero: "solid", imageRatio: "square" },
+    borderWidth: 2, shadow: "offset", density: "comfortable", motion: "expressive",
+    components: { button: "solid", card: "bordered", productLayout: "grid", categoryNav: "pills", hero: "solid", imageRatio: "square", badge: "sticker" },
   }),
 
   preset("cloud-kitchen-pro", "Cloud Kitchen Pro", "Delivery-first & multi-brand kitchens", "Neutral greys with a confident blue and a compact list — built for fast repeat ordering.", {
@@ -126,8 +126,8 @@ export const THEME_PRESETS: ThemePreset[] = [
     },
     typography: { headingFont: "manrope", bodyFont: "inter", scale: "sm", headingWeight: 700, headingCase: "normal", buttonCase: "normal" },
     shape: { button: 8, card: 10, input: 8, chip: 999, image: 8 },
-    borderWidth: 1, shadow: "soft", density: "compact",
-    components: { button: "solid", card: "bordered", productLayout: "list", categoryNav: "underline", hero: "minimal", imageRatio: "square" },
+    borderWidth: 1, shadow: "soft", density: "compact", motion: "none",
+    components: { button: "solid", card: "bordered", productLayout: "list", categoryNav: "underline", hero: "minimal", imageRatio: "square", badge: "pill" },
   }),
 
   preset("trattoria", "Trattoria", "Pizza, pasta & Italian", "Tomato red, basil and warm cream with slab-serif headings — a neighbourhood trattoria.", {
@@ -138,8 +138,8 @@ export const THEME_PRESETS: ThemePreset[] = [
     },
     typography: { headingFont: "roboto-slab", bodyFont: "work-sans", scale: "md", headingWeight: 700, headingCase: "normal", buttonCase: "normal" },
     shape: { button: 6, card: 10, input: 6, chip: 999, image: 10 },
-    borderWidth: 1, shadow: "soft", density: "comfortable",
-    components: { button: "solid", card: "bordered", productLayout: "grid", categoryNav: "pills", hero: "gradient", imageRatio: "landscape" },
+    borderWidth: 1, shadow: "soft", density: "comfortable", motion: "subtle",
+    components: { button: "solid", card: "bordered", productLayout: "grid", categoryNav: "pills", hero: "gradient", imageRatio: "landscape", badge: "quiet" },
   }),
 
   preset("chai-adda", "Chai Adda", "Tea, snacks & quick bites", "Kraft-paper browns with ginger orange and a characterful serif — cosy, like a corner chai stall.", {
@@ -150,8 +150,8 @@ export const THEME_PRESETS: ThemePreset[] = [
     },
     typography: { headingFont: "dm-serif", bodyFont: "dm-sans", scale: "md", headingWeight: 500, headingCase: "normal", buttonCase: "normal" },
     shape: { button: 12, card: 14, input: 10, chip: 999, image: 12 },
-    borderWidth: 1, shadow: "soft", density: "comfortable",
-    components: { button: "solid", card: "elevated", productLayout: "list", categoryNav: "pills", hero: "solid", imageRatio: "square" },
+    borderWidth: 1, shadow: "soft", density: "comfortable", motion: "subtle",
+    components: { button: "solid", card: "elevated", productLayout: "board", categoryNav: "pills", hero: "solid", imageRatio: "square", badge: "sticker" },
   }),
 
   preset("wok-ember", "Wok & Ember", "Pan-Asian, grills & late-night", "Charcoal, chilli red and amber with crisp geometry — dark, sharp and appetising.", {
@@ -162,8 +162,8 @@ export const THEME_PRESETS: ThemePreset[] = [
     },
     typography: { headingFont: "space-grotesk", bodyFont: "inter", scale: "md", headingWeight: 700, headingCase: "uppercase", buttonCase: "uppercase" },
     shape: { button: 4, card: 6, input: 4, chip: 4, image: 4 },
-    borderWidth: 1, shadow: "none", density: "compact",
-    components: { button: "solid", card: "flat", productLayout: "grid", categoryNav: "underline", hero: "solid", imageRatio: "wide" },
+    borderWidth: 1, shadow: "none", density: "compact", motion: "expressive",
+    components: { button: "solid", card: "flat", productLayout: "grid", categoryNav: "underline", hero: "solid", imageRatio: "wide", badge: "pill" },
   }),
 ];
 

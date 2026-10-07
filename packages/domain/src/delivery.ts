@@ -11,9 +11,20 @@ export interface DeliveryZone {
   rule: ZoneRule;
   feeMinor: bigint;
   minimumOrderMinor: bigint;
+  /** Free delivery when the item total reaches this amount; null/undefined = always charge the fee. */
+  freeDeliveryMinimumMinor?: bigint | null;
   etaMin: number;
   etaMax: number;
   active: boolean;
+}
+
+/**
+ * The delivery fee for an item total (BUSINESS_RULES P16): the zone fee, or nothing once the item total — before
+ * any discount, like the minimum order (P2) — reaches the zone's free-delivery threshold.
+ */
+export function deliveryFeeFor(zone: Pick<DeliveryZone, "feeMinor" | "freeDeliveryMinimumMinor">, itemTotalMinor: bigint): bigint {
+  const threshold = zone.freeDeliveryMinimumMinor ?? null;
+  return threshold !== null && itemTotalMinor >= threshold ? 0n : zone.feeMinor;
 }
 
 export interface GeoPoint {

@@ -1,7 +1,7 @@
 // Storefront theme fonts (packages/domain THEME_FONTS), self-hosted by next/font. Not preloaded: the browser only
 // downloads a font when the page actually uses it, so a theme costs just its own heading/body pair.
 // Generated to match THEME_FONTS — keep the two lists in sync (a type check below enforces the ids).
-import { Baloo_2, Bricolage_Grotesque, Cormorant_Garamond, DM_Sans, DM_Serif_Display, Fraunces, Inter, Lora, Manrope, Nunito, Outfit, Playfair_Display, Poppins, Roboto_Slab, Rubik, Space_Grotesk, Work_Sans } from "next/font/google";
+import { Baloo_2, Bricolage_Grotesque, Cormorant_Garamond, DM_Sans, DM_Serif_Display, Fraunces, Inter, Lora, Manrope, Noto_Sans_Devanagari, Noto_Serif_Devanagari, Nunito, Outfit, Playfair_Display, Poppins, Roboto_Slab, Rubik, Space_Grotesk, Work_Sans } from "next/font/google";
 import type { ThemeFontId } from "@restaurant-os/domain";
 
 const ff_inter = Inter({ subsets: ["latin"], display: "swap", preload: false, variable: "--ff-inter" });
@@ -21,6 +21,11 @@ const ff_dm_serif = DM_Serif_Display({ subsets: ["latin"], display: "swap", prel
 const ff_roboto_slab = Roboto_Slab({ subsets: ["latin"], display: "swap", preload: false, variable: "--ff-roboto-slab" });
 const ff_bricolage = Bricolage_Grotesque({ subsets: ["latin"], display: "swap", preload: false, variable: "--ff-bricolage" });
 const ff_baloo = Baloo_2({ subsets: ["latin"], display: "swap", preload: false, variable: "--ff-baloo" });
+
+// Hindi (Devanagari) text in bilingual stores: each font stack falls back to these (packages/domain fontStack).
+// The Devanagari subset's unicode-range means they only download when Hindi characters are on the page.
+const ff_deva_sans = Noto_Sans_Devanagari({ subsets: ["devanagari"], display: "swap", preload: false, variable: "--ff-deva-sans", weight: ["400", "500", "600", "700"] });
+const ff_deva_serif = Noto_Serif_Devanagari({ subsets: ["devanagari"], display: "swap", preload: false, variable: "--ff-deva-serif", weight: ["400", "500", "600", "700"] });
 
 /** className that defines `--ff-<id>` for each font. */
 export const FONT_VARIABLE_CLASS: Record<ThemeFontId, string> = {
@@ -43,4 +48,4 @@ export const FONT_VARIABLE_CLASS: Record<ThemeFontId, string> = {
   "baloo": ff_baloo.variable,
 };
 
-export const ALL_FONT_CLASSES = Object.values(FONT_VARIABLE_CLASS).join(" ");
+export const ALL_FONT_CLASSES = [...Object.values(FONT_VARIABLE_CLASS), ff_deva_sans.variable, ff_deva_serif.variable].join(" ");

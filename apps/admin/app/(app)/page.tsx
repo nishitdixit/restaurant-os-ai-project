@@ -9,6 +9,7 @@ import { ArrowRight, CheckCircle2, Circle, ExternalLink, Rocket } from "lucide-r
 import type { AdminOrderSummary, AnalyticsDashboard, SetupStatus } from "@restaurant-os/types";
 import { Alert, Button, Card, CardHeader, EmptyState, ErrorState, PageHeader, RelativeTime, Skeleton, Stat, StatusPill, buttonClass, cx, formatMoney, toast } from "@restaurant-os/ui";
 import { ApiError, errorMessage, STOREFRONT_URL } from "@/lib/api";
+import { usePreviewUrl } from "@/lib/preview";
 import { useSession, useTenantKey } from "@/lib/session";
 
 function SetupChecklist({ setup }: { setup: SetupStatus }) {
@@ -21,10 +22,11 @@ function SetupChecklist({ setup }: { setup: SetupStatus }) {
     onError: (e) => toast.error(e instanceof ApiError && e.code === "SETUP_INCOMPLETE" ? "Finish the remaining steps first." : errorMessage(e)),
   });
   const remaining = setup.steps.filter((s) => s.key !== "publish" && !s.complete);
+  const previewHref = usePreviewUrl("/");
   return (
     <Card>
       <CardHeader title="Get your storefront live" description={`${setup.progress}% done — customers can order once you publish.`}
-        action={<a href={`${STOREFRONT_URL}?preview=1`} target="_blank" rel="noopener noreferrer" className={buttonClass("outline", "sm")}>Preview<ExternalLink className="size-3.5" aria-hidden /></a>} />
+        action={previewHref ? <a href={previewHref} target="_blank" rel="noopener noreferrer" className={buttonClass("outline", "sm")}>Preview<ExternalLink className="size-3.5" aria-hidden /></a> : undefined} />
       <div className="mb-4 h-2 overflow-hidden rounded-full bg-subtle" role="progressbar" aria-valuenow={setup.progress} aria-valuemin={0} aria-valuemax={100} aria-label="Setup progress">
         <div className="h-full rounded-full bg-success transition-all" style={{ width: `${setup.progress}%` }} />
       </div>

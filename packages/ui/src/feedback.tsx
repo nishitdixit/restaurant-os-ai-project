@@ -11,9 +11,9 @@ import { cx, DELIVERY, ORDER, PAYMENT, type Tone } from "./utils.ts";
 export { toast };
 
 export function Toaster({ theme = "light" }: { theme?: "light" | "dark" } = {}) {
-  // Offset clears the sticky header (64px; 105px on phones, where the storefront adds a row of section links)
+  // Offset clears the sticky header (64px on the storefront, 56px in the admin)
   // so a toast never covers the cart, menu or page actions.
-  return <SonnerToaster theme={theme} position="top-center" richColors closeButton offset={{ top: 76 }} mobileOffset={{ top: 112 }} toastOptions={{ duration: 4000 }} />;
+  return <SonnerToaster theme={theme} position="top-center" richColors closeButton offset={{ top: 76 }} mobileOffset={{ top: 76 }} toastOptions={{ duration: 4000 }} />;
 }
 
 export function Modal({ open, onOpenChange, title, description, children, footer, size = "md" }: {

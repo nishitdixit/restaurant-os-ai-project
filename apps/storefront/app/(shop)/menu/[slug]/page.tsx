@@ -1,11 +1,12 @@
 // Product page (docs/SEO.md: /menu/{product-slug}) with full option selection.
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { MenuProduct } from "@restaurant-os/types";
 import { formatMoney } from "@restaurant-os/ui";
-import { DietMark, JsonLd, SpiceLevel, StoreStatusBanner } from "@/components/basics";
+import { DietMark, DishBadges, JsonLd, SpiceLevel, StoreStatusBanner } from "@/components/basics";
+import { ProductGallery } from "@/components/product-gallery";
+import { dishDescription, dishName } from "@/lib/experience";
 import { ProductPurchase } from "@/components/product-purchase";
 import { serverGet } from "@/lib/api";
 import { breadcrumbJsonLd, productJsonLd } from "@/lib/seo";
@@ -36,6 +37,8 @@ export default async function ProductPage({ params }: Params) {
   const { slug } = await params;
   const { config, product } = await load(slug);
   if (!product) notFound();
+  const name = dishName(product, config.experience.site.language);
+  const description = dishDescription(product, config.experience.site.language);
   return (
     <>
       <JsonLd data={productJsonLd(config, product)} />
@@ -48,16 +51,13 @@ export default async function ProductPage({ params }: Params) {
         </ol>
       </nav>
       <div className="mt-4 grid gap-8 md:grid-cols-2">
-        <div className="relative aspect-square overflow-hidden rounded-[var(--ros-radius-xl)] bg-subtle">
-          {product.imageUrl
-            ? <Image src={product.imageUrl} alt={product.name} fill sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" priority />
-            : <div className="flex h-full items-center justify-center text-6xl font-bold text-faint" aria-hidden>{product.name.slice(0, 1)}</div>}
-        </div>
+        <ProductGallery name={product.name} images={[...(product.imageUrl ? [{ url: product.imageUrl, alt: product.name }] : []), ...product.gallery]} />
         <div>
           <div className="flex items-center gap-2"><DietMark dietary={product.dietary} /><SpiceLevel level={product.spiceLevel} /></div>
-          <h1 className="mt-2 text-3xl ros-heading">{product.name}</h1>
+          {config.experience.menu.showBadges && <DishBadges badges={product.badges} max={4} className="mt-3" />}
+          <h1 className="mt-2 text-3xl ros-heading">{name.primary}{name.secondary && <span lang="hi" className="mt-1 block text-xl font-medium text-link">{name.secondary}</span>}</h1>
           <p className="mt-2 text-xl font-semibold tabular-nums">{formatMoney(product.priceMinor, config.currency)}</p>
-          {product.description && <p className="mt-3 text-muted">{product.description}</p>}
+          {description && <p className="mt-3 text-muted">{description}</p>}
           {product.longDescription && <p className="mt-3 whitespace-pre-line leading-relaxed text-muted">{product.longDescription}</p>}
           {(product.allergens.length > 0 || product.tags.length > 0) && (
             <dl className="mt-4 space-y-1 text-sm">

@@ -58,10 +58,13 @@ export const THEME_OPTIONS = {
   density: ["compact", "comfortable", "airy"],
   button: ["solid", "soft", "outline"],
   card: ["bordered", "elevated", "flat"],
-  productLayout: ["list", "grid", "compact"],
+  productLayout: ["list", "grid", "compact", "board"],
   categoryNav: ["pills", "underline"],
   hero: ["gradient", "solid", "minimal"],
   imageRatio: ["square", "landscape", "wide"],
+  /** Dish badges: a solid pill, a quiet label (premium) or a tilted sticker (playful). */
+  badge: ["pill", "quiet", "sticker"],
+  motion: ["none", "subtle", "expressive"],
 } as const;
 
 /** Corner radii in px; anything at or above PILL_RADIUS renders fully rounded. */
@@ -86,6 +89,8 @@ export interface StoreTheme {
   borderWidth: (typeof THEME_OPTIONS.borderWidth)[number];
   shadow: (typeof THEME_OPTIONS.shadow)[number];
   density: (typeof THEME_OPTIONS.density)[number];
+  /** Micro-interactions and section reveals; "none" for none at all (reduced-motion users always get none). */
+  motion: (typeof THEME_OPTIONS.motion)[number];
   components: {
     button: (typeof THEME_OPTIONS.button)[number];
     card: (typeof THEME_OPTIONS.card)[number];
@@ -93,6 +98,7 @@ export interface StoreTheme {
     categoryNav: (typeof THEME_OPTIONS.categoryNav)[number];
     hero: (typeof THEME_OPTIONS.hero)[number];
     imageRatio: (typeof THEME_OPTIONS.imageRatio)[number];
+    badge: (typeof THEME_OPTIONS.badge)[number];
   };
 }
 
@@ -167,7 +173,8 @@ export function classicTheme(primary = "#b42318"): StoreTheme {
     borderWidth: 1,
     shadow: "soft",
     density: "comfortable",
-    components: { button: "solid", card: "bordered", productLayout: "list", categoryNav: "pills", hero: "gradient", imageRatio: "square" },
+    motion: "subtle",
+    components: { button: "solid", card: "bordered", productLayout: "list", categoryNav: "pills", hero: "gradient", imageRatio: "square", badge: "pill" },
   };
 }
 
@@ -212,6 +219,7 @@ export function normalizeTheme(input: unknown, base: StoreTheme = classicTheme()
     borderWidth: pick(t.borderWidth, O.borderWidth, base.borderWidth),
     shadow: pick(t.shadow, O.shadow, base.shadow),
     density: pick(t.density, O.density, base.density),
+    motion: pick(t.motion, O.motion, base.motion),
     components: {
       button: pick(co.button, O.button, base.components.button),
       card: pick(co.card, O.card, base.components.card),
@@ -219,6 +227,7 @@ export function normalizeTheme(input: unknown, base: StoreTheme = classicTheme()
       categoryNav: pick(co.categoryNav, O.categoryNav, base.components.categoryNav),
       hero: pick(co.hero, O.hero, base.components.hero),
       imageRatio: pick(co.imageRatio, O.imageRatio, base.components.imageRatio),
+      badge: pick(co.badge, O.badge, base.components.badge),
     },
   };
 }
@@ -311,9 +320,14 @@ export function themeFont(id: ThemeFontId): ThemeFont {
   return THEME_FONTS.find((f) => f.id === id) ?? THEME_FONTS[0];
 }
 
-/** CSS font-family value; the app defines `--ff-<id>` for each self-hosted font. */
+/**
+ * CSS font-family value; the app defines `--ff-<id>` for each self-hosted font, plus `--ff-deva-sans` /
+ * `--ff-deva-serif` for Devanagari (Hindi) text — those only download when Hindi characters are on the page.
+ */
 export function fontStack(id: ThemeFontId): string {
-  return `var(--ff-${id}), ${FALLBACK_STACK[themeFont(id).category]}`;
+  const category = themeFont(id).category;
+  const deva = category === "serif" || category === "slab" ? "var(--ff-deva-serif, serif)" : "var(--ff-deva-sans, sans-serif)";
+  return `var(--ff-${id}), ${deva}, ${FALLBACK_STACK[category]}`;
 }
 
 function nearestWeight(font: ThemeFont, weight: number): number {
@@ -364,7 +378,8 @@ export function themeVariables(input: StoreTheme): Record<string, string> {
     "--ros-border-strong": offset ? c.text : borderStrong,
     "--ros-text": c.text,
     "--ros-muted": c.muted,
-    "--ros-faint": mixColors(c.muted, c.surface, 0.3),
+    // Faint text (hints like "Customisable") stays readable: softer than secondary text, never below AA on cards.
+    "--ros-faint": adjustForContrast(mixColors(c.muted, c.surface, 0.3), c.surface, AA_TEXT),
     "--ros-primary-soft": primarySoft(theme),
     "--ros-link": linkColor(theme),
     "--ros-accent": c.accent,
@@ -427,7 +442,34 @@ export function themeAttributes(input: StoreTheme): Record<string, string> {
     "data-ros-nav": theme.components.categoryNav,
     "data-ros-hero": theme.components.hero,
     "data-ros-shadow": theme.shadow,
+    "data-ros-motion": theme.motion,
+    "data-ros-badge": theme.components.badge,
   };
+}
+
+/** Section backgrounds (ADR-013 "tone"): the page, a soft fill, the brand colour, or the theme inverted. */
+export type SectionToneName = "default" | "subtle" | "brand" | "inverted";
+
+/**
+ * CSS variables for a section's background and the text placed directly on it. Cards inside a section keep the
+ * theme's own surface colours. Every pairing is readable by construction: brand and inverted reuse pairs the
+ * theme guardrail already checks (primaryText/primary, text/background); secondary text falls back to the main
+ * text colour when it would be too faint.
+ */
+export function sectionToneVariables(input: StoreTheme, tone: SectionToneName): Record<string, string> {
+  const theme = normalizeTheme(input);
+  const c = theme.colors;
+  const pair = (bg: string, fg: string, mutedCandidate: string, link: string) => {
+    const muted = contrastRatio(mutedCandidate, bg) >= AA_TEXT ? mutedCandidate : fg;
+    const readableLink = contrastRatio(link, bg) >= AA_TEXT ? link : fg;
+    return { "--ros-section-bg": bg, "--ros-section-fg": fg, "--ros-section-muted": muted, "--ros-section-link": readableLink, "--ros-section-line": mixColors(bg, fg, 0.18) };
+  };
+  switch (tone) {
+    case "subtle": return pair(c.subtle, c.text, c.muted, linkColor(theme));
+    case "brand": return pair(c.primary, c.primaryText, c.primaryText, c.primaryText);
+    case "inverted": return pair(c.text, c.background, mixColors(c.background, c.text, 0.25), c.accent);
+    default: return pair(c.background, c.text, c.muted, linkColor(theme));
+  }
 }
 
 /** Fonts a theme uses (the storefront loads only these). */

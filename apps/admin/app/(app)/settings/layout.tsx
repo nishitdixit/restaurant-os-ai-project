@@ -9,6 +9,7 @@ const TABS = [
   { href: "/settings", label: "Business", permission: "tenant.read" },
   { href: "/settings/brand", label: "Brand & storefront", permission: "tenant.read" },
   { href: "/settings/outlet", label: "Kitchen & hours", permission: "tenant.read" },
+  { href: "/settings/policies", label: "Policies", permission: "tenant.read" },
   { href: "/settings/team", label: "Team", permission: "tenant.read" },
   { href: "/settings/audit", label: "Audit log", permission: "audit.read" },
 ];

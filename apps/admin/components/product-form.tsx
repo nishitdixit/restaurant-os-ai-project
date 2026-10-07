@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ExternalLink, ImagePlus, Loader2, X } from "lucide-react";
+import { BADGE_KINDS, BADGE_LABELS, MAX_BADGES, type BadgeKind, type ProductBadge } from "@restaurant-os/domain";
 import type { AdminCategory, AdminModifierGroup, AdminProduct, MediaAsset } from "@restaurant-os/types";
+import { MediaPicker } from "@/components/appearance/media";
 import { Alert, Button, Card, Checkbox, Field, Input, PageHeader, Select, Textarea, buttonClass, cx, toast } from "@restaurant-os/ui";
 import { ApiError, errorMessage, fromMinor, STOREFRONT_URL, toMinor } from "@/lib/api";
 import { useSession, useTenantKey } from "@/lib/session";
@@ -12,6 +14,7 @@ import { useSession, useTenantKey } from "@/lib/session";
 interface FormState {
   name: string; categoryId: string; price: string; description: string; longDescription: string; dietary: string; spiceLevel: string;
   allergens: string; tags: string; modifierGroupIds: string[]; status: "DRAFT" | "ACTIVE"; imageAssetId: string | null; imageUrl: string | null;
+  nameHi: string; descriptionHi: string; badges: ProductBadge[]; gallery: { id: string; url: string }[];
 }
 
 function toForm(p: AdminProduct | null, defaultCategory: string): FormState {
@@ -20,6 +23,7 @@ function toForm(p: AdminProduct | null, defaultCategory: string): FormState {
     longDescription: p?.longDescription ?? "", dietary: p?.dietary ?? "", spiceLevel: p?.spiceLevel === null || p?.spiceLevel === undefined ? "" : String(p.spiceLevel),
     allergens: p?.allergens.join(", ") ?? "", tags: p?.tags.join(", ") ?? "", modifierGroupIds: p?.modifierGroupIds ?? [],
     status: p?.status === "ACTIVE" ? "ACTIVE" : "DRAFT", imageAssetId: p?.imageAssetId ?? null, imageUrl: p?.imageUrl ?? null,
+    nameHi: p?.nameHi ?? "", descriptionHi: p?.descriptionHi ?? "", badges: p?.badges ?? [], gallery: (p?.gallery ?? []).map((g) => ({ id: g.id, url: g.url })),
   };
 }
 
@@ -38,6 +42,7 @@ export function ProductForm({ product }: { product: AdminProduct | null }) {
   const [uploading, setUploading] = useState(false);
   const [dirty, setDirty] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [picking, setPicking] = useState(false);
 
   useEffect(() => {
     if (!form.categoryId && categories.data?.[0]) setForm((f) => ({ ...f, categoryId: categories.data![0]!.id }));
@@ -70,7 +75,7 @@ export function ProductForm({ product }: { product: AdminProduct | null }) {
     try {
       const data = new FormData();
       data.append("file", file);
-      const asset = await request<MediaAsset>("/v1/admin/media", { body: data });
+      const asset = await request<MediaAsset>(`/v1/admin/media?kind=product${form.name.trim() ? `&alt=${encodeURIComponent(form.name.trim())}` : ""}`, { body: data });
       setForm((f) => ({ ...f, imageAssetId: asset.id, imageUrl: asset.url }));
       setDirty(true);
     } catch (e) {
@@ -95,6 +100,7 @@ export function ProductForm({ product }: { product: AdminProduct | null }) {
       categoryId: form.categoryId, name: form.name.trim(), description: form.description.trim(), longDescription: form.longDescription.trim(), basePriceMinor: price,
       imageAssetId: form.imageAssetId, dietary: form.dietary || null, spiceLevel: form.spiceLevel === "" ? null : Number(form.spiceLevel),
       allergens: list(form.allergens), tags: list(form.tags), modifierGroupIds: form.modifierGroupIds, status,
+      nameHi: form.nameHi.trim(), descriptionHi: form.descriptionHi.trim(), badges: form.badges, galleryAssetIds: form.gallery.map((g) => g.id),
     });
   };
 
@@ -117,7 +123,14 @@ export function ProductForm({ product }: { product: AdminProduct | null }) {
               <Field label="Price" required error={errors.basePriceMinor} hint="Including taxes, as customers pay it">{(p) => <Input {...p} inputMode="decimal" prefix="₹" value={form.price} onChange={(e) => set("price", e.target.value)} />}</Field>
               <Field label="Short description" hint="One line on the menu card" className="sm:col-span-2">{(p) => <Input {...p} maxLength={300} value={form.description} onChange={(e) => set("description", e.target.value)} />}</Field>
               <Field label="Full description (optional)" hint="Shown on the item page — great for search engines" className="sm:col-span-2">{(p) => <Textarea {...p} rows={4} maxLength={3000} value={form.longDescription} onChange={(e) => set("longDescription", e.target.value)} />}</Field>
+              <Field label="Name in Hindi (optional)" hint="Shown when your store uses Hindi or both languages (Appearance → Homepage)">{(p) => <Input {...p} lang="hi" maxLength={120} value={form.nameHi} onChange={(e) => set("nameHi", e.target.value)} placeholder="जैसे चिकन दम बिरयानी" />}</Field>
+              <Field label="Short description in Hindi (optional)">{(p) => <Input {...p} lang="hi" maxLength={300} value={form.descriptionHi} onChange={(e) => set("descriptionHi", e.target.value)} />}</Field>
             </div>
+          </Card>
+          <Card>
+            <h2 className="text-base font-semibold">Badges</h2>
+            <p className="mt-0.5 text-sm text-muted">Up to {MAX_BADGES}. “Bestseller” is added automatically when a dish really sells — you can't set it by hand.</p>
+            <BadgePicker value={form.badges} onChange={(badges) => set("badges", badges)} />
           </Card>
           <Card>
             <h2 className="text-base font-semibold">Options</h2>
@@ -169,6 +182,23 @@ export function ProductForm({ product }: { product: AdminProduct | null }) {
             </div>
             <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" aria-label="Upload photo" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload(f); }} />
             {form.imageUrl && <Button variant="ghost" size="sm" className="mt-2" onClick={() => fileRef.current?.click()} loading={uploading}>Replace photo</Button>}
+            <div className="mt-4 border-t border-border pt-3">
+              <p className="text-sm font-medium">More photos ({form.gallery.length}/8)</p>
+              <p className="text-xs text-muted">Shown on the dish page after the main photo.</p>
+              <ul className="mt-2 grid grid-cols-4 gap-2">
+                {form.gallery.map((g) => (
+                  <li key={g.id} className="relative aspect-square overflow-hidden rounded-[var(--ros-radius-sm)] bg-subtle">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={g.url} alt="" className="size-full object-cover" />
+                    <button type="button" className="absolute right-0.5 top-0.5 rounded-full bg-black/60 p-0.5 text-white" aria-label="Remove photo" onClick={() => set("gallery", form.gallery.filter((x) => x.id !== g.id))}><X className="size-3" /></button>
+                  </li>
+                ))}
+                {form.gallery.length < 8 && (
+                  <li><button type="button" onClick={() => setPicking(true)} className="flex aspect-square w-full items-center justify-center rounded-[var(--ros-radius-sm)] border border-dashed border-border-strong text-muted hover:text-text" aria-label="Add another photo"><ImagePlus className="size-5" aria-hidden /></button></li>
+                )}
+              </ul>
+              <MediaPicker open={picking} onOpenChange={setPicking} kind="product" onPick={(a) => !form.gallery.some((g) => g.id === a.id) && set("gallery", [...form.gallery, { id: a.id, url: a.url }])} />
+            </div>
           </Card>
           <Card className="lg:sticky lg:top-20">
             <h2 className="text-base font-semibold">Publish</h2>
@@ -189,5 +219,37 @@ export function ProductForm({ product }: { product: AdminProduct | null }) {
         </div>
       </div>
     </>
+  );
+}
+
+const STANDARD_BADGES = BADGE_KINDS.filter((k): k is Exclude<BadgeKind, "custom"> => k !== "custom");
+const TONE_OF: Record<Exclude<BadgeKind, "custom">, ProductBadge["tone"]> = { new: "success", signature: "accent", "chefs-choice": "accent", recommended: "accent", limited: "warning", combo: "brand" };
+
+function BadgePicker({ value, onChange }: { value: ProductBadge[]; onChange: (badges: ProductBadge[]) => void }) {
+  const custom = value.find((b) => b.kind === "custom");
+  const full = value.length >= MAX_BADGES;
+  const toggle = (kind: Exclude<BadgeKind, "custom">, on: boolean) => onChange(on ? [...value, { kind, label: "", tone: TONE_OF[kind] }] : value.filter((b) => b.kind !== kind));
+  return (
+    <div className="mt-3 space-y-3">
+      <div className="flex flex-wrap gap-2">
+        {STANDARD_BADGES.map((kind) => {
+          const on = value.some((b) => b.kind === kind);
+          return (
+            <button key={kind} type="button" aria-pressed={on} disabled={!on && full} onClick={() => toggle(kind, !on)}
+              className={cx("rounded-full border px-3 py-1.5 text-sm font-medium disabled:opacity-40", on ? "border-primary bg-primary-soft text-primary" : "border-border-strong hover:bg-subtle")}>
+              {BADGE_LABELS[kind]}
+            </button>
+          );
+        })}
+      </div>
+      <Field label="Your own badge (optional)" hint="e.g. Royal Feast, Banarasi must-try — up to 24 characters">
+        {(p) => <Input {...p} maxLength={24} disabled={!custom && full} value={custom?.label ?? ""}
+          onChange={(e) => {
+            const label = e.target.value;
+            const rest = value.filter((b) => b.kind !== "custom");
+            onChange(label.trim() ? [...rest, { kind: "custom", label, tone: "neutral" }] : rest);
+          }} />}
+      </Field>
+    </div>
   );
 }

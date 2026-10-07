@@ -63,9 +63,29 @@
 `GET /v1/admin/analytics/...`
 
 `GET /v1/admin/appearance` · `PUT|DELETE /v1/admin/appearance/draft` · `POST /v1/admin/appearance/publish` ·
-`POST /v1/admin/appearance/restore` — storefront theme draft/publish/history (ADR-012). Publish/restore return
-`422 THEME_NOT_READABLE` with `details.issues` when text contrast fails. The public config endpoint returns the
-normalised `theme`; `?theme=draft` (merchant preview) returns the saved draft instead.
+`POST /v1/admin/appearance/restore` — storefront theme **and experience** draft/publish/history (ADR-012, ADR-013).
+Draft saves take `{ theme?, experience? }` (either or both); publish/restore make both live as one version. Errors:
+`422 THEME_NOT_READABLE` (text contrast) or `422 EXPERIENCE_NOT_READY` (homepage photo without alt text), each
+with `details.issues`. The state includes `experience.{published, draft, check}` and a `media` map.
+
+`POST /v1/admin/preview-token` → `{ token, expiresAt, brandSlug }`: signed, expiring merchant preview link
+(`tenant.read`). Public endpoints accept `?preview=<token>`; a valid token for the store shows the unpublished store,
+draft dishes stay hidden, and `config` returns the draft theme and experience with `preview: true`. Anything else
+(including the old `?preview=1`) gets the public view.
+
+`GET /v1/admin/media?kind=` · `POST /v1/admin/media?kind=&alt=` (multipart upload) · `PATCH /v1/admin/media/:id`
+(`altText`, `kind`) · `DELETE /v1/admin/media/:id` (`409 MEDIA_IN_USE` with `details.usedIn` while used) — media
+library with alt text and usage.
+
+`GET|PUT /v1/admin/settings/policies` — refund/terms/privacy/delivery policy text; public
+`GET /v1/storefront/:store/policies/:key`. Business settings take `fssai` (14 digits).
+
+Public `config` adds `experience`, `media`, `stats.paidOrders` (null below 50), `credentials`, `policies`,
+`deliveryAreas[].freeDeliveryMinimumMinor`, `preview`. `menu` adds `bestsellerIds` and per dish `nameHi`,
+`descriptionHi`, `badges`, `bestseller`, `gallery`; per category `nameHi`, `descriptionHi`, `imageUrl`. Quotes add
+`delivery.freeDeliveryMinimumMinor`; offers add `minimumOrderMinor`. Products take `nameHi`, `descriptionHi`,
+`badges`, `galleryAssetIds`; categories take `nameHi`, `descriptionHi`, `imageAssetId` (slugs can't be store page
+names); delivery areas take `freeDeliveryMinimumMinor`.
 
 ## Webhooks
 

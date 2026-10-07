@@ -6,7 +6,7 @@ import Image from "next/image";
 import type { MenuProduct } from "@restaurant-os/types";
 import { Button, Drawer, cx, formatMoney, QuantityStepper, toast } from "@restaurant-os/ui";
 import { Plus } from "lucide-react";
-import { useCart } from "@/lib/cart";
+import { lineKey, useCart } from "@/lib/cart";
 import { useStore } from "./providers";
 
 function initialSelection(product: MenuProduct): Record<string, string[]> {
@@ -76,30 +76,45 @@ export function OptionGroups({ product, selection }: { product: MenuProduct; sel
 }
 
 export function AddToCartButton({ product, size = "md", label = "Add" }: { product: MenuProduct; size?: "md" | "lg"; label?: string }) {
-  const { add } = useCart();
+  const { items, add, setQuantity, ready } = useCart();
   const { canOrder } = useStore();
   const [open, setOpen] = useState(false);
+  const [justAdded, setJustAdded] = useState(false);
   const hasOptions = product.modifierGroups.length > 0;
+  const inCart = ready ? items.filter((i) => i.productId === product.id).reduce((n, i) => n + i.quantity, 0) : 0;
 
   if (!product.available) {
     return <span className="inline-flex h-10 items-center rounded-[var(--ros-radius-md)] bg-subtle px-3 text-sm font-medium text-muted">{product.unavailableReason ?? "Out of stock"}</span>;
   }
+  const flash = () => { setJustAdded(true); window.setTimeout(() => setJustAdded(false), 650); };
   const quickAdd = () => {
     add({ productId: product.id, slug: product.slug, name: product.name, modifierIds: [], optionLabels: [], unitPriceMinor: product.priceMinor, imageUrl: product.imageUrl });
+    flash();
     toast.success(`${product.name} added`, { description: canOrder ? undefined : "You can check out once we're open.", action: undefined });
   };
+
+  // Already in the cart (no options): the button becomes a stepper, so the quantity is visible right here.
+  if (!hasOptions && inCart > 0) {
+    const key = lineKey(product.id, []);
+    return (
+      <QuantityStepper value={inCart} label={product.name} size={size === "lg" ? "md" : "sm"} className={cx("ros-fade-up", size === "lg" ? "h-12" : "h-10")}
+        onChange={(q) => setQuantity(key, q)} />
+    );
+  }
   return (
-    <>
+    <div className="flex flex-col items-center gap-1">
       <Button size={size} variant={size === "lg" ? "primary" : "outline"} onClick={hasOptions ? () => setOpen(true) : quickAdd} icon={<Plus className="size-4" aria-hidden />}
-        aria-label={`${label} ${product.name}${hasOptions ? " (choose options)" : ""}`}>
+        className={cx("ros-add ros-press", justAdded && "ros-added")}
+        aria-label={`${label} ${product.name}${hasOptions ? " (choose options)" : ""}${inCart ? `, ${inCart} in your order` : ""}`}>
         {label}
       </Button>
-      {hasOptions && <OptionSheet product={product} open={open} onOpenChange={setOpen} />}
-    </>
+      {hasOptions && inCart > 0 && <span className="text-xs font-medium text-link" aria-hidden>{inCart} in your order</span>}
+      {hasOptions && <OptionSheet product={product} open={open} onOpenChange={setOpen} onAdded={flash} />}
+    </div>
   );
 }
 
-function OptionSheet({ product, open, onOpenChange }: { product: MenuProduct; open: boolean; onOpenChange: (open: boolean) => void }) {
+function OptionSheet({ product, open, onOpenChange, onAdded }: { product: MenuProduct; open: boolean; onOpenChange: (open: boolean) => void; onAdded?: () => void }) {
   const { add } = useCart();
   const { currency } = useStore();
   const selection = useOptionSelection(product);
@@ -111,6 +126,7 @@ function OptionSheet({ product, open, onOpenChange }: { product: MenuProduct; op
     if (selection.problems.length) return;
     add({ productId: product.id, slug: product.slug, name: product.name, modifierIds: selection.modifierIds, optionLabels: selection.optionLabels, unitPriceMinor: selection.unitPriceMinor, imageUrl: product.imageUrl }, quantity);
     toast.success(`${product.name} added`);
+    onAdded?.();
     onOpenChange(false);
     selection.reset();
     setQuantity(1);

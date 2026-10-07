@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, Copy, ImageOff, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import type { AdminCategory, AdminModifierGroup, AdminProduct } from "@restaurant-os/types";
+import { ImageField } from "@/components/appearance/media";
 import {
   Alert, Badge, Button, Card, ConfirmDialog, DataTable, EmptyState, ErrorState, Field, Input, Modal, PageHeader, Select, Skeleton, StatusPill, Switch, Tabs, Textarea,
   buttonClass, cx, formatMoney, toast,
@@ -167,7 +168,7 @@ function CategoriesTab() {
   const key = useTenantKey("categories");
   const { categories } = useCatalog();
   const [editing, setEditing] = useState<AdminCategory | "new" | null>(null);
-  const [form, setForm] = useState({ name: "", description: "", status: "ACTIVE" as "ACTIVE" | "INACTIVE" });
+  const [form, setForm] = useState({ name: "", description: "", status: "ACTIVE" as "ACTIVE" | "INACTIVE", nameHi: "", imageAssetId: null as string | null });
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<AdminCategory | null>(null);
   const invalidate = () => { void qc.invalidateQueries({ queryKey: key }); };
@@ -185,7 +186,8 @@ function CategoriesTab() {
   const open = (c: AdminCategory | "new") => {
     setEditing(c);
     setError(null);
-    setForm(c === "new" ? { name: "", description: "", status: "ACTIVE" } : { name: c.name, description: c.description, status: c.status === "INACTIVE" ? "INACTIVE" : "ACTIVE" });
+    setForm(c === "new" ? { name: "", description: "", status: "ACTIVE", nameHi: "", imageAssetId: null }
+      : { name: c.name, description: c.description, status: c.status === "INACTIVE" ? "INACTIVE" : "ACTIVE", nameHi: c.nameHi, imageAssetId: c.imageAssetId });
   };
   if (categories.isLoading) return <Skeleton className="h-64" />;
   const list = categories.data ?? [];
@@ -204,8 +206,10 @@ function CategoriesTab() {
           <ul className="divide-y divide-border">
             {list.map((c, i) => (
               <li key={c.id} className="flex items-center gap-3 px-4 py-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {c.imageUrl ? <img src={c.imageUrl} alt="" className="size-10 shrink-0 rounded-[var(--ros-radius-sm)] object-cover" /> : <span className="size-10 shrink-0 rounded-[var(--ros-radius-sm)] bg-subtle" aria-hidden />}
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium">{c.name} {c.status === "INACTIVE" && <Badge>Hidden</Badge>}</p>
+                  <p className="font-medium">{c.name} {c.nameHi && <span lang="hi" className="text-sm font-normal text-muted">{c.nameHi}</span>} {c.status === "INACTIVE" && <Badge>Hidden</Badge>}</p>
                   <p className="text-sm text-muted">{c.productCount} item{c.productCount === 1 ? "" : "s"} · /{c.slug}</p>
                 </div>
                 {can("catalog.manage") && <>
@@ -224,6 +228,9 @@ function CategoriesTab() {
         <div className="space-y-4">
           <Field label="Name" required error={error}>{(p) => <Input {...p} autoFocus value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />}</Field>
           <Field label="Description" hint="Shown on the category page">{(p) => <Textarea {...p} rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />}</Field>
+          <Field label="Name in Hindi (optional)">{(p) => <Input {...p} lang="hi" maxLength={80} value={form.nameHi} onChange={(e) => setForm({ ...form, nameHi: e.target.value })} />}</Field>
+          <ImageField label="Category photo" imageId={form.imageAssetId} onChange={(imageAssetId) => setForm({ ...form, imageAssetId })} kind="category" media={{}}
+            hint="Used on your homepage's category cards. Without one, the first dish photo is used." />
           <Switch checked={form.status === "ACTIVE"} onCheckedChange={(v) => setForm({ ...form, status: v ? "ACTIVE" : "INACTIVE" })} label="Visible on the storefront" />
         </div>
       </Modal>

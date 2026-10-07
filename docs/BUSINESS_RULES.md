@@ -79,6 +79,28 @@
 - Only roles with `tenant.manage` (Owner) can change the look; roles with `tenant.read` can view it.
 - Every published theme is kept and can be restored in one step.
 
+## Storefront brand experience (ADR-013)
+
+- The homepage, site layout, menu presentation and SEO overrides are per tenant (`brands.experience`), drafted
+  and published **together with the theme** as one version; a restore brings back both.
+- A homepage photo can't be published without a description (alt text). Text placed on a photo always gets a
+  readable overlay; section backgrounds (page, soft, brand, contrast) are readable by construction.
+- Homepage content may only reference the restaurant's own photos, dishes and categories (others are dropped).
+- **Bestseller** is never set by hand: a dish needs at least N paid, uncancelled orders in the last D days and is
+  ranked by units sold, top K only (restaurant setting, default 5 orders / 30 days / 6 dishes). No sales → no
+  Bestseller badge and no Bestsellers section.
+- Merchant badges: at most three per dish (New, Signature, Chef's choice, Recommended, Limited, Combo, or a custom
+  label up to 24 characters). There is no dish-level "Offer" badge — offers are order-level codes.
+- Trust content is never fabricated: an order count is shown only from real paid orders and only from 50 upward;
+  a rating is shown only with its source, a checkable https link and the month it was read; reviews show their
+  source and date and are never labelled "verified".
+- Preset default copy is neutral and makes no claims about the restaurant (food, history, hours).
+- Applying a preset's layout keeps the restaurant's content and never deletes a section (unused ones are hidden).
+- Merchant preview of drafts and unpublished stores requires a signed, expiring link issued to signed-in staff.
+- FSSAI licence number (14 digits) and GSTIN, when entered, appear in the storefront footer; policy pages appear
+  only once the restaurant has written them.
+- Category web addresses can't use names of store pages (`menu`, `offers`, `checkout`, `policies`, …).
+
 ## Implemented rule details — PENDING OWNER SIGN-OFF
 
 These decisions affect money, customers or operations. They were made during MVP implementation without
@@ -103,3 +125,4 @@ configurable, the setting is named.
 | P13 | Notifications | Customer updates are sent for: order confirmed (on payment), payment failed, accepted, ready, dispatched, delivered/collected, cancelled (+ refund note). Merchant in-app alerts: new paid order, failed delivery, payment after cancellation. Wording is in `apps/api/src/jobs/notifications.ts`. | ADR-009/010 | Approve the message set and wording (automated customer messaging gate). |
 | P14 | Marketing consent | The "send me offers" checkbox is **unticked by default**; consent is stored with a timestamp and can be withdrawn by staff on request. | checkout, customers | Confirm. |
 | P15 | Access | Invited team members are linked **on first sign-in by verified email**. Self-service restaurant creation is **off** (`SELF_SIGNUP_ENABLED=false`). | `auth/context.ts`, env | Confirm (auth/security gate). |
+| P16 | Delivery | **Free delivery above an amount** (per delivery area, optional): the fee is waived when the **item total before discount** reaches the threshold — the same base as the minimum order (P2). | `domain/delivery.ts deliveryFeeFor`, `pricing.ts` | Before or after discount? |

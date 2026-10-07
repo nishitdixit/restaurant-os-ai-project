@@ -10,6 +10,7 @@ import {
 import type { SetupStatus } from "@restaurant-os/types";
 import { Badge, Switch, cx, toast } from "@restaurant-os/ui";
 import { errorMessage, STOREFRONT_URL } from "@/lib/api";
+import { usePreviewUrl } from "@/lib/preview";
 import { useSession, useTenantKey } from "@/lib/session";
 
 const NAV = [
@@ -54,7 +55,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const setupKey = useTenantKey("setup");
   const setup = useQuery({ queryKey: setupKey, queryFn: () => request<SetupStatus>("/v1/admin/setup"), enabled: can("tenant.read"), staleTime: 60_000 });
-  const storefront = membership?.brandSlug ? `${STOREFRONT_URL}${setup.data?.published ? "" : "?preview=1"}` : STOREFRONT_URL;
+  const previewHref = usePreviewUrl("/");
+  const storefront = setup.data?.published ? STOREFRONT_URL : previewHref ?? STOREFRONT_URL;
 
   const nav = (
     <nav aria-label="Main" className="flex flex-col gap-0.5">

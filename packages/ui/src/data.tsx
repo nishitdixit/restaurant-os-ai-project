@@ -123,10 +123,10 @@ export function OrderTimeline({ items, className }: { items: TimelineItem[]; cla
   );
 }
 
-export function QuantityStepper({ value, onChange, min = 0, max = 50, label, size = "md" }: { value: number; onChange: (value: number) => void; min?: number; max?: number; label: string; size?: "sm" | "md" }) {
+export function QuantityStepper({ value, onChange, min = 0, max = 50, label, size = "md", className }: { value: number; onChange: (value: number) => void; min?: number; max?: number; label: string; size?: "sm" | "md"; className?: string }) {
   const btn = size === "sm" ? "size-8" : "size-10";
   return (
-    <div className="inline-flex items-center rounded-full border border-border-strong bg-surface" role="group" aria-label={`Quantity for ${label}`}>
+    <div className={cx("inline-flex items-center justify-between rounded-full border border-border-strong bg-surface", className)} role="group" aria-label={`Quantity for ${label}`}>
       <button type="button" className={cx(btn, "flex items-center justify-center rounded-full text-text hover:bg-subtle disabled:opacity-40")} onClick={() => onChange(value - 1)} disabled={value <= min}
         aria-label={value - 1 <= 0 ? `Remove ${label}` : `Decrease ${label}`}>
         {value - 1 <= 0 && min === 0 ? <Trash2 className="size-4" /> : <Minus className="size-4" />}

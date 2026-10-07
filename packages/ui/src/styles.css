@@ -20,7 +20,7 @@
   --ros-border-strong: #c9cdd3;
   --ros-text: #15181d;
   --ros-muted: #5b6370;
-  --ros-faint: #8a919c;
+  --ros-faint: #697180;
   --ros-primary-soft: color-mix(in srgb, var(--brand-primary) 10%, white);
   --ros-link: var(--brand-primary);
   --ros-accent: var(--brand-primary);
@@ -75,6 +75,13 @@
   --ros-heading-tracking: -0.01em;
   --ros-root-font-size: 100%;
   --ros-image-ratio: 1 / 1;
+  --ros-content-width: 72rem;
+  /* Section backgrounds (storefront experience, ADR-013); defaults = the page. */
+  --ros-section-bg: var(--ros-bg);
+  --ros-section-fg: var(--ros-text);
+  --ros-section-muted: var(--ros-muted);
+  --ros-section-link: var(--ros-link);
+  --ros-section-line: var(--ros-border);
   --ros-hero-from: var(--brand-primary);
   --ros-hero-to: color-mix(in srgb, var(--brand-primary) 70%, black);
 

@@ -254,3 +254,22 @@ All additive (`db/migrations/0008_storefront_theme.sql`).
 - **brand_theme_versions**: every published theme (`tenant_id`, `brand_id`, `theme`, `published_by`, `created_at`)
   for one-click restore.
 
+
+## Migration 0009 additions (storefront brand experience, ADR-013)
+
+All additive (`db/migrations/0009_brand_experience.sql`).
+
+- **brands**: `experience` (published homepage composition, site/menu settings and SEO, jsonb; NULL = the default
+  composition), `experience_draft`, `policies` (jsonb: refund/terms/privacy/delivery text with `updatedAt`).
+  Experiences are always read through `normalizeExperience()` (packages/domain).
+- **brand_theme_versions**: `experience` — published together with the theme (NULL for versions published before
+  experiences; restoring those keeps the current layout).
+- **media_assets**: `kind` (general, logo, hero, product, category, gallery, story, banner), `updated_at`; `alt_text`
+  is now edited in the media library and required for homepage photos.
+- **categories**: `image_asset_id` (→ media_assets, set null on delete), `name_hi`, `description_hi`.
+- **products**: `name_hi`, `description_hi`, `badges` (jsonb, normalised by `normalizeBadges()`; Bestseller is
+  computed, never stored).
+- **product_media**: extra dish photos after the main one (`tenant_id`, `product_id`, `media_id`, `sort_order`).
+- **delivery_zones**: `free_delivery_minimum_minor` (nullable; BUSINESS_RULES P16).
+- **tenants.metadata**: `fssai` alongside `gstin`.
+- Index `orders (tenant_id, created_at)` for the bestseller query.

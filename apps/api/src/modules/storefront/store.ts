@@ -1,5 +1,5 @@
 // Public store context: tenant resolved from a verified brand slug (docs/TENANCY.md).
-import { classicTheme, isOpenAt, nextOpening, normalizeTheme, type OpeningHours, type StoreTheme } from "@restaurant-os/domain";
+import { classicTheme, defaultExperience, isOpenAt, nextOpening, normalizeExperience, normalizeTheme, type OpeningHours, type StoreExperience, type StoreTheme } from "@restaurant-os/domain";
 import type { BrandLinks } from "@restaurant-os/types";
 import type { Db } from "../../db/pool.ts";
 import { ApiError } from "../../lib/errors.ts";
@@ -37,6 +37,11 @@ export interface StoreContext {
   metadata: BrandMetadata;
   theme: unknown;
   themeDraft: unknown;
+  experience: unknown;
+  experienceDraft: unknown;
+  policies: Record<string, unknown>;
+  legalName: string;
+  tenantMetadata: { gstin?: string; fssai?: string };
   logoAssetId: string | null;
   updatedAt: Date;
   published: boolean;
@@ -50,8 +55,10 @@ export async function loadStore(db: Db, slug: string, options: { allowDraft?: bo
   const r = await db.query<{
     tenant_id: string; brand_id: string; slug: string; name: string; currency: string; locale: string; metadata: BrandMetadata;
     logo_asset_id: string | null; updated_at: Date; status: string; theme: unknown; theme_draft: unknown;
+    experience: unknown; experience_draft: unknown; policies: Record<string, unknown> | null; legal_name: string | null; tenant_metadata: StoreContext["tenantMetadata"] | null;
   }>(
-    `SELECT b.tenant_id, b.id AS brand_id, b.slug, b.name, t.default_currency AS currency, t.locale, b.metadata, b.logo_asset_id, b.updated_at, b.status, b.theme, b.theme_draft
+    `SELECT b.tenant_id, b.id AS brand_id, b.slug, b.name, t.default_currency AS currency, t.locale, b.metadata, b.logo_asset_id, b.updated_at, b.status, b.theme, b.theme_draft,
+       b.experience, b.experience_draft, b.policies, t.legal_name, t.metadata AS tenant_metadata
      FROM brands b JOIN tenants t ON t.id = b.tenant_id AND t.status = 'ACTIVE'
      WHERE b.slug = $1 AND ${options.allowDraft ? "b.status IN ('ACTIVE','DRAFT')" : "b.status = 'ACTIVE'"}
      ORDER BY (b.status = 'ACTIVE') DESC LIMIT 1`,
@@ -73,6 +80,11 @@ export async function loadStore(db: Db, slug: string, options: { allowDraft?: bo
     metadata: brand.metadata ?? {},
     theme: brand.theme,
     themeDraft: brand.theme_draft,
+    experience: brand.experience,
+    experienceDraft: brand.experience_draft,
+    policies: brand.policies ?? {},
+    legalName: brand.legal_name ?? "",
+    tenantMetadata: brand.tenant_metadata ?? {},
     logoAssetId: brand.logo_asset_id,
     updatedAt: brand.updated_at,
     published: brand.status === "ACTIVE",
@@ -99,4 +111,9 @@ export function brandLinks(metadata: BrandMetadata): BrandLinks {
 export function publishedTheme(row: { theme: unknown; metadata: BrandMetadata | null }): StoreTheme {
   const base = classicTheme(row.metadata?.primaryColor);
   return row.theme ? normalizeTheme(row.theme, base) : base;
+}
+
+/** The experience a brand renders with: its published experience, or the default composition. */
+export function publishedExperience(row: { experience: unknown }): StoreExperience {
+  return row.experience ? normalizeExperience(row.experience) : defaultExperience();
 }

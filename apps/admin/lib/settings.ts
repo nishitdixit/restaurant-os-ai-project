@@ -6,7 +6,7 @@ import { ApiError, errorMessage } from "./api";
 import { useSession, useTenantKey } from "./session";
 
 export interface SettingsResponse {
-  business: { businessName: string; legalName: string; gstin: string; contactName: string; contactPhone: string; contactEmail: string; currency: "INR"; locale: "en-IN" };
+  business: { businessName: string; legalName: string; gstin: string; fssai: string; contactName: string; contactPhone: string; contactEmail: string; currency: "INR"; locale: "en-IN" };
   brand: { name: string; slug: string; tagline: string; description: string; cuisines: string[]; logoAssetId: string | null; logoUrl: string | null; primaryColor: string; links: BrandLinks; status: string; publishedAt: string | null };
   outlet: {
     name: string; phone: string; address: { line1: string; line2: string; city: string; region: string; postalCode: string }; location: { latitude: number; longitude: number } | null;

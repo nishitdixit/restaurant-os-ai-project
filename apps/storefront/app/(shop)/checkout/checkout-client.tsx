@@ -210,7 +210,7 @@ export function CheckoutClient({ config }: { config: StoreConfig }) {
   const lineProblem = (productId: string) => quote?.lines.find((l) => l.productId === productId && l.problem)?.problem ?? null;
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto max-w-5xl pb-24 lg:pb-0">
       <h1 className="text-2xl ros-heading">Checkout</h1>
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="space-y-6">
@@ -320,6 +320,9 @@ export function CheckoutClient({ config }: { config: StoreConfig }) {
                       <dd className="tabular-nums">{quote.delivery ? (quote.feeMinor ? formatMoney(quote.feeMinor, quote.currency) : "Free") : <span className="text-muted">Enter pincode</span>}</dd></div>
                   )}
                   {quote.delivery && quote.delivery.minimumOrderMinor > 0 && <p className="text-xs text-muted">Minimum order for your area: {formatMoney(quote.delivery.minimumOrderMinor, quote.currency)}</p>}
+                  {fulfillment === "DELIVERY" && quote.delivery?.freeDeliveryMinimumMinor && quote.feeMinor > 0 && (
+                    <p className="text-xs text-success">Add {formatMoney(quote.delivery.freeDeliveryMinimumMinor - quote.subtotalMinor, quote.currency)} more for free delivery.</p>
+                  )}
                   <div className="flex justify-between border-t border-border pt-2 text-base font-semibold"><dt>To pay</dt><dd className="tabular-nums">{formatMoney(quote.totalMinor, quote.currency)}</dd></div>
                 </>
               )}
@@ -331,12 +334,25 @@ export function CheckoutClient({ config }: { config: StoreConfig }) {
             ))}
             {submitError && <Alert tone="danger" className="mt-4">{submitError}</Alert>}
 
-            <Button size="lg" block className="mt-4" loading={submitting} disabled={!quote || quoting || blocking.length > 0} onClick={() => void placeOrder()}>
+            {/* On phones the sticky bar below is the order button (one control, always in reach). */}
+            <Button size="lg" block className="mt-4 max-lg:hidden" loading={submitting} disabled={!quote || quoting || blocking.length > 0} onClick={() => void placeOrder()}>
               {quote ? `Place order · ${formatMoney(quote.totalMinor, quote.currency)}` : "Place order"}
             </Button>
             <p className="mt-2 text-center text-xs text-muted">You&apos;ll pay securely on the next step.</p>
           </Card>
         </aside>
+      </div>
+      {/* Phones: the total and the order button stay in reach while filling in details (same action, same server quote). */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur lg:hidden">
+        <div className="flex items-center gap-3">
+          <div className="min-w-0">
+            <p className="text-xs text-muted">You pay</p>
+            <p className="text-lg font-semibold tabular-nums" aria-live="polite">{quote ? formatMoney(quote.totalMinor, quote.currency) : "…"}</p>
+          </div>
+          <Button size="lg" className="ros-press flex-1" loading={submitting} disabled={!quote || quoting || blocking.length > 0} onClick={() => void placeOrder()}
+            aria-label={quote ? `Place order · ${formatMoney(quote.totalMinor, quote.currency)}` : "Place order"}>Place order</Button>
+        </div>
+        {(submitError || (blocking.length > 0 && quote)) && <p className="mt-2 text-xs font-medium text-danger">Can&apos;t place the order yet — see the note above.</p>}
       </div>
     </div>
   );

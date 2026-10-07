@@ -1,6 +1,6 @@
 # Build State
 
-Updated: 2026-10-06
+Updated: 2026-10-07
 
 ## Current phase
 
@@ -67,6 +67,34 @@ Payments and customer messaging run on development providers by product decision
   normalisation), API (`appearance.test.ts`: draft/publish/restore, guardrail, validation, permissions, tenant
   isolation), E2E (`themes.spec.ts`: every preset on phone and desktop — no sideways scroll, computed contrast of
   header, dish, add-button, category and checkout button text), recording chapter 06b.
+
+## Storefront brand experience (2026-10-07, ADR-013 — owner directive "Brand Experience Upgrade" + preset expansion)
+
+- **Homepage builder**: the homepage is the restaurant's own list of 12 restaurant-native sections (hero in 7
+  layouts, highlights, categories, featured, bestsellers, combos, story, gallery, offers, reviews, delivery, call to
+  action), each with controlled variants, backgrounds (tones), English/Hindi text and photos. Appearance → Homepage
+  adds, hides, reorders and edits them; the live preview re-renders and scrolls to the section being edited.
+- **Complete presets**: each of the 13 styles now sets look + homepage composition + header/footer/width + menu
+  presentation + badge treatment + motion; "Use this style" applies all of it, keeping the restaurant's content
+  ("Look only" keeps the layout). Rationale per preset in `ui/THEME_PRESETS.md`; every pair of presets differs on
+  ≥ 6 visible dimensions (domain test).
+- **Media library** with alt text and usage; category photos; up to 8 extra photos per dish; Hindi dish/category
+  names; dish badges (incl. custom labels); **Bestseller computed from paid orders** (never set by hand).
+- **Storefront UX**: one-row phone header with a menu sheet, food above the fold, "More ways to order" sheet,
+  inline menu search with suggestions/recent searches, veg-only filter, photo/menu-board view toggle, quantity
+  stepper on dish cards, cart drawer with thumbnails, remove, real delivery-fee preview, offer hints and
+  free-delivery progress, sticky "Place order" on phones, dish photo gallery, policy pages, FSSAI/GSTIN footer,
+  CSS-only motion (none/subtle/expressive, reduced-motion respected), SEO title/description/share image.
+- **Free delivery above an amount** per delivery area (BUSINESS_RULES P16, pending sign-off).
+- **Signed merchant preview links** replace the open `?preview=1` (`PREVIEW_SECRET`).
+- Migration 0009 (additive). Restaurants that never edit get the default composition (the original homepage).
+- Tests: domain 62 (experience schema, presets distinctness, badges, bestsellers, free delivery, tone contrast),
+  API 78 (incl. `experience.test.ts`: draft/publish/restore together, signed preview, alt-text guardrail, media
+  library, cross-tenant references, bestsellers, badges/gallery/Hindi, reserved slugs, free delivery, FSSAI and
+  policies), E2E: `themes.spec.ts` 13 presets × phone/desktop + reduced motion, `a11y.spec.ts` (axe), and
+  `customer.spec.ts` — all passing against a local stack on 2026-10-07. Accessibility fixes found by axe: faint
+  text contrast, dimmed out-of-stock cards. Recorded walkthrough `recordings/2026-10-07_0330` (chapters 01–06, 06b
+  Appearance builder, 08 customer browsing; real Clerk dev sign-up): 8/8 passed. Other chapters were not re-run.
 
 ## Security review findings (2026-10-06 alignment review)
 
