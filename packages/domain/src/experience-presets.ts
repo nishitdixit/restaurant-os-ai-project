@@ -5,7 +5,7 @@
 //
 // Applying a layout never destroys the restaurant's own content: story text, photos, reviews, highlights and
 // picked dishes carry over to the matching section; sections the preset doesn't use are switched off, not deleted.
-// The language setting, SEO text and bestseller rules are the restaurant's business and are kept as they are.
+// The language and WhatsApp-ordering settings, SEO text and bestseller rules are the restaurant's business and are kept as they are.
 import {
   defaultExperience, defaultSection, EXPERIENCE_VERSION, lt, normalizeExperience,
   type ExperienceMenu, type ExperienceSite, type Section, type SectionOf, type SectionType, type SectionVariant, type StoreExperience,
@@ -26,7 +26,7 @@ export interface PresetDesign {
   personality: string;
   /** Three to five design traits shown as chips: "Dark surfaces · editorial serif · wide photos". */
   traits: string[];
-  site: Omit<ExperienceSite, "language">;
+  site: Omit<ExperienceSite, "language" | "whatsappOrdering">;
   /** Presentation only; the restaurant's bestseller rules, search and veg-filter choices are kept. */
   menu: Pick<ExperienceMenu, "viewToggle" | "showBadges">;
   sections: PresetSection[];
@@ -308,7 +308,7 @@ export function applyLayoutPreset(current: StoreExperience, presetId: string, op
   return normalizeExperience({
     version: EXPERIENCE_VERSION,
     layoutPresetId: presetId,
-    site: { ...design.site, language: current.site.language },
+    site: { ...design.site, language: current.site.language, whatsappOrdering: current.site.whatsappOrdering },
     menu: { ...current.menu, ...design.menu },
     seo: current.seo,
     sections: [...sections, ...leftovers],

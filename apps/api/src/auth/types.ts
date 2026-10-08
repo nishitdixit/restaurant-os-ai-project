@@ -8,6 +8,8 @@ export type Permission =
   | "availability.manage"
   | "order.read"
   | "order.manage"
+  /** Enter orders that reached the restaurant directly (WhatsApp, phone, walk-in) — ADR-014. */
+  | "order.create"
   | "customer.read"
   | "customer.manage"
   | "promotion.manage"

@@ -273,3 +273,14 @@ All additive (`db/migrations/0009_brand_experience.sql`).
 - **delivery_zones**: `free_delivery_minimum_minor` (nullable; BUSINESS_RULES P16).
 - **tenants.metadata**: `fssai` alongside `gstin`.
 - Index `orders (tenant_id, created_at)` for the bestseller query.
+
+### Staff-entered orders and staff-only offers (migration 0010, ADR-014)
+
+- **orders**: `created_by_user_id` (staff member who entered it; NULL = website), `payment_method` (CASH / UPI / CARD /
+  PAY_LATER; NULL = paid online), `notify_customer` (default true); `channel` also takes WALK_IN and OTHER.
+  Index `(tenant_id, channel, created_at)`.
+- **payments**: staff orders have one `provider = 'manual'` row (CAPTURED when paid now, PENDING for pay later);
+  `metadata` holds `method` and `recordedBy`.
+- **promotions**: `staff_only` (with `is_public` gives the audience PUBLIC / CODE_ONLY / STAFF_ONLY).
+- **promotion_redemptions**: `applied_by_user_id` (NULL = the customer at checkout).
+- **permissions**: `order.create` granted to OWNER, MANAGER, KITCHEN, STAFF, PLATFORM_ADMIN.

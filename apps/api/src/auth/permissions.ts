@@ -3,18 +3,18 @@ import type { Permission, Role, TenantContext } from "./types";
 const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
   OWNER: [
     "tenant.read", "tenant.manage", "catalog.read", "catalog.manage", "availability.manage",
-    "order.read", "order.manage", "customer.read", "customer.manage", "promotion.manage",
+    "order.read", "order.manage", "order.create", "customer.read", "customer.manage", "promotion.manage",
     "delivery.manage", "analytics.read", "integration.manage", "billing.manage", "audit.read",
   ],
   MANAGER: [
-    "tenant.read", "catalog.read", "catalog.manage", "availability.manage", "order.read", "order.manage",
+    "tenant.read", "catalog.read", "catalog.manage", "availability.manage", "order.read", "order.manage", "order.create",
     "customer.read", "customer.manage", "promotion.manage", "delivery.manage", "analytics.read",
   ],
-  KITCHEN: ["catalog.read", "availability.manage", "order.read", "order.manage"],
-  STAFF: ["catalog.read", "order.read", "order.manage"],
+  KITCHEN: ["catalog.read", "availability.manage", "order.read", "order.manage", "order.create"],
+  STAFF: ["catalog.read", "order.read", "order.manage", "order.create"],
   PLATFORM_ADMIN: [
     "tenant.read", "tenant.manage", "catalog.read", "catalog.manage", "availability.manage", "order.read",
-    "order.manage", "customer.read", "customer.manage", "promotion.manage", "delivery.manage",
+    "order.manage", "order.create", "customer.read", "customer.manage", "promotion.manage", "delivery.manage",
     "analytics.read", "integration.manage", "billing.manage", "audit.read",
   ],
 };

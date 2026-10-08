@@ -13,6 +13,7 @@ import { Button, Drawer, EmptyState, formatMoney, QuantityStepper, buttonClass, 
 import { clientRequest } from "@/lib/api";
 import { useCart } from "@/lib/cart";
 import { useStore } from "./providers";
+import { WhatsAppOrderLink } from "./whatsapp-order";
 
 export function CartButton() {
   const { count, setOpen, ready } = useCart();
@@ -114,6 +115,7 @@ export function CartDrawer() {
           </dl>
           <p className="text-xs text-muted">{unlocked ? "Apply your code at checkout — the final total is confirmed there." : "Offers and the final total are confirmed at checkout."}</p>
           <Button size="lg" block className="ros-press" onClick={() => { setOpen(false); router.push("/checkout"); }}>Go to checkout · {money(subtotal + (quote?.delivery ? quote.feeMinor : 0))}</Button>
+          <WhatsAppOrderLink variant="text" className="w-full justify-center" label="Or send this order on WhatsApp" />
         </div>
       ) : undefined}>
       {items.length === 0 ? (

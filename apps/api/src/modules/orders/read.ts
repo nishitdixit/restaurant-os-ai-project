@@ -33,11 +33,15 @@ export interface OrderRow {
   cancel_reason_code: string | null;
   cancel_note: string | null;
   outlet_id: string;
+  created_by_user_id: string | null;
+  payment_method: "CASH" | "UPI" | "CARD" | "PAY_LATER" | null;
+  notify_customer: boolean;
 }
 
 export const ORDER_COLUMNS = `o.id, o.tenant_id, o.order_number, o.public_token, o.status, o.payment_status, o.fulfillment_type, o.channel, trim(o.currency) AS currency,
   o.subtotal_minor, o.discount_minor, o.fee_minor, o.tax_minor, o.total_minor, o.customer_id, o.customer_snapshot, o.address_snapshot,
-  o.customer_note, o.promotion_code, o.eta_min, o.eta_max, o.created_at, o.paid_at, o.accepted_at, o.cancel_reason_code, o.cancel_note, o.outlet_id`;
+  o.customer_note, o.promotion_code, o.eta_min, o.eta_max, o.created_at, o.paid_at, o.accepted_at, o.cancel_reason_code, o.cancel_note, o.outlet_id,
+  o.created_by_user_id, o.payment_method, o.notify_customer`;
 
 export async function orderItems(db: Db, orderId: string): Promise<PublicOrderItem[]> {
   const r = await db.query<{ product_id: string | null; product_name_snapshot: string; quantity: number; unit_price_minor: number; line_total_minor: number; modifiers_snapshot: { groupName: string; name: string; priceDeltaMinor: number; modifierId?: string }[] }>(

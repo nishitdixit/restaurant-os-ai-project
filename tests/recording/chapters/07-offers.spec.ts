@@ -17,7 +17,7 @@ async function createOffer(admin: Page, o: Offer) {
   const box = (name: string) => d.getByRole("checkbox", { name: new RegExp(`^${name}`) });
   if (o.firstOrder) await click(admin, box("First order only"));
   if (o.oncePerCustomer === false) await click(admin, box("Once per customer"));
-  if (o.hidden) await click(admin, box("Show on the storefront"));
+  if (o.hidden) await d.getByRole("combobox", { name: "Who can use it" }).selectOption("CODE_ONLY");
   await sleep(600);
   await click(admin, d.getByRole("button", { name: "Save offer" }));
   await expect(admin.getByText("Offer saved").first()).toBeVisible();

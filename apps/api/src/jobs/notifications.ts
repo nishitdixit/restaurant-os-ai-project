@@ -20,6 +20,8 @@ interface OrderContext {
   customer_snapshot: { name?: string; phone?: string; email?: string }; eta_min: number | null; eta_max: number | null; refunded_minor: number;
   cancel_reason_code: string | null; store_name: string; store_slug: string; item_count: number;
   rider_name: string | null; rider_phone: string | null;
+  /** Staff can switch customer updates off for an order they enter (ADR-014). */
+  notify_customer: boolean; payment_method: string | null; payment_status: string;
 }
 
 export interface PlannedMessage {
@@ -37,7 +39,7 @@ async function loadOrder(tenantId: string, orderId: string): Promise<OrderContex
             o.cancel_reason_code, b.name AS store_name, b.slug AS store_slug,
             (SELECT coalesce(sum(quantity), 0) FROM order_items WHERE order_id = o.id) AS item_count,
             (SELECT coalesce(sum(r.amount_minor), 0) FROM payment_refunds r JOIN payments p ON p.id = r.payment_id WHERE p.order_id = o.id) AS refunded_minor,
-            d.rider_name, d.rider_phone
+            d.rider_name, d.rider_phone, o.notify_customer, o.payment_method, o.payment_status
      FROM orders o JOIN outlets ot ON ot.id = o.outlet_id JOIN brands b ON b.id = ot.brand_id
      LEFT JOIN delivery_orders d ON d.order_id = o.id
      WHERE o.id = $1 AND o.tenant_id = $2`, [orderId, tenantId]);
@@ -50,6 +52,7 @@ function trackUrl(o: OrderContext) {
 
 function customerMessages(o: OrderContext, template: string, subject: string, text: string): PlannedMessage[] {
   const messages: PlannedMessage[] = [];
+  if (!o.notify_customer) return messages;
   const body = `${text}\n\nTrack your order: ${trackUrl(o)}\n— ${o.store_name}`;
   if (o.customer_snapshot.phone) messages.push({ audience: "CUSTOMER", channel: "whatsapp", recipient: o.customer_snapshot.phone, template, subject: null, body });
   if (o.customer_snapshot.email) messages.push({ audience: "CUSTOMER", channel: "email", recipient: o.customer_snapshot.email, template, subject, body });
@@ -73,6 +76,14 @@ export async function planMessages(event: DomainEventRow): Promise<{ orderId: st
   const messages: PlannedMessage[] = [];
 
   switch (event.event_type) {
+    case "OrderCreated": {
+      // Website orders are confirmed when payment is captured; staff-entered orders are confirmed when entered.
+      if (event.payload.enteredByStaff !== true) break;
+      const paid = o.payment_status === "CAPTURED";
+      messages.push(...customerMessages(o, "ORDER_CONFIRMED", `Order ${n} confirmed`,
+        `Hi ${name}, ${o.store_name} has your order ${n} (${total}).${paid ? " Payment received — thank you!" : ` Please pay ${total} on ${pickup ? "pickup" : "delivery"}.`}${eta ? ` ${pickup ? "Ready for pickup" : "Estimated delivery"} in about ${eta}.` : ""}`));
+      break;
+    }
     case "PaymentCaptured":
       messages.push(...customerMessages(o, "ORDER_CONFIRMED", `Order ${n} confirmed`, `Hi ${name}, we've received your order ${n} (${total}). Payment confirmed — the kitchen will accept it shortly.`));
       messages.push(merchant("NEW_ORDER", `New order ${n}`, `New paid ${pickup ? "pickup" : "delivery"} order ${n}: ${o.item_count} item${o.item_count === 1 ? "" : "s"}, ${total}.`));
@@ -93,7 +104,8 @@ export async function planMessages(event: DomainEventRow): Promise<{ orderId: st
     }
     case "OrderCancelled": {
       const willRefund = event.payload.willRefund === true;
-      messages.push(...customerMessages(o, "ORDER_CANCELLED", `Order ${n} cancelled`, `Sorry ${name}, order ${n} has been cancelled by ${o.store_name}.${willRefund ? ` A full refund of ${total} has been started; it usually reaches your account in 5–7 working days.` : ""}`));
+      const refundText = !willRefund ? "" : o.payment_method ? ` ${o.store_name} will return your payment of ${total}.` : ` A full refund of ${total} has been started; it usually reaches your account in 5–7 working days.`;
+      messages.push(...customerMessages(o, "ORDER_CANCELLED", `Order ${n} cancelled`, `Sorry ${name}, order ${n} has been cancelled by ${o.store_name}.${refundText}`));
       break;
     }
     case "DeliveryUpdated":

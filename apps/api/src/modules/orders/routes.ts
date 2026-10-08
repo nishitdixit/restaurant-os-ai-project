@@ -1,11 +1,15 @@
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
-import { CancelOrderInputSchema, DeliveryUpdateInputSchema, DispatchInputSchema, OrderListQuerySchema, OrderNoteInputSchema, RefundInputSchema, TransitionInputSchema } from "@restaurant-os/types";
+import {
+  CancelOrderInputSchema, CustomerLookupQuerySchema, DeliveryUpdateInputSchema, DispatchInputSchema, MarkPaidInputSchema, OrderListQuerySchema, OrderNoteInputSchema,
+  RefundInputSchema, StaffOrderInputSchema, StaffQuoteInputSchema, TransitionInputSchema,
+} from "@restaurant-os/types";
 import { ApiError } from "../../lib/errors.ts";
 import { actorOf, requirePermission, tenantOf } from "../../auth/context.ts";
 import { refundOrder } from "../payments/service.ts";
 import { addNote, cancelOrder, dispatchOrder, listOrders, orderDetail, transitionOrder, updateDelivery } from "./admin.ts";
+import { createStaffOrder, lookupCustomer, markOrderPaid, staffMenu, staffOffers, staffQuote } from "./staff.ts";
 
 const Id = z.object({ id: z.uuid() });
 const tags = ["orders"];
@@ -14,6 +18,22 @@ export async function orderRoutes(app: FastifyInstance) {
   const r = app.withTypeProvider<ZodTypeProvider>();
 
   r.get("/v1/admin/orders", { preValidation: requirePermission("order.read"), schema: { tags, querystring: OrderListQuerySchema } }, async (req) => listOrders(tenantOf(req).tenantId, req.query));
+  // Orders staff enter themselves (ADR-014): menu, offers, customer lookup, price check, create; and "mark paid".
+  r.get("/v1/admin/orders/new/menu", { preValidation: requirePermission("order.create"), schema: { tags } }, async (req) => staffMenu(tenantOf(req).tenantId));
+  r.get("/v1/admin/orders/new/offers", { preValidation: requirePermission("order.create"), schema: { tags } }, async (req) => ({ items: await staffOffers(tenantOf(req).tenantId) }));
+  r.get("/v1/admin/orders/new/customer", { preValidation: requirePermission("order.create"), schema: { tags, querystring: CustomerLookupQuerySchema } }, async (req) => lookupCustomer(tenantOf(req).tenantId, req.query.phone));
+  r.post("/v1/admin/orders/quote", { preValidation: requirePermission("order.create"), schema: { tags, body: StaffQuoteInputSchema } }, async (req) => staffQuote(tenantOf(req).tenantId, req.body));
+  r.post("/v1/admin/orders", {
+    preValidation: requirePermission("order.create"),
+    schema: { tags, body: StaffOrderInputSchema, headers: z.object({ "idempotency-key": z.string().min(8).max(120) }).loose() },
+  }, async (req, reply) => {
+    const t = tenantOf(req);
+    const result = await createStaffOrder({ ...actorOf(req), userId: t.userId }, t.role, req.body, req.headers["idempotency-key"]);
+    return reply.status(result.duplicate ? 200 : 201).send(result);
+  });
+  r.post("/v1/admin/orders/:id/mark-paid", { preValidation: requirePermission("order.manage"), schema: { tags, params: Id, body: MarkPaidInputSchema } }, async (req) =>
+    markOrderPaid(actorOf(req), tenantOf(req).role, req.params.id, req.body.method));
+
   r.get("/v1/admin/orders/:id", { preValidation: requirePermission("order.read"), schema: { tags, params: Id } }, async (req) => orderDetail(tenantOf(req).tenantId, req.params.id, tenantOf(req).role));
   r.post("/v1/admin/orders/:id/transition", { preValidation: requirePermission("order.manage"), schema: { tags, params: Id, body: TransitionInputSchema } }, async (req) => transitionOrder(actorOf(req), tenantOf(req).role, req.params.id, req.body.to));
   r.post("/v1/admin/orders/:id/cancel", { preValidation: requirePermission("order.manage"), schema: { tags, params: Id, body: CancelOrderInputSchema } }, async (req) => cancelOrder(actorOf(req), tenantOf(req).role, req.params.id, req.body));

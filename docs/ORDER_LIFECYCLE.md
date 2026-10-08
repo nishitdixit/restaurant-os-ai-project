@@ -45,8 +45,13 @@ Channel is metadata describing origin, not a separate order model:
 - ZOMATO
 - ONDC
 - POS
+- WALK_IN, OTHER (staff-entered, ADR-014)
 
 Only channels actually integrated/supported should create orders automatically in the platform.
+
+Staff can **enter** WHATSAPP, PHONE, WALK_IN and OTHER orders from the dashboard (ADR-014). They are priced by the
+same engine as website orders, start ACCEPTED, record who entered them (`created_by_user_id`) and how they are paid
+(`payment_method`: CASH / UPI / CARD, or PAY_LATER until marked paid). Aggregator orders are not entered by hand.
 
 ## Snapshot policy
 

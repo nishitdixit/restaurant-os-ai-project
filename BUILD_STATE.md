@@ -1,6 +1,6 @@
 # Build State
 
-Updated: 2026-10-07
+Updated: 2026-10-08
 
 ## Current phase
 
@@ -95,6 +95,33 @@ Payments and customer messaging run on development providers by product decision
   `customer.spec.ts` — all passing against a local stack on 2026-10-07. Accessibility fixes found by axe: faint
   text contrast, dimmed out-of-stock cards. Recorded walkthrough `recordings/2026-10-07_0330` (chapters 01–06, 06b
   Appearance builder, 08 customer browsing; real Clerk dev sign-up): 8/8 passed. Other chapters were not re-run.
+
+## Orders from WhatsApp, phone and walk-ins; staff-only offers; WhatsApp messages (2026-10-08, ADR-014)
+
+- **New order** (Orders → New order, `order.create`: Owner, Manager, Kitchen, Staff): staff enter WhatsApp, phone,
+  walk-in and other orders. Same pricing engine as website checkout (shared `createOrderRecord`): same total for the
+  same cart, delivery outside the delivery areas blocked, unavailable dishes blocked. Orders start accepted, record
+  who entered them, and are paid by cash / UPI / card or **pay later** ("Payment due" on the board, "Mark as paid",
+  never expired, not in sales until paid). Known phone numbers fill name and saved addresses. Source badges and a
+  source filter on the order list; customer updates optional per order.
+- **Staff-only offers**: "Who can use it" on every offer (shown on website / code only / staff only). Staff pick any
+  live offer on the new-order screen; staff-only codes are refused on the website as unknown codes. Usage split by
+  website vs staff and by staff member on the Offers page; offers table and "pay later" money due in Analytics.
+- **"Order on WhatsApp"**: buttons on the dish page, the option sheet, the cart and checkout; the restaurant's
+  existing WhatsApp links (header sheet, homepage buttons, footer) also carry the cart. The message lists quantity,
+  dish, portion and add-ons with prices and the total (checkout adds the quoted fee/offer/total and delivery
+  details). Appearance → Page layout switch "Order on WhatsApp buttons" (default on; needs a WhatsApp number).
+- Migration 0010 (additive): `orders.created_by_user_id/payment_method/notify_customer`, `promotions.staff_only`,
+  `promotion_redemptions.applied_by_user_id`, permission `order.create`. BUSINESS_RULES P17–P20 await sign-off.
+- Tests (2026-10-08): domain 69 (incl. `order-message.test.ts`), API 94 (incl. `staff-orders.test.ts`: price
+  parity with the website, all four roles, double submit, blocked delivery/unavailable dish, paused ordering, walk-in
+  rules, customer lookup, staff-only offers hidden/refused/attributed, pay later never expires and counts once paid,
+  mark-paid rules, manual refunds, notify setting, tenant isolation), E2E 62/62 against a local stack (incl.
+  `whatsapp.spec.ts` on phone and desktop). Admin production build passes. Recording chapter 18 added (storefront WhatsApp
+  messages, staff-only offer, WhatsApp pay-later order + mark paid, walk-in cash order, reports) and chapter 07
+  updated for the new offer control: `recordings/2026-10-08_0132` 01–07 passed; `recordings/2026-10-08_0144`
+  01–06 + 18 passed (7/7). Open: one React hydration warning (#418) on the storefront `/menu` in chapter 18's
+  recording, not reproducible on a local production build.
 
 ## Security review findings (2026-10-06 alignment review)
 

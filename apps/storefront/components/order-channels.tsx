@@ -28,7 +28,7 @@ export function OrderChannelsButton({ channels, label = "More ways to order", cl
         <ul className="space-y-2">
           {channels.map((c) => (
             <li key={c.kind}>
-              <a href={c.href} target={c.kind === "call" ? undefined : "_blank"} rel={c.kind === "call" ? undefined : "noopener noreferrer"}
+              <a href={c.href} target={c.kind === "call" ? undefined : "_blank"} rel={c.kind === "call" ? undefined : "noopener noreferrer"} data-wa-cart={c.kind === "whatsapp" ? "" : undefined}
                 className="flex min-h-14 items-center gap-3 rounded-[var(--ros-radius-md)] border border-border bg-surface px-4 py-3 hover:bg-subtle">
                 <span className="text-link">{META[c.kind].icon}</span>
                 <span className="min-w-0 flex-1">

@@ -23,6 +23,8 @@ export function LayoutPanel({ experience, update }: { experience: StoreExperienc
         options={[{ value: "en", label: "English" }, { value: "hi", label: "हिन्दी" }, { value: "bilingual", label: "Both" }]}
         hint="For your own text (titles, story, dish names). Hindi fields appear once you choose Hindi or Both; buttons and checkout stay in English for now." />
       <Switch label="“More ways to order”" description="Lets customers also reach you on WhatsApp, Swiggy, Zomato or by phone." checked={site.orderChannels} onCheckedChange={(v) => set("orderChannels", v)} />
+      <Switch label="“Order on WhatsApp” buttons" description="On dishes, the cart and checkout. The WhatsApp message lists exactly what the customer picked (portion, add-ons, quantity). Needs a WhatsApp number in Settings → Brand."
+        checked={site.whatsappOrdering} onCheckedChange={(v) => set("whatsappOrdering", v)} />
     </PanelCard>
   );
 }

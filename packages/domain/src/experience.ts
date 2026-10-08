@@ -300,6 +300,8 @@ export interface ExperienceSite {
   footer: (typeof SITE_OPTIONS.footer)[number];
   /** Shows "More ways to order" (WhatsApp, Swiggy, Zomato, call) next to "Order direct". */
   orderChannels: boolean;
+  /** "Order on WhatsApp" buttons on dishes, the cart and checkout (shown only when a WhatsApp number is set). */
+  whatsappOrdering: boolean;
 }
 
 export interface BestsellerRules {
@@ -375,7 +377,7 @@ export function defaultSection<T extends SectionType>(type: T, id: string = type
   return (sections[type] as () => SectionOf<T>)();
 }
 
-export const DEFAULT_SITE: ExperienceSite = { language: "en", contentWidth: "standard", header: "standard", footer: "detailed", orderChannels: true };
+export const DEFAULT_SITE: ExperienceSite = { language: "en", contentWidth: "standard", header: "standard", footer: "detailed", orderChannels: true, whatsappOrdering: true };
 export const DEFAULT_MENU: ExperienceMenu = {
   viewToggle: false, inlineSearch: true, vegFilter: true, showBadges: true,
   bestseller: { enabled: true, windowDays: 30, minOrders: 5, limit: 6 },
@@ -535,6 +537,7 @@ export function normalizeExperience(input: unknown, fallback: StoreExperience = 
       header: pick(site.header, SITE_OPTIONS.header, fallback.site.header),
       footer: pick(site.footer, SITE_OPTIONS.footer, fallback.site.footer),
       orderChannels: bool(site.orderChannels, fallback.site.orderChannels),
+      whatsappOrdering: bool(site.whatsappOrdering, fallback.site.whatsappOrdering),
     },
     menu: {
       viewToggle: bool(menu.viewToggle, fallback.menu.viewToggle),

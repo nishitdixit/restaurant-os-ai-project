@@ -32,11 +32,16 @@ export function media(config: StoreConfig, id: string | null | undefined): Media
   return id ? config.media[id] ?? null : null;
 }
 
-export function whatsappLink(number: string, text?: string): string | null {
+/** The restaurant's WhatsApp number in wa.me form (country code, digits only); null when not usable. */
+export function whatsappNumber(number: string): string | null {
   const digits = number.replace(/\D/g, "");
   if (digits.length < 10) return null;
-  const full = digits.length === 10 ? `91${digits}` : digits;
-  return `https://wa.me/${full}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
+  return digits.length === 10 ? `91${digits}` : digits;
+}
+
+export function whatsappLink(number: string, text?: string): string | null {
+  const full = whatsappNumber(number);
+  return full ? `https://wa.me/${full}${text ? `?text=${encodeURIComponent(text)}` : ""}` : null;
 }
 
 export interface ResolvedCta {

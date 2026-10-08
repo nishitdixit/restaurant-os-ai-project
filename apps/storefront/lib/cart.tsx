@@ -3,6 +3,13 @@
 // Display prices here are hints only; every total the customer commits to comes from the server quote.
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
+/** A chosen option with its group, so the "Order on WhatsApp" message can say "Portion: Full" (ADR-014). */
+export interface CartOption {
+  group: string;
+  name: string;
+  priceDeltaMinor: number;
+}
+
 export interface CartItem {
   key: string;
   productId: string;
@@ -11,6 +18,8 @@ export interface CartItem {
   quantity: number;
   modifierIds: string[];
   optionLabels: string[];
+  /** Missing on carts saved before option groups were stored. */
+  options?: CartOption[];
   unitPriceMinor: number;
   imageUrl: string | null;
 }

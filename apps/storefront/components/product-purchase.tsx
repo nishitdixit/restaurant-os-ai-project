@@ -6,6 +6,7 @@ import { Button, formatMoney, QuantityStepper, toast } from "@restaurant-os/ui";
 import { useCart } from "@/lib/cart";
 import { OptionGroups, useOptionSelection } from "./product-ui";
 import { useStore } from "./providers";
+import { WhatsAppOrderLink } from "./whatsapp-order";
 
 /** Inline option selection + add to cart on the product page. */
 export function ProductPurchase({ product }: { product: MenuProduct }) {
@@ -29,7 +30,7 @@ export function ProductPurchase({ product }: { product: MenuProduct }) {
   const submit = (goToCart: boolean) => {
     setTried(true);
     if (selection.problems.length) return;
-    add({ productId: product.id, slug: product.slug, name: product.name, modifierIds: selection.modifierIds, optionLabels: selection.optionLabels, unitPriceMinor: selection.unitPriceMinor, imageUrl: product.imageUrl }, quantity);
+    add({ productId: product.id, slug: product.slug, name: product.name, modifierIds: selection.modifierIds, optionLabels: selection.optionLabels, options: selection.options, unitPriceMinor: selection.unitPriceMinor, imageUrl: product.imageUrl }, quantity);
     toast.success(`${quantity} × ${product.name} added`);
     if (goToCart) setOpen(true);
   };
@@ -42,6 +43,8 @@ export function ProductPurchase({ product }: { product: MenuProduct }) {
         <QuantityStepper value={quantity} onChange={(q) => setQuantity(Math.max(1, q))} min={1} label={product.name} />
         <Button size="lg" className="flex-1" onClick={() => submit(true)}>Add to order · {formatMoney(selection.unitPriceMinor * quantity, currency)}</Button>
       </div>
+      <WhatsAppOrderLink dishSlug={product.slug} lines={[{ name: product.name, quantity, unitPriceMinor: selection.unitPriceMinor, options: selection.options }]}
+        blocked={selection.problems.length > 0} onBlocked={() => setTried(true)} />
     </div>
   );
 }

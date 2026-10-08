@@ -6,7 +6,8 @@ import Image from "next/image";
 import type { MenuProduct } from "@restaurant-os/types";
 import { Button, Drawer, cx, formatMoney, QuantityStepper, toast } from "@restaurant-os/ui";
 import { Plus } from "lucide-react";
-import { lineKey, useCart } from "@/lib/cart";
+import { lineKey, useCart, type CartOption } from "@/lib/cart";
+import { WhatsAppOrderLink } from "./whatsapp-order";
 import { useStore } from "./providers";
 
 function initialSelection(product: MenuProduct): Record<string, string[]> {
@@ -34,9 +35,10 @@ export function useOptionSelection(product: MenuProduct) {
     return count < g.minSelections ? [{ groupId: g.id, message: g.minSelections === 1 ? `Choose ${g.name.toLowerCase()}` : `Choose at least ${g.minSelections}` }] : [];
   });
   const modifierIds = product.modifierGroups.flatMap((g) => selected[g.id] ?? []);
-  const chosen = product.modifierGroups.flatMap((g) => g.modifiers.filter((m) => (selected[g.id] ?? []).includes(m.id)));
+  const chosen = product.modifierGroups.flatMap((g) => g.modifiers.filter((m) => (selected[g.id] ?? []).includes(m.id)).map((m) => ({ ...m, group: g.name })));
   const unitPriceMinor = product.priceMinor + chosen.reduce((s, m) => s + m.priceDeltaMinor, 0);
-  return { selected, toggle, problems, modifierIds, optionLabels: chosen.map((m) => m.name), unitPriceMinor, reset: () => setSelected(initialSelection(product)) };
+  const options: CartOption[] = chosen.map((m) => ({ group: m.group, name: m.name, priceDeltaMinor: m.priceDeltaMinor }));
+  return { selected, toggle, problems, modifierIds, optionLabels: chosen.map((m) => m.name), options, unitPriceMinor, reset: () => setSelected(initialSelection(product)) };
 }
 
 export function OptionGroups({ product, selection }: { product: MenuProduct; selection: ReturnType<typeof useOptionSelection> }) {
@@ -88,7 +90,7 @@ export function AddToCartButton({ product, size = "md", label = "Add" }: { produ
   }
   const flash = () => { setJustAdded(true); window.setTimeout(() => setJustAdded(false), 650); };
   const quickAdd = () => {
-    add({ productId: product.id, slug: product.slug, name: product.name, modifierIds: [], optionLabels: [], unitPriceMinor: product.priceMinor, imageUrl: product.imageUrl });
+    add({ productId: product.id, slug: product.slug, name: product.name, modifierIds: [], optionLabels: [], options: [], unitPriceMinor: product.priceMinor, imageUrl: product.imageUrl });
     flash();
     toast.success(`${product.name} added`, { description: canOrder ? undefined : "You can check out once we're open.", action: undefined });
   };
@@ -124,7 +126,7 @@ function OptionSheet({ product, open, onOpenChange, onAdded }: { product: MenuPr
   const submit = () => {
     setTried(true);
     if (selection.problems.length) return;
-    add({ productId: product.id, slug: product.slug, name: product.name, modifierIds: selection.modifierIds, optionLabels: selection.optionLabels, unitPriceMinor: selection.unitPriceMinor, imageUrl: product.imageUrl }, quantity);
+    add({ productId: product.id, slug: product.slug, name: product.name, modifierIds: selection.modifierIds, optionLabels: selection.optionLabels, options: selection.options, unitPriceMinor: selection.unitPriceMinor, imageUrl: product.imageUrl }, quantity);
     toast.success(`${product.name} added`);
     onAdded?.();
     onOpenChange(false);
@@ -147,6 +149,9 @@ function OptionSheet({ product, open, onOpenChange, onAdded }: { product: MenuPr
       )}
       <OptionGroups product={product} selection={selection} />
       {tried && selection.problems.length > 0 && <p role="alert" className="mt-4 text-sm font-medium text-danger">{selection.problems[0]!.message} to continue.</p>}
+      <WhatsAppOrderLink variant="text" className="mt-5" label="Or order this on WhatsApp" dishSlug={product.slug}
+        lines={[{ name: product.name, quantity, unitPriceMinor: selection.unitPriceMinor, options: selection.options }]}
+        blocked={selection.problems.length > 0} onBlocked={() => setTried(true)} />
     </Drawer>
   );
 }

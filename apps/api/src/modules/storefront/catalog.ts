@@ -230,7 +230,7 @@ export async function offers(slug: string, access: Access = PUBLIC): Promise<Pub
   const fmt = moneyFormatter(store.currency, store.locale);
   const r = await db.query<{ code: string; title: string; description: string; type: "FIXED" | "PERCENTAGE"; value: number; minimum_order_minor: number; max_discount_minor: number | null; ends_at: Date; new_customer_only: boolean }>(
     `SELECT code, title, description, type, value, minimum_order_minor, max_discount_minor, ends_at, new_customer_only FROM promotions
-     WHERE tenant_id = $1 AND status = 'ACTIVE' AND is_public AND starts_at <= now() AND ends_at > now() AND (usage_cap IS NULL OR usage_count < usage_cap)
+     WHERE tenant_id = $1 AND status = 'ACTIVE' AND is_public AND NOT staff_only AND starts_at <= now() AND ends_at > now() AND (usage_cap IS NULL OR usage_count < usage_cap)
      ORDER BY ends_at`,
     [store.tenantId],
   );

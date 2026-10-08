@@ -239,6 +239,11 @@ export const PromotionInputSchema = z.object({
   newCustomerOnly: z.boolean().default(false),
   oncePerCustomer: z.boolean().default(false),
   isPublic: z.boolean().default(true),
+  /**
+   * Who can use the offer (ADR-014): PUBLIC = listed on the website, CODE_ONLY = works when typed but isn't listed,
+   * STAFF_ONLY = only staff can apply it to orders they enter in the dashboard. Omitted = from `isPublic`.
+   */
+  audience: z.enum(["PUBLIC", "CODE_ONLY", "STAFF_ONLY"]).optional(),
   active: z.boolean().default(true),
 }).refine((p) => p.type !== "PERCENTAGE" || p.value <= 100, { message: "A percentage cannot exceed 100.", path: ["value"] })
   .refine((p) => new Date(p.endsAt) > new Date(p.startsAt), { message: "End must be after start.", path: ["endsAt"] });
@@ -279,6 +284,8 @@ export const RefundInputSchema = z.object({
 export const OrderListQuerySchema = z.object({
   view: z.enum(["active", "awaiting_payment", "completed", "cancelled", "all"]).default("active"),
   q: z.string().trim().max(80).optional(),
+  /** Only orders from this source (DIRECT_WEB, WHATSAPP, PHONE, WALK_IN, OTHER). */
+  channel: z.enum(["DIRECT_WEB", "WHATSAPP", "PHONE", "WALK_IN", "OTHER"]).optional(),
   limit: z.coerce.number().int().min(1).max(200).default(100),
   cursor: z.string().max(200).optional(),
 });
@@ -369,3 +376,39 @@ export const PolicyKeySchema = z.enum(["refund", "terms", "privacy", "delivery"]
 export const PoliciesInputSchema = z.object({
   policies: z.partialRecord(PolicyKeySchema, z.object({ body: localized(20_000) })),
 });
+
+// Admin: orders entered by staff (ADR-014) ---------------------------------------------------
+
+/** Where a staff-entered order came from. Website orders are DIRECT_WEB; aggregators are not entered by hand. */
+export const STAFF_ORDER_CHANNELS = ["WHATSAPP", "PHONE", "WALK_IN", "OTHER"] as const;
+export const StaffOrderChannelSchema = z.enum(STAFF_ORDER_CHANNELS);
+/** CASH / UPI / CARD = collected now; PAY_LATER = collect on delivery or pickup, then "Mark as paid". */
+export const StaffPaymentSchema = z.enum(["CASH", "UPI", "CARD", "PAY_LATER"]);
+
+export const StaffOrderInputSchema = QuoteInputSchema.omit({ customerPhone: true }).extend({
+  channel: StaffOrderChannelSchema,
+  customer: z.object({
+    name: optionalText(80),
+    phone: z.string().trim().max(20).optional().default(""),
+    email: z.union([z.email().max(200), z.literal("")]).optional().default(""),
+  }),
+  customerNote: optionalText(500),
+  payment: StaffPaymentSchema,
+  /** Send order updates (WhatsApp/SMS/email) to the customer. */
+  notifyCustomer: z.boolean().default(true),
+  /** Total the staff member saw; a different server total returns PRICE_CHANGED. */
+  expectedTotalMinor: money,
+}).superRefine((o, ctx) => {
+  // Only a walk-in (or "other") pickup can be anonymous; everyone else needs a number to reach them on.
+  const anonymousOk = o.fulfillmentType === "PICKUP" && (o.channel === "WALK_IN" || o.channel === "OTHER");
+  if (!anonymousOk && !o.customer.phone) ctx.addIssue({ code: "custom", path: ["customer", "phone"], message: "Enter the customer's mobile number." });
+  if (o.fulfillmentType === "DELIVERY" && !o.customer.name) ctx.addIssue({ code: "custom", path: ["customer", "name"], message: "Enter the customer's name for the rider." });
+});
+export type StaffOrderInput = z.infer<typeof StaffOrderInputSchema>;
+
+/** Price check for the new-order screen: same as the website quote, plus the customer's phone for offer rules. */
+export const StaffQuoteInputSchema = QuoteInputSchema;
+
+export const MarkPaidInputSchema = z.object({ method: z.enum(["CASH", "UPI", "CARD"]) });
+
+export const CustomerLookupQuerySchema = z.object({ phone: z.string().trim().min(8).max(20) });

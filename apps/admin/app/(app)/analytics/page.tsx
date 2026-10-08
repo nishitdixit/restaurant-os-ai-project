@@ -6,13 +6,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Info } from "lucide-react";
 import { ORDER_STATUS_LABELS } from "@restaurant-os/domain";
 import type { AnalyticsDashboard } from "@restaurant-os/types";
-import { Card, CardHeader, ErrorState, PageHeader, Skeleton, Stat, Tabs, formatMoney } from "@restaurant-os/ui";
+import { Badge, Card, CardHeader, DataTable, ErrorState, PageHeader, Skeleton, Stat, Tabs, formatMoney } from "@restaurant-os/ui";
 import { BarList, DailyColumns } from "@/components/charts";
 import { errorMessage } from "@/lib/api";
 import { useSession, useTenantKey } from "@/lib/session";
+import { CHANNEL_LABELS } from "@/lib/order-labels";
 
 const RANGES = [{ value: "today", label: "Today" }, { value: "7d", label: "7 days" }, { value: "30d", label: "30 days" }, { value: "90d", label: "90 days" }];
-const CHANNELS: Record<string, string> = { DIRECT_WEB: "Direct website", DIRECT: "Direct (legacy)", WHATSAPP: "WhatsApp", PHONE: "Phone", SWIGGY: "Swiggy", ZOMATO: "Zomato" };
 
 function delta(current: number, previous: number, label: string) {
   if (!previous) return current ? { value: 1, label: `new vs previous ${label}` } : null;
@@ -69,8 +69,8 @@ export default function AnalyticsPage() {
                 <BarList valueLabel="Orders" rows={d.statusBreakdown.map((s) => ({ label: ORDER_STATUS_LABELS[s.status], value: s.count, display: String(s.count) }))} />
               </Card>
               <Card>
-                <CardHeader title="Channels" description="Where paid orders came from" />
-                <BarList valueLabel="Orders" rows={d.channelMix.map((c) => ({ label: CHANNELS[c.channel] ?? c.channel, value: c.orders, display: `${c.orders} · ${formatMoney(c.grossSalesMinor, d.currency)}` }))} />
+                <CardHeader title="Channels" description="Where paid orders came from: your website, or entered by staff" />
+                <BarList valueLabel="Orders" rows={d.channelMix.map((c) => ({ label: CHANNEL_LABELS[c.channel] ?? c.channel, value: c.orders, display: `${c.orders} · ${formatMoney(c.grossSalesMinor, d.currency)}` }))} />
               </Card>
               <Card>
                 <CardHeader title="Delivery vs pickup" />
@@ -81,7 +81,21 @@ export default function AnalyticsPage() {
                 </dl>
               </Card>
             </div>
-            <p className="text-xs text-muted">Times are in {d.range.timezone}. {d.summary.awaitingPaymentOrders} order(s) currently awaiting payment are not counted.</p>
+            <Card>
+              <CardHeader title={<>Offers <Definition text={d.definitions.offers!} /></>} description="Uses on paid orders in this period" />
+              <DataTable rows={d.offers} rowKey={(o) => o.code} caption="Offer usage" empty={<p className="py-6 text-center text-sm text-muted">No offers used in this period.</p>}
+                columns={[
+                  { key: "c", header: "Offer", cell: (o) => <span className="flex flex-wrap items-center gap-1.5"><span className="font-mono font-medium">{o.code}</span>{o.staffOnly && <Badge tone="info">Staff only</Badge>}</span> },
+                  { key: "u", header: "Uses", align: "right", cell: (o) => o.uses },
+                  { key: "s", header: "Website · staff", align: "right", cell: (o) => <span className="text-muted">{o.websiteUses} · {o.staffUses}</span>, hideOnMobile: true },
+                  { key: "d", header: "Discount given", align: "right", cell: (o) => formatMoney(o.discountMinor, d.currency) },
+                  { key: "t", header: "Order totals", align: "right", cell: (o) => formatMoney(o.salesMinor, d.currency), hideOnMobile: true },
+                ]} />
+            </Card>
+            <p className="text-xs text-muted">
+              Times are in {d.range.timezone}. {d.summary.awaitingPaymentOrders} order(s) currently awaiting payment are not counted.
+              {d.paymentDue.orders > 0 && <> {d.paymentDue.orders} “pay later” order{d.paymentDue.orders === 1 ? "" : "s"} ({formatMoney(d.paymentDue.amountMinor, d.currency)}) still to be collected <Definition text={d.definitions.paymentDue!} />.</>}
+            </p>
           </div>
         )}
     </>

@@ -7,6 +7,7 @@ export type DomainEventType =
   | "PaymentCaptured"
   | "PaymentFailed"
   | "PaymentCapturedAfterCancellation"
+  | "PaymentRecorded"
   | "OrderStatusChanged"
   | "OrderCancelled"
   | "DeliveryUpdated"

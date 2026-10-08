@@ -347,9 +347,38 @@ export interface AdminPromotion {
   newCustomerOnly: boolean;
   oncePerCustomer: boolean;
   isPublic: boolean;
+  /** Who can use it (ADR-014). */
+  audience: PromotionAudience;
   active: boolean;
   state: "ACTIVE" | "PAUSED" | "SCHEDULED" | "EXPIRED" | "EXHAUSTED";
   discountGivenMinor: number;
+  /** Times used on website orders vs orders staff entered (current uses, cancelled orders excluded). */
+  usageBySource: { website: number; staff: number };
+  /** Staff members who applied it, most uses first. */
+  appliedBy: { staff: string; uses: number }[];
+}
+
+export type PromotionAudience = "PUBLIC" | "CODE_ONLY" | "STAFF_ONLY";
+export type StaffOrderChannel = "WHATSAPP" | "PHONE" | "WALK_IN" | "OTHER";
+export type StaffPaymentMethod = "CASH" | "UPI" | "CARD" | "PAY_LATER";
+
+/** An offer staff can apply on the new-order screen. */
+export interface StaffOrderOffer {
+  id: string;
+  code: string;
+  title: string;
+  /** "20% off, up to ₹100 · on orders above ₹300" */
+  summary: string;
+  audience: PromotionAudience;
+}
+
+/** What the new-order screen knows about a phone number (exact match only). */
+export interface StaffCustomerLookup {
+  found: boolean;
+  name: string;
+  email: string;
+  orderCount: number;
+  addresses: { line1: string; line2: string; landmark: string; city: string; postalCode: string }[];
 }
 
 export interface AdminOrderSummary {
@@ -371,6 +400,12 @@ export interface AdminOrderSummary {
   etaMax: number | null;
   postalCode: string | null;
   deliveryStatus: DeliveryStatus | null;
+  /** Staff member (email) who entered the order; null = placed by the customer on the website. */
+  createdBy: string | null;
+  /** How a staff-entered order is paid; null = online at website checkout. */
+  paymentMethod: StaffPaymentMethod | null;
+  /** A staff-entered "pay later" order whose money hasn't been collected yet. */
+  paymentDue: boolean;
 }
 
 export interface AdminOrderDetail extends AdminOrderSummary {
@@ -380,6 +415,10 @@ export interface AdminOrderDetail extends AdminOrderSummary {
   feeMinor: number;
   taxMinor: number;
   promotionCode: string | null;
+  /** The applied offer is staff-only, and who applied it (null = the customer at checkout). */
+  promotionStaffOnly: boolean;
+  promotionAppliedBy: string | null;
+  notifyCustomer: boolean;
   customerId: string | null;
   customerEmail: string | null;
   customerNote: string | null;
@@ -441,6 +480,10 @@ export interface AnalyticsDashboard {
   channelMix: { channel: string; orders: number; grossSalesMinor: number }[];
   fulfillmentMix: { fulfillmentType: FulfillmentType; orders: number }[];
   topProducts: { name: string; quantity: number; revenueMinor: number }[];
+  /** Offers used on paid orders, split by website vs staff-entered orders. */
+  offers: { code: string; staffOnly: boolean; uses: number; websiteUses: number; staffUses: number; discountMinor: number; salesMinor: number }[];
+  /** Staff-entered "pay later" orders not yet collected (current, not limited to the range). */
+  paymentDue: { orders: number; amountMinor: number };
   definitions: Record<string, string>;
 }
 

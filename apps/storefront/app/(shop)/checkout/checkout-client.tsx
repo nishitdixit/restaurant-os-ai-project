@@ -9,6 +9,7 @@ import type { PlaceOrderResult, Quote, StoreConfig } from "@restaurant-os/types"
 import { Alert, Button, Card, Checkbox, CartLine, EmptyState, Field, Input, Skeleton, Textarea, buttonClass, cx, formatMoney, toast } from "@restaurant-os/ui";
 import { ApiRequestError, clientRequest } from "@/lib/api";
 import { useCart, type CartItem } from "@/lib/cart";
+import { cartMessageLines, WhatsAppOrderLink } from "@/components/whatsapp-order";
 
 interface Contact { name: string; phone: string; email: string; marketingConsent: boolean }
 interface Address { line1: string; line2: string; landmark: string; city: string; region: string; postalCode: string; location: { latitude: number; longitude: number } | null }
@@ -338,6 +339,22 @@ export function CheckoutClient({ config }: { config: StoreConfig }) {
             <Button size="lg" block className="mt-4 max-lg:hidden" loading={submitting} disabled={!quote || quoting || blocking.length > 0} onClick={() => void placeOrder()}>
               {quote ? `Place order · ${formatMoney(quote.totalMinor, quote.currency)}` : "Place order"}
             </Button>
+            <WhatsAppOrderLink variant="text" className="mt-3 w-full justify-center" label="Or send this order on WhatsApp"
+              lines={cartMessageLines(items).map((l, i) => {
+                const item = items[i]!;
+                const q = quote?.lines.find((x) => x.productId === item.productId && x.modifiers.map((m) => m.modifierId).sort().join() === [...item.modifierIds].sort().join());
+                return q && !q.problem ? { ...l, unitPriceMinor: q.unitPriceMinor } : l;
+              })}
+              details={{
+                fulfillment,
+                name: contact.name.trim(),
+                phone: contact.phone.trim(),
+                address: fulfillment === "DELIVERY" ? [address.line1, address.line2, address.landmark, address.city, address.postalCode].map((x) => x.trim()).filter(Boolean).join(", ") : "",
+                note: note.trim(),
+                totals: quote && (fulfillment === "PICKUP" || quote.delivery)
+                  ? { subtotalMinor: quote.subtotalMinor, discountMinor: quote.discountMinor, feeMinor: quote.feeMinor, totalMinor: quote.totalMinor, promotionCode: quote.promotion?.code ?? null }
+                  : null,
+              }} />
             <p className="mt-2 text-center text-xs text-muted">You&apos;ll pay securely on the next step.</p>
           </Card>
         </aside>

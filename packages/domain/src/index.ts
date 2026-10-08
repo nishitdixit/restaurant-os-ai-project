@@ -9,3 +9,4 @@ export * from "./theme-presets.ts";
 export * from "./experience.ts";
 export * from "./merchandising.ts";
 export * from "./experience-presets.ts";
+export * from "./order-message.ts";

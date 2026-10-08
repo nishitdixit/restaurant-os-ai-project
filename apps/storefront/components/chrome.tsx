@@ -160,7 +160,7 @@ export function SiteFooter({ config }: { config: StoreConfig }) {
           <ul className="mt-3 space-y-2">
             {o?.phone && <li><a href={`tel:${o.phone}`} className="inline-flex items-center gap-2 hover:underline"><Phone className="size-4" aria-hidden />{o.phone}</a></li>}
             {maps && <li><a href={maps} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 hover:underline"><MapPin className="size-4" aria-hidden />Get directions</a></li>}
-            {wa && <li><a href={wa} target="_blank" rel="noopener noreferrer" className="hover:underline">Chat on WhatsApp</a></li>}
+            {wa && <li><a href={wa} target="_blank" rel="noopener noreferrer" className="hover:underline" data-wa-cart="">Chat on WhatsApp</a></li>}
           </ul>
         </div>
         <div className="text-sm">

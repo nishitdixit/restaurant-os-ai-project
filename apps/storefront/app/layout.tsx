@@ -7,7 +7,7 @@ import { RevealObserver } from "@/components/motion";
 import { Providers } from "@/components/providers";
 import { ThemePreviewBridge } from "@/components/theme-preview";
 import { ALL_FONT_CLASSES } from "@/lib/fonts";
-import { freeDeliveryFrom, lowestFee, media } from "@/lib/experience";
+import { freeDeliveryFrom, lowestFee, media, whatsappNumber } from "@/lib/experience";
 import type { StoreConfig } from "@restaurant-os/types";
 
 function deliveryHint(config: StoreConfig) {
@@ -72,7 +72,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html {...html}>
       <body suppressHydrationWarning className="min-h-dvh">
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-surface focus:px-3 focus:py-2 focus:shadow">Skip to content</a>
-        <Providers store={{ slug: config.slug, name: config.name, currency: config.currency, canOrder, language: config.experience.site.language, showBadges: config.experience.menu.showBadges, delivery: deliveryHint(config) }} mode={theme.mode}>
+        <Providers store={{ slug: config.slug, name: config.name, currency: config.currency, canOrder, language: config.experience.site.language, showBadges: config.experience.menu.showBadges, whatsapp: config.experience.site.whatsappOrdering ? whatsappNumber(config.links.whatsapp) : null, delivery: deliveryHint(config) }} mode={theme.mode}>
           {preview && <ThemePreviewBridge />}
           <RevealObserver />
           {preview && (

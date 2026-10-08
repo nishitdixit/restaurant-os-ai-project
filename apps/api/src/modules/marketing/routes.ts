@@ -2,7 +2,7 @@
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
-import { DeliveryZoneInputSchema, PromotionInputSchema, type AdminDeliveryZone, type AdminPromotion, type DeliveryZoneInput } from "@restaurant-os/types";
+import { DeliveryZoneInputSchema, PromotionInputSchema, type AdminDeliveryZone, type AdminPromotion, type DeliveryZoneInput, type PromotionAudience } from "@restaurant-os/types";
 import { pool, withTransaction } from "../../db/pool.ts";
 import { notFound, ApiError } from "../../lib/errors.ts";
 import { audit } from "../../lib/events.ts";
@@ -26,7 +26,13 @@ async function listZones(tenantId: string): Promise<AdminDeliveryZone[]> {
 
 interface PromotionRow {
   id: string; code: string; title: string; description: string; type: "FIXED" | "PERCENTAGE"; value: number; minimum_order_minor: number; max_discount_minor: number | null;
-  starts_at: Date; ends_at: Date; usage_cap: number | null; usage_count: number; new_customer_only: boolean; once_per_customer: boolean; is_public: boolean; status: string; discount_given: number;
+  starts_at: Date; ends_at: Date; usage_cap: number | null; usage_count: number; new_customer_only: boolean; once_per_customer: boolean; is_public: boolean; staff_only: boolean; status: string;
+  discount_given: number; website_uses: number; staff_uses: number; applied_by: { staff: string; uses: number }[] | null;
+}
+
+/** "Who can use it" (ADR-014) from the two stored flags. */
+export function promotionAudience(p: { is_public: boolean; staff_only: boolean }): PromotionAudience {
+  return p.staff_only ? "STAFF_ONLY" : p.is_public ? "PUBLIC" : "CODE_ONLY";
 }
 
 function promotionState(p: PromotionRow, now = new Date()): AdminPromotion["state"] {
@@ -40,14 +46,19 @@ function promotionState(p: PromotionRow, now = new Date()): AdminPromotion["stat
 async function listPromotions(tenantId: string): Promise<AdminPromotion[]> {
   const r = await pool().query<PromotionRow>(
     `SELECT p.id, p.code, p.title, p.description, p.type, p.value, p.minimum_order_minor, p.max_discount_minor, p.starts_at, p.ends_at, p.usage_cap, p.usage_count,
-            p.new_customer_only, p.once_per_customer, p.is_public, p.status,
-            coalesce((SELECT sum(r.discount_minor) FROM promotion_redemptions r JOIN orders o ON o.id = r.order_id AND o.payment_status IN ('CAPTURED','PARTIALLY_REFUNDED') WHERE r.promotion_id = p.id), 0) AS discount_given
+            p.new_customer_only, p.once_per_customer, p.is_public, p.staff_only, p.status,
+            coalesce((SELECT sum(r.discount_minor) FROM promotion_redemptions r JOIN orders o ON o.id = r.order_id AND o.payment_status IN ('CAPTURED','PARTIALLY_REFUNDED') WHERE r.promotion_id = p.id), 0) AS discount_given,
+            (SELECT count(*) FROM promotion_redemptions r WHERE r.promotion_id = p.id AND r.applied_by_user_id IS NULL) AS website_uses,
+            (SELECT count(*) FROM promotion_redemptions r WHERE r.promotion_id = p.id AND r.applied_by_user_id IS NOT NULL) AS staff_uses,
+            (SELECT json_agg(json_build_object('staff', x.staff, 'uses', x.uses) ORDER BY x.uses DESC, x.staff)
+               FROM (SELECT coalesce(u.email, 'Former staff member') AS staff, count(*)::int AS uses FROM promotion_redemptions r JOIN users u ON u.id = r.applied_by_user_id
+                     WHERE r.promotion_id = p.id GROUP BY 1) x) AS applied_by
      FROM promotions p WHERE p.tenant_id = $1 AND p.status <> 'ARCHIVED' ORDER BY p.created_at DESC`, [tenantId]);
   return r.rows.map((p) => ({
     id: p.id, code: p.code, title: p.title, description: p.description, type: p.type, value: p.value, minimumOrderMinor: p.minimum_order_minor,
     maxDiscountMinor: p.max_discount_minor, startsAt: iso(p.starts_at)!, endsAt: iso(p.ends_at)!, usageCap: p.usage_cap, usageCount: p.usage_count,
-    newCustomerOnly: p.new_customer_only, oncePerCustomer: p.once_per_customer, isPublic: p.is_public, active: p.status === "ACTIVE",
-    state: promotionState(p), discountGivenMinor: p.discount_given,
+    newCustomerOnly: p.new_customer_only, oncePerCustomer: p.once_per_customer, isPublic: p.is_public, audience: promotionAudience(p), active: p.status === "ACTIVE",
+    state: promotionState(p), discountGivenMinor: p.discount_given, usageBySource: { website: p.website_uses, staff: p.staff_uses }, appliedBy: p.applied_by ?? [],
   }));
 }
 
@@ -99,22 +110,23 @@ export async function marketingRoutes(app: FastifyInstance) {
   const savePromotion = async (actor: ReturnType<typeof actorOf>, id: string | null, p: z.infer<typeof PromotionInputSchema>) => withTransaction(async (tx) => {
     const clash = await tx.query(`SELECT 1 FROM promotions WHERE tenant_id = $1 AND upper(code) = $2 AND ($3::uuid IS NULL OR id <> $3)`, [actor.tenantId, p.code, id]);
     if (clash.rowCount) throw new ApiError(409, "CODE_TAKEN", `${p.code} already exists.`, { fields: { code: "Code already exists." } });
+    const audience = p.audience ?? (p.isPublic ? "PUBLIC" : "CODE_ONLY");
     const params = [actor.tenantId, p.code, p.title, p.description, p.type, p.value, p.minimumOrderMinor, p.maxDiscountMinor ?? null, p.startsAt, p.endsAt,
-      p.usageCap ?? null, p.newCustomerOnly, p.oncePerCustomer, p.isPublic, p.active ? "ACTIVE" : "INACTIVE"];
+      p.usageCap ?? null, p.newCustomerOnly, p.oncePerCustomer, audience === "PUBLIC", p.active ? "ACTIVE" : "INACTIVE", audience === "STAFF_ONLY"];
     let promotionId = id;
     if (id) {
       const row = await tx.query(
         `UPDATE promotions SET code = $2, title = $3, description = $4, type = $5::promotion_type, value = $6, minimum_order_minor = $7, max_discount_minor = $8,
-           starts_at = $9, ends_at = $10, usage_cap = $11, new_customer_only = $12, once_per_customer = $13, is_public = $14, status = $15::business_object_status, updated_at = now()
-         WHERE id = $16 AND tenant_id = $1`, [...params, id]);
+           starts_at = $9, ends_at = $10, usage_cap = $11, new_customer_only = $12, once_per_customer = $13, is_public = $14, status = $15::business_object_status, staff_only = $16, updated_at = now()
+         WHERE id = $17 AND tenant_id = $1`, [...params, id]);
       if (!row.rowCount) throw notFound("Offer");
     } else {
       promotionId = (await tx.query<{ id: string }>(
         `INSERT INTO promotions (tenant_id, code, title, description, type, value, minimum_order_minor, max_discount_minor, starts_at, ends_at, usage_cap,
-           new_customer_only, once_per_customer, is_public, status)
-         VALUES ($1, $2, $3, $4, $5::promotion_type, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15::business_object_status) RETURNING id`, params)).rows[0]!.id;
+           new_customer_only, once_per_customer, is_public, status, staff_only)
+         VALUES ($1, $2, $3, $4, $5::promotion_type, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15::business_object_status, $16) RETURNING id`, params)).rows[0]!.id;
     }
-    await audit(tx, actor, id ? "PromotionUpdated" : "PromotionCreated", { type: "Promotion", id: promotionId }, { ...p });
+    await audit(tx, actor, id ? "PromotionUpdated" : "PromotionCreated", { type: "Promotion", id: promotionId }, { ...p, audience });
     return { id: promotionId };
   });
 

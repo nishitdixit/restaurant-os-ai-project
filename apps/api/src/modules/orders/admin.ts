@@ -16,12 +16,19 @@ interface SummaryRow extends OrderRow {
   item_count: number;
   items_preview: string;
   delivery_status: DeliveryStatus | null;
+  created_by_email: string | null;
 }
+
+export const PAYMENT_METHOD_LABELS: Record<string, string> = { CASH: "Cash", UPI: "UPI", CARD: "Card", PAY_LATER: "Pay later" };
+
+/** A staff-entered "pay later" order whose money hasn't been collected yet (ADR-014). */
+export const PAYMENT_DUE_SQL = `(o.payment_method = 'PAY_LATER' AND o.payment_status NOT IN ('CAPTURED','PARTIALLY_REFUNDED','REFUNDED'))`;
 
 const SUMMARY_SELECT = `SELECT ${ORDER_COLUMNS},
   (SELECT coalesce(sum(quantity), 0) FROM order_items i WHERE i.order_id = o.id) AS item_count,
   (SELECT string_agg(i.quantity || '× ' || i.product_name_snapshot, ', ' ORDER BY i.position) FROM order_items i WHERE i.order_id = o.id) AS items_preview,
-  (SELECT d.status FROM delivery_orders d WHERE d.order_id = o.id) AS delivery_status
+  (SELECT d.status FROM delivery_orders d WHERE d.order_id = o.id) AS delivery_status,
+  (SELECT u.email FROM users u WHERE u.id = o.created_by_user_id) AS created_by_email
   FROM orders o`;
 
 function toSummary(o: SummaryRow): AdminOrderSummary {
@@ -30,21 +37,28 @@ function toSummary(o: SummaryRow): AdminOrderSummary {
     customerName: o.customer_snapshot?.name ?? "Guest", customerPhone: o.customer_snapshot?.phone ?? null, totalMinor: o.total_minor, currency: o.currency,
     itemCount: o.item_count, itemsPreview: o.items_preview ?? "", createdAt: iso(o.created_at)!, paidAt: iso(o.paid_at), acceptedAt: iso(o.accepted_at),
     etaMax: o.eta_max, postalCode: o.address_snapshot?.postalCode ?? null, deliveryStatus: o.delivery_status,
+    createdBy: o.created_by_user_id ? o.created_by_email ?? "Former staff member" : null, paymentMethod: o.payment_method,
+    paymentDue: o.payment_method === "PAY_LATER" && !["CAPTURED", "PARTIALLY_REFUNDED", "REFUNDED"].includes(o.payment_status) && o.status !== "CANCELLED",
   };
 }
 
 const VIEWS: Record<string, string> = {
-  // The board shows paid orders that still need work; unpaid orders wait in their own view.
-  active: `o.status IN ('NEW','ACCEPTED','PREPARING','READY','PACKED','DISPATCHED') AND o.payment_status IN ('CAPTURED','PARTIALLY_REFUNDED')`,
-  awaiting_payment: `o.status = 'NEW' AND o.payment_status NOT IN ('CAPTURED','PARTIALLY_REFUNDED','REFUNDED')`,
+  // The board shows paid orders that still need work; unpaid website orders wait in their own view. Staff-entered
+  // "pay later" orders are on the board straight away (the money is collected on delivery or pickup).
+  active: `o.status IN ('NEW','ACCEPTED','PREPARING','READY','PACKED','DISPATCHED') AND (o.payment_status IN ('CAPTURED','PARTIALLY_REFUNDED') OR ${PAYMENT_DUE_SQL})`,
+  awaiting_payment: `o.status = 'NEW' AND o.payment_status NOT IN ('CAPTURED','PARTIALLY_REFUNDED','REFUNDED') AND o.created_by_user_id IS NULL`,
   completed: `o.status = 'DELIVERED'`,
   cancelled: `o.status = 'CANCELLED'`,
   all: `true`,
 };
 
-export async function listOrders(tenantId: string, query: { view: string; q?: string; limit: number; cursor?: string }) {
+export async function listOrders(tenantId: string, query: { view: string; q?: string; channel?: string; limit: number; cursor?: string }) {
   const params: unknown[] = [tenantId];
   const where = [`o.tenant_id = $1`, VIEWS[query.view] ?? VIEWS.all!];
+  if (query.channel) {
+    params.push(query.channel);
+    where.push(`o.channel = $${params.length}`);
+  }
   if (query.q) {
     const digits = query.q.replace(/\D/g, "");
     params.push(`%${query.q.toLowerCase()}%`);
@@ -95,10 +109,11 @@ export async function orderDetail(tenantId: string, orderId: string, role: Role)
   const r = await db.query<SummaryRow>(`${SUMMARY_SELECT} WHERE o.tenant_id = $1 AND o.id = $2`, [tenantId, orderId]);
   const o = r.rows[0];
   if (!o) throw notFound("Order", "ORDER_NOT_FOUND");
-  const [items, payments, refunds, delivery, statusEvents, deliveryEvents, notes, auditEvents] = await Promise.all([
+  const [items, payments, refunds, delivery, statusEvents, deliveryEvents, notes, auditEvents, redemption] = await Promise.all([
     orderItems(db, o.id),
-    db.query<{ id: string; provider: string; provider_payment_id: string | null; status: AdminOrderDetail["paymentStatus"]; amount_minor: number; created_at: Date; captured_at: Date | null }>(
-      `SELECT id, provider, provider_payment_id, status, amount_minor, created_at, captured_at FROM payments WHERE order_id = $1 ORDER BY created_at`, [o.id]),
+    db.query<{ id: string; provider: string; provider_payment_id: string | null; status: AdminOrderDetail["paymentStatus"]; amount_minor: number; created_at: Date; captured_at: Date | null; method: string | null; recorded_by: string | null }>(
+      `SELECT p.id, p.provider, p.provider_payment_id, p.status, p.amount_minor, p.created_at, p.captured_at, p.metadata->>'method' AS method, u.email AS recorded_by
+       FROM payments p LEFT JOIN users u ON u.id::text = p.metadata->>'recordedBy' WHERE p.order_id = $1 ORDER BY p.created_at`, [o.id]),
     db.query<{ id: string; amount_minor: number; status: string; reason: string | null; created_at: Date }>(
       `SELECT r.id, r.amount_minor, r.status, r.reason, r.created_at FROM payment_refunds r JOIN payments p ON p.id = r.payment_id WHERE p.order_id = $1 ORDER BY r.created_at`, [o.id]),
     db.query<{ id: string; status: DeliveryStatus; provider: string; rider_name: string | null; rider_phone: string | null; tracking_reference: string | null; notes: string | null; assigned_at: Date | null; picked_up_at: Date | null; delivered_at: Date | null; failure_reason: string | null }>(
@@ -112,6 +127,9 @@ export async function orderDetail(tenantId: string, orderId: string, role: Role)
     db.query<{ event_name: string; metadata: Record<string, unknown>; actor: string | null; created_at: Date }>(
       `SELECT a.event_name, a.metadata, u.email AS actor, a.created_at FROM audit_events a LEFT JOIN users u ON u.id = a.actor_user_id
        WHERE a.tenant_id = $1 AND a.entity_type = 'Order' AND a.entity_id = $2 AND a.event_name IN ('PaymentRefunded','PaymentCapturedForCancelledOrder') ORDER BY a.created_at`, [tenantId, o.id]),
+    db.query<{ staff_only: boolean; applied_by: string | null; by_staff: boolean }>(
+      `SELECT p.staff_only, u.email AS applied_by, r.applied_by_user_id IS NOT NULL AS by_staff FROM promotion_redemptions r JOIN promotions p ON p.id = r.promotion_id
+       LEFT JOIN users u ON u.id = r.applied_by_user_id WHERE r.order_id = $1 AND r.tenant_id = $2 LIMIT 1`, [o.id, tenantId]),
   ]);
   const refunded = await refundedTotal(db, o.id);
   const captured = payments.rows.filter((p) => ["CAPTURED", "PARTIALLY_REFUNDED", "REFUNDED"].includes(p.status)).reduce((s, p) => s + p.amount_minor, 0);
@@ -122,7 +140,11 @@ export async function orderDetail(tenantId: string, orderId: string, role: Role)
       detail: [e.reason_code ? CANCEL_REASON_LABELS[e.reason_code as CancelReasonCode] ?? e.reason_code : null, e.note && e.note !== "Order placed" ? e.note : null].filter(Boolean).join(" — ") || null,
       actor: e.actor, at: iso(e.created_at)!,
     })),
-    ...payments.rows.flatMap((p) => [
+    ...payments.rows.flatMap((p): AdminOrderDetail["timeline"] => p.provider === "manual" ? [
+      // Staff-entered orders: money is collected by the restaurant (ADR-014).
+      ...(p.captured_at ? [{ kind: "payment" as const, label: `Payment received · ${PAYMENT_METHOD_LABELS[p.method ?? ""] ?? "Manual"}`, detail: null, actor: p.recorded_by, at: iso(p.captured_at)! }]
+        : p.status === "PENDING" ? [{ kind: "payment" as const, label: "Payment due on delivery / pickup", detail: null, actor: null, at: iso(p.created_at)! }] : []),
+    ] : [
       { kind: "payment" as const, label: "Payment started", detail: `${p.provider} · ${p.provider_payment_id ?? ""}`, actor: null, at: iso(p.created_at)! },
       ...(p.captured_at ? [{ kind: "payment" as const, label: "Payment received", detail: null, actor: null, at: iso(p.captured_at)! }] : []),
       ...(["FAILED", "CANCELLED"].includes(p.status) ? [{ kind: "payment" as const, label: p.status === "FAILED" ? "Payment failed" : "Payment cancelled", detail: null, actor: null, at: iso(p.created_at)! }] : []),
@@ -146,7 +168,9 @@ export async function orderDetail(tenantId: string, orderId: string, role: Role)
   return {
     ...toSummary(o),
     token: o.public_token, subtotalMinor: o.subtotal_minor, discountMinor: o.discount_minor, feeMinor: o.fee_minor, taxMinor: o.tax_minor,
-    promotionCode: o.promotion_code, customerId: o.customer_id, customerEmail: o.customer_snapshot?.email ?? null, customerNote: o.customer_note,
+    promotionCode: o.promotion_code, promotionStaffOnly: redemption.rows[0]?.staff_only ?? false,
+    promotionAppliedBy: redemption.rows[0]?.by_staff ? redemption.rows[0].applied_by ?? "Former staff member" : null, notifyCustomer: o.notify_customer,
+    customerId: o.customer_id, customerEmail: o.customer_snapshot?.email ?? null, customerNote: o.customer_note,
     address: o.address_snapshot ? { line1: o.address_snapshot.line1 ?? "", line2: o.address_snapshot.line2 ?? "", landmark: o.address_snapshot.landmark ?? "", city: o.address_snapshot.city ?? "", postalCode: o.address_snapshot.postalCode ?? "" } : null,
     items,
     payments: payments.rows.map((p) => ({ id: p.id, provider: p.provider, providerPaymentId: p.provider_payment_id, status: p.status, amountMinor: p.amount_minor, createdAt: iso(p.created_at)!, capturedAt: iso(p.captured_at) })),

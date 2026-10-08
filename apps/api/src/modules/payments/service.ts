@@ -211,8 +211,11 @@ export async function refundOrder(
     const amount = input.amountMinor ?? refundable;
     if (amount <= 0 || amount > refundable) throw new ApiError(422, "REFUND_AMOUNT_INVALID", `You can refund up to ${refundable / 100} ${payment.currency}.`, { refundableMinor: refundable });
 
-    let refund;
-    try {
+    // Money collected by the restaurant itself (staff-entered orders, ADR-014) is returned by the restaurant; the
+    // refund is recorded so totals and analytics stay right.
+    let refund: { providerRefundId: string | null; status: string };
+    if (payment.provider === "manual") refund = { providerRefundId: null, status: "REFUNDED" };
+    else try {
       refund = await paymentProvider().refund({
         providerPaymentId: payment.provider_payment_id!, amountMinor: BigInt(amount), idempotencyKey: input.idempotencyKey,
         capturedAmountMinor: BigInt(payment.amount_minor), alreadyRefundedMinor: BigInt(already),

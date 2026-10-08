@@ -87,6 +87,21 @@ Public `config` adds `experience`, `media`, `stats.paidOrders` (null below 50), 
 `badges`, `galleryAssetIds`; categories take `nameHi`, `descriptionHi`, `imageAssetId` (slugs can't be store page
 names); delivery areas take `freeDeliveryMinimumMinor`.
 
+`POST /v1/admin/orders` (`order.create`, `Idempotency-Key` required) — an order staff enter (ADR-014). Body: the quote
+fields plus `channel` (WHATSAPP | PHONE | WALK_IN | OTHER), `customer {name, phone, email}`, `customerNote`,
+`payment` (CASH | UPI | CARD | PAY_LATER), `notifyCustomer`, `expectedTotalMinor`. Returns `{ order, duplicate }`
+(201, or 200 for a replayed key). Errors as checkout: `422` quote issues (`ADDRESS_NOT_SERVICEABLE`,
+`ITEM_UNAVAILABLE`…), `422 PROMOTION_INVALID`, `409 PRICE_CHANGED`. Helpers: `POST /v1/admin/orders/quote`,
+`GET /v1/admin/orders/new/menu`, `GET /v1/admin/orders/new/offers` (live offers incl. staff-only, with `audience`
+and `summary`), `GET /v1/admin/orders/new/customer?phone=` (exact match). `POST /v1/admin/orders/:id/mark-paid`
+`{ method: CASH | UPI | CARD }` (`order.manage`; `409 NOT_PAY_LATER` otherwise). `GET /v1/admin/orders` takes
+`channel=`; summaries add `createdBy`, `paymentMethod`, `paymentDue`; details add `promotionStaffOnly`,
+`promotionAppliedBy`, `notifyCustomer`.
+
+Promotions take `audience` (PUBLIC | CODE_ONLY | STAFF_ONLY; omitted = from `isPublic`) and return `audience`,
+`usageBySource {website, staff}` and `appliedBy [{staff, uses}]`. A staff-only code is refused at website checkout as
+an unknown code. Analytics adds `offers[]` and `paymentDue`.
+
 ## Webhooks
 
 Incoming provider webhooks must:

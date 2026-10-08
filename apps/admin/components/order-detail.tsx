@@ -13,6 +13,8 @@ import {
 } from "@restaurant-os/ui";
 import { ApiError, errorMessage, fromMinor, toMinor } from "@/lib/api";
 import { useSession, useTenantKey } from "@/lib/session";
+import { CHANNEL_LABELS, PAYMENT_LABELS } from "@/lib/order-labels";
+import { OrderSourceBadges } from "./order-badges";
 
 const ACTION_LABEL: Partial<Record<OrderStatus, string>> = {
   ACCEPTED: "Accept order", PREPARING: "Start preparing", READY: "Mark ready", PACKED: "Mark packed", DELIVERED: "Mark completed",
@@ -53,6 +55,10 @@ export function useOrderMutations(orderId: string) {
     delivery: useMutation({
       mutationFn: (body: { status: "PICKED_UP" | "DELIVERED" | "FAILED"; note: string }) => request<AdminOrderDetail>(`/v1/admin/orders/${orderId}/delivery`, { body }),
       onSuccess: (d) => done(d, `Delivery updated`), onError,
+    }),
+    markPaid: useMutation({
+      mutationFn: (method: "CASH" | "UPI" | "CARD") => request<AdminOrderDetail>(`/v1/admin/orders/${orderId}/mark-paid`, { body: { method } }),
+      onSuccess: (d) => done(d, `Order #${d.number}: payment received (${PAYMENT_LABELS[d.paymentMethod ?? "CASH"]})`), onError,
     }),
   };
 }
@@ -113,7 +119,8 @@ function CancelDialog({ order, open, onOpenChange }: { order: AdminOrderDetail; 
           </Select>
         )}</Field>
         <Field label={reasonCode === "OTHER" ? "Note" : "Note (optional)"} required={reasonCode === "OTHER"}>{(p) => <Textarea {...p} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />}</Field>
-        {paid && <Checkbox checked={refund} onChange={(e) => setRefund(e.target.checked)} label={`Refund ${formatMoney(order.refundableMinor, order.currency)} to the customer`} description="Recommended. Turn off only if you'll settle it another way." />}
+        {paid && <Checkbox checked={refund} onChange={(e) => setRefund(e.target.checked)} label={`Refund ${formatMoney(order.refundableMinor, order.currency)} to the customer`}
+          description={order.paymentMethod ? "Paid to you directly, so you return the money yourself (cash / UPI); this records the refund." : "Recommended. Turn off only if you'll settle it another way."} />}
       </div>
     </ConfirmDialog>
   );
@@ -157,7 +164,7 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
   const qc = useQueryClient();
   const key = useTenantKey("order", orderId);
   const { data: order, isLoading, error, refetch } = useQuery({ queryKey: key, queryFn: () => request<AdminOrderDetail>(`/v1/admin/orders/${orderId}`), refetchInterval: 20_000 });
-  const { transition, delivery } = useOrderMutations(orderId);
+  const { transition, delivery, markPaid } = useOrderMutations(orderId);
   const [dialog, setDialog] = useState<null | "dispatch" | "cancel" | "refund" | "fail">(null);
   const [note, setNote] = useState("");
   const [failNote, setFailNote] = useState("");
@@ -174,7 +181,7 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
   const isManager = ["OWNER", "MANAGER", "PLATFORM_ADMIN"].includes(membership?.role ?? "");
   const next = nextAction(order);
   const transitions = order.allowedTransitions.filter((t) => t !== "CANCELLED" && t !== "DISPATCHED" && t !== next?.to);
-  const busy = transition.isPending || delivery.isPending;
+  const busy = transition.isPending || delivery.isPending || markPaid.isPending;
 
   return (
     <div className="space-y-5">
@@ -183,8 +190,25 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
         <StatusPill kind="payment" status={order.paymentStatus} />
         {order.delivery && <StatusPill kind="delivery" status={order.delivery.status} />}
         <Badge>{order.fulfillmentType === "DELIVERY" ? <><Bike className="size-3" aria-hidden /> Delivery</> : <><Store className="size-3" aria-hidden /> Pickup</>}</Badge>
+        <OrderSourceBadges order={order} />
         <span className="ml-auto text-xs text-muted">Placed {formatDateTime(order.createdAt)}</span>
       </div>
+      {order.createdBy && (
+        <p className="-mt-3 text-sm text-muted">
+          Entered by {order.createdBy} · {CHANNEL_LABELS[order.channel] ?? order.channel} order{order.paymentMethod && !order.paymentDue ? ` · paid by ${PAYMENT_LABELS[order.paymentMethod].toLowerCase()}` : ""}
+        </p>
+      )}
+
+      {order.paymentDue && (
+        <Alert tone="warning" title={`Collect ${formatMoney(order.totalMinor, order.currency)} on ${order.fulfillmentType === "DELIVERY" ? "delivery" : "pickup"}`}
+          action={manage ? (
+            <span className="flex flex-wrap gap-1.5">
+              {(["CASH", "UPI", "CARD"] as const).map((m) => <Button key={m} size="sm" variant="outline" disabled={busy} loading={markPaid.isPending && markPaid.variables === m} onClick={() => markPaid.mutate(m)}>Paid · {PAYMENT_LABELS[m]}</Button>)}
+            </span>
+          ) : undefined}>
+          This order isn&apos;t counted in sales until it&apos;s marked paid.
+        </Alert>
+      )}
 
       {order.status === "NEW" && order.paymentStatus !== "CAPTURED" && (
         <Alert tone="warning" title="Waiting for payment">Don&apos;t start cooking yet. Unpaid orders cancel themselves when the payment window closes.</Alert>
@@ -226,6 +250,7 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
             </div>
           )}
           {order.customerNote && <p className="mt-3 rounded-[var(--ros-radius-md)] bg-warning-soft p-2.5 text-sm"><span className="font-semibold">Customer note:</span> {order.customerNote}</p>}
+          {!order.notifyCustomer && <p className="mt-3 text-xs text-muted">Order updates are not sent to this customer.</p>}
         </Card>
         <Card>
           <h3 className="text-sm font-semibold">{order.delivery ? "Delivery" : order.fulfillmentType === "DELIVERY" ? "Delivery" : "Pickup"}</h3>
@@ -248,7 +273,13 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
         </ul>
         <dl className="mt-2 space-y-1 border-t border-border pt-3 text-sm">
           <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd>{formatMoney(order.subtotalMinor, order.currency)}</dd></div>
-          {order.discountMinor > 0 && <div className="flex justify-between"><dt className="text-muted">Discount {order.promotionCode && <Badge>{order.promotionCode}</Badge>}</dt><dd>−{formatMoney(order.discountMinor, order.currency)}</dd></div>}
+          {order.discountMinor > 0 && (
+            <div className="flex justify-between gap-3">
+              <dt className="text-muted">Discount {order.promotionCode && <Badge>{order.promotionCode}</Badge>} {order.promotionStaffOnly && <Badge tone="info">Staff only</Badge>}
+                {order.promotionAppliedBy && <span className="block text-xs">Applied by {order.promotionAppliedBy}</span>}</dt>
+              <dd>−{formatMoney(order.discountMinor, order.currency)}</dd>
+            </div>
+          )}
           {order.feeMinor > 0 && <div className="flex justify-between"><dt className="text-muted">Delivery fee</dt><dd>{formatMoney(order.feeMinor, order.currency)}</dd></div>}
           <div className="flex justify-between font-semibold"><dt>Total</dt><dd>{formatMoney(order.totalMinor, order.currency)}</dd></div>
           {order.refunds.length > 0 && <div className="flex justify-between text-muted"><dt>Refunded</dt><dd>−{formatMoney(order.refunds.reduce((s, r) => s + r.amountMinor, 0), order.currency)}</dd></div>}

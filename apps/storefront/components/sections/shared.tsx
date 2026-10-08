@@ -77,7 +77,7 @@ export function CtaButton({ cta, ctx, style = "primary", className }: { cta: Res
   if (cta.href === null) {
     return <OrderChannelsButton channels={orderChannels(ctx.config)} storeName={ctx.config.name} label={cta.label} className={cls} />;
   }
-  if (cta.external) return <a href={cta.href} target={cta.href.startsWith("tel:") ? undefined : "_blank"} rel="noopener noreferrer" className={cls}>{cta.label}</a>;
+  if (cta.external) return <a href={cta.href} target={cta.href.startsWith("tel:") ? undefined : "_blank"} rel="noopener noreferrer" className={cls} data-wa-cart={cta.target === "whatsapp" ? "" : undefined}>{cta.label}</a>;
   return <Link href={cta.href} className={cls}>{cta.label}</Link>;
 }
 

@@ -98,6 +98,7 @@ export async function loadZones(db: Db, tenantId: string): Promise<(DeliveryZone
 interface PromotionRow {
   id: string; code: string; title: string; type: "FIXED" | "PERCENTAGE"; value: number; status: string; starts_at: Date; ends_at: Date;
   minimum_order_minor: number; max_discount_minor: number | null; usage_cap: number | null; usage_count: number; new_customer_only: boolean; once_per_customer: boolean;
+  staff_only: boolean;
 }
 
 export function toPromotionRule(p: PromotionRow): PromotionRule {
@@ -134,8 +135,12 @@ export interface QuoteResult {
  * Computes a quote. Problems are reported as `issues` (blocking) or `promotionError` (the code is
  * simply not applied) instead of throwing, so the checkout can explain every failure inline.
  * With `forUpdate`, the promotion row is locked so usage accounting stays atomic.
+ *
+ * `staff` prices an order staff enter from the dashboard (ADR-014) with the same rules, except that staff-only offers
+ * are accepted and the website's "paused" / "closed" switches don't apply (staff are taking the order themselves).
+ * Website quotes treat a staff-only code exactly like an unknown one, so the code is never revealed.
  */
-export async function computeQuote(db: Db, store: StoreContext, input: QuoteInput, options: { forUpdate?: boolean; now?: Date } = {}): Promise<QuoteResult> {
+export async function computeQuote(db: Db, store: StoreContext, input: QuoteInput, options: { forUpdate?: boolean; now?: Date; staff?: boolean } = {}): Promise<QuoteResult> {
   const now = options.now ?? new Date();
   const fmt = moneyFormatter(store.currency, store.locale);
   const issues: QuoteIssue[] = [];
@@ -144,8 +149,9 @@ export async function computeQuote(db: Db, store: StoreContext, input: QuoteInpu
   if (!outlet) issues.push({ code: "STORE_UNAVAILABLE", message: "This restaurant is not taking orders yet." });
   else {
     const { openNow, nextOpening } = outletOpenState(outlet, now);
-    if (!outlet.accepting_orders) issues.push({ code: "ORDERING_PAUSED", message: "The restaurant has paused online orders for now. Please try again a little later." });
-    else if (!openNow) issues.push({ code: "STORE_CLOSED", message: nextOpening ? `We're closed right now. We open ${nextOpening}.` : "We're closed right now." });
+    // The website's open/paused state doesn't limit orders staff take themselves.
+    if (!options.staff && !outlet.accepting_orders) issues.push({ code: "ORDERING_PAUSED", message: "The restaurant has paused online orders for now. Please try again a little later." });
+    else if (!options.staff && !openNow) issues.push({ code: "STORE_CLOSED", message: nextOpening ? `We're closed right now. We open ${nextOpening}.` : "We're closed right now." });
     if (input.fulfillmentType === "DELIVERY" && !outlet.delivery_enabled) issues.push({ code: "DELIVERY_UNAVAILABLE", message: "Delivery is not available right now. Choose pickup instead.", field: "fulfillmentType" });
     if (input.fulfillmentType === "PICKUP" && !outlet.pickup_enabled) issues.push({ code: "PICKUP_UNAVAILABLE", message: "Pickup is not available right now. Choose delivery instead.", field: "fulfillmentType" });
   }
@@ -181,12 +187,12 @@ export async function computeQuote(db: Db, store: StoreContext, input: QuoteInpu
   const code = normalizePromotionCode(input.promotionCode ?? "");
   if (code) {
     const p = await db.query<PromotionRow>(
-      `SELECT id, code, title, type, value, status, starts_at, ends_at, minimum_order_minor, max_discount_minor, usage_cap, usage_count, new_customer_only, once_per_customer
+      `SELECT id, code, title, type, value, status, starts_at, ends_at, minimum_order_minor, max_discount_minor, usage_cap, usage_count, new_customer_only, once_per_customer, staff_only
        FROM promotions WHERE tenant_id = $1 AND upper(code) = $2 AND status IN ('ACTIVE','INACTIVE') ${options.forUpdate ? "FOR UPDATE" : ""}`,
       [store.tenantId, code],
     );
     const row = p.rows[0];
-    if (!row) promotionError = `${code} is not a valid code.`;
+    if (!row || (row.staff_only && !options.staff)) promotionError = `${code} is not a valid code.`;
     else {
       const history = await customerHistory(db, store.tenantId, input.customerPhone || null, row.id);
       const evaluation = evaluatePromotion(toPromotionRule(row), { subtotalMinor: subtotal, now, customerPriorOrders: history.priorOrders, customerPriorRedemptions: history.priorRedemptions, formatMoney: fmt });

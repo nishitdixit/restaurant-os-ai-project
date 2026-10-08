@@ -3,7 +3,7 @@
 | Layer | Where | Runs with |
 | --- | --- | --- |
 | Domain unit tests (pricing, modifiers, promotions, order state machine, serviceability, phone identity, opening hours) | `packages/domain/src/*.test.ts` | `pnpm --filter @restaurant-os/domain test` |
-| API integration tests (real Postgres, real migrations + seed, Fastify `inject`) — checkout, payments & webhooks, promotions under concurrency, tenant isolation, roles, order operations, catalog, onboarding, notifications/outbox, analytics reconciliation | `apps/api/test/*.test.ts` | `pnpm --filter @restaurant-os/api test` |
+| API integration tests (real Postgres, real migrations + seed, Fastify `inject`) — checkout, payments & webhooks, promotions under concurrency, tenant isolation, roles, order operations, catalog, onboarding, notifications/outbox, analytics reconciliation, staff-entered orders and staff-only offers | `apps/api/test/*.test.ts` | `pnpm --filter @restaurant-os/api test` |
 | Payment adapter contract tests (mock + Razorpay) | `apps/api/test/payment-providers.test.ts` | same |
 | End-to-end customer journeys in a real browser (mobile + desktop) | `tests/e2e/specs` | `pnpm test:e2e` |
 | Recorded walkthrough of every admin + storefront flow (videos, also asserts each flow) | `tests/recording/chapters` | `pnpm record` |
@@ -32,6 +32,9 @@ Specs:
   merchant preview): header/footer/hero variants and section order match the preset, no sideways scroll at 360, 390
   and 430 px and desktop, computed contrast of header, section headings, dishes, add buttons, category chips and
   the order button; reduced motion shows every section immediately.
+- `whatsapp.spec.ts` — "Order on WhatsApp" messages (wa.me intercepted): dish page and option sheet send that dish
+  with quantity/portion/add-ons; the cart and checkout send every line with totals and delivery details; the
+  restaurant's general WhatsApp links carry the cart; the Appearance switch hides the buttons.
 - `a11y.spec.ts` — axe (WCAG 2.x A/AA) on home, menu, dish, checkout and delivery areas with a light and a dark
   preset; serious/critical violations fail.
 

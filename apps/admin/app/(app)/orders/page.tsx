@@ -2,15 +2,18 @@
 // Order board (docs/KITCHEN.md): New | Accepted | Preparing | Ready | Out for delivery, live-updating,
 // with an audible alert for new paid orders and one primary action per card.
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { Bell, BellOff, Bike, Search, Store, Timer } from "lucide-react";
+import { Bell, BellOff, Bike, Plus, Search, Store, Timer } from "lucide-react";
 import type { AdminOrderSummary, OrderStatus } from "@restaurant-os/types";
 import {
-  Button, DataTable, Drawer, EmptyState, ErrorState, Input, LoadMore, PageHeader, RelativeTime, Skeleton, StatusPill, Tabs, cx, formatDateTime, formatMoney, toast,
+  Badge, Button, DataTable, Drawer, EmptyState, ErrorState, Input, LoadMore, PageHeader, RelativeTime, Select, Skeleton, StatusPill, Tabs, buttonClass, cx, formatDateTime, formatMoney, toast,
 } from "@restaurant-os/ui";
 import { OrderDetailView, nextAction, useOrderMutations } from "@/components/order-detail";
+import { OrderSourceBadges } from "@/components/order-badges";
 import { errorMessage } from "@/lib/api";
+import { CHANNEL_LABELS } from "@/lib/order-labels";
 import { useSession, useTenantKey } from "@/lib/session";
 
 const COLUMNS: { key: string; title: string; statuses: OrderStatus[] }[] = [
@@ -66,6 +69,7 @@ function BoardCard({ order, onOpen }: { order: AdminOrderSummary; onOpen: () => 
           <span className="truncate">{order.customerName}{order.postalCode ? ` · ${order.postalCode}` : ""}</span>
         </p>
         <p className="mt-1.5 line-clamp-3 text-sm">{order.itemsPreview}</p>
+        <OrderSourceBadges order={order} className="mt-1.5" />
         <p className="mt-1.5 text-sm font-medium">{formatMoney(order.totalMinor, order.currency)}</p>
         {late && <p className="mt-1 text-xs font-medium text-danger">Past the promised time</p>}
       </button>
@@ -126,7 +130,7 @@ function Board({ onOpen }: { onOpen: (id: string) => void }) {
         </Button>
       </div>
       {items.length === 0 ? (
-        <EmptyState title="All caught up" description="New paid orders appear here instantly, with a sound if you turn it on. Unpaid orders wait in “Awaiting payment”." />
+        <EmptyState title="All caught up" description="New paid orders appear here instantly, with a sound if you turn it on. Unpaid website orders wait in “Awaiting payment”. Orders from WhatsApp, phone or walk-ins: use “New order”." />
       ) : (
         <div className="flex gap-3 overflow-x-auto pb-2 lg:grid lg:grid-cols-5 lg:overflow-visible">
           {COLUMNS.map((col) => {
@@ -151,12 +155,13 @@ function Board({ onOpen }: { onOpen: (id: string) => void }) {
 
 function OrderList({ view, onOpen }: { view: string; onOpen: (id: string) => void }) {
   const { request } = useSession();
+  const [channel, setChannel] = useState("");
   const [q, setQ] = useState("");
   const [term, setTerm] = useState("");
   useEffect(() => { const t = setTimeout(() => setTerm(q.trim()), 300); return () => clearTimeout(t); }, [q]);
   const query = useInfiniteQuery({
-    queryKey: useTenantKey("orders", "list", view, term),
-    queryFn: ({ pageParam }) => request<ListResponse>(`/v1/admin/orders?view=${view}&limit=50${term ? `&q=${encodeURIComponent(term)}` : ""}${pageParam ? `&cursor=${pageParam}` : ""}`),
+    queryKey: useTenantKey("orders", "list", view, term, channel),
+    queryFn: ({ pageParam }) => request<ListResponse>(`/v1/admin/orders?view=${view}&limit=50${term ? `&q=${encodeURIComponent(term)}` : ""}${channel ? `&channel=${channel}` : ""}${pageParam ? `&cursor=${pageParam}` : ""}`),
     initialPageParam: "",
     getNextPageParam: (last) => last.nextCursor ?? undefined,
     refetchInterval: view === "awaiting_payment" ? 15_000 : false,
@@ -164,9 +169,17 @@ function OrderList({ view, onOpen }: { view: string; onOpen: (id: string) => voi
   const rows = query.data?.pages.flatMap((p) => p.items) ?? [];
   return (
     <>
-      <div className="relative mb-3 max-w-sm">
-        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden />
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Order number, name or phone" aria-label="Search orders" className="pl-9" />
+      <div className="mb-3 flex flex-wrap gap-2">
+        <div className="relative w-full max-w-sm">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Order number, name or phone" aria-label="Search orders" className="pl-9" />
+        </div>
+        {view !== "awaiting_payment" && (
+          <Select value={channel} onChange={(e) => setChannel(e.target.value)} aria-label="Order source" className="w-44">
+            <option value="">All sources</option>
+            {["DIRECT_WEB", "WHATSAPP", "PHONE", "WALK_IN", "OTHER"].map((c) => <option key={c} value={c}>{CHANNEL_LABELS[c]}</option>)}
+          </Select>
+        )}
       </div>
       {view === "awaiting_payment" && <p className="mb-3 text-sm text-muted">These customers haven&apos;t completed payment. Don&apos;t prepare them yet — they cancel automatically when the payment window closes.</p>}
       {query.isLoading ? <Skeleton className="h-64" /> : query.error ? <ErrorState description={errorMessage(query.error)} onRetry={() => void query.refetch()} /> : (
@@ -177,6 +190,7 @@ function OrderList({ view, onOpen }: { view: string; onOpen: (id: string) => voi
               { key: "n", header: "Order", cell: (o) => <span className="font-semibold">#{o.number}</span> },
               { key: "s", header: "Status", cell: (o) => <span className="flex flex-wrap gap-1"><StatusPill kind="order" status={o.status} />{o.paymentStatus !== "CAPTURED" && <StatusPill kind="payment" status={o.paymentStatus} />}</span> },
               { key: "c", header: "Customer", cell: (o) => <span>{o.customerName}<span className="block text-xs text-muted">{o.customerPhone}</span></span> },
+              { key: "src", header: "Source", cell: (o) => <span className="flex flex-wrap gap-1"><span className="text-muted">{CHANNEL_LABELS[o.channel] ?? o.channel}</span>{o.paymentDue && <Badge tone="warning">Payment due</Badge>}</span>, hideOnMobile: true },
               { key: "i", header: "Items", cell: (o) => <span className="line-clamp-1 text-muted">{o.itemsPreview}</span>, hideOnMobile: true },
               { key: "t", header: "Total", align: "right", cell: (o) => formatMoney(o.totalMinor, o.currency) },
               { key: "d", header: "Placed", align: "right", cell: (o) => <span className="text-muted">{formatDateTime(o.createdAt, { dateStyle: "short", timeStyle: "short" })}</span>, hideOnMobile: true },
@@ -191,7 +205,7 @@ function OrderList({ view, onOpen }: { view: string; onOpen: (id: string) => voi
 function OrdersPageInner() {
   const router = useRouter();
   const params = useSearchParams();
-  const { request } = useSession();
+  const { request, can } = useSession();
   const view = params.get("view") ?? "board";
   const openId = params.get("order");
   const counts = useQuery({ queryKey: useTenantKey("orders", "counts"), queryFn: () => request<ListResponse>("/v1/admin/orders?view=active&limit=1"), refetchInterval: 15_000 });
@@ -212,7 +226,8 @@ function OrdersPageInner() {
 
   return (
     <>
-      <PageHeader title="Orders" description="Accept, prepare and dispatch direct orders." />
+      <PageHeader title="Orders" description="Accept, prepare and dispatch direct orders."
+        actions={can("order.create") && <Link href="/orders/new" className={buttonClass("primary", "md")}><Plus className="size-4" aria-hidden />New order</Link>} />
       <Tabs value={view} onValueChange={(v) => setParam("view", v === "board" ? null : v)} items={tabs} className="mb-4" />
       {view === "board" ? <Board onOpen={open} /> : <OrderList key={view} view={view} onOpen={open} />}
       <Drawer open={!!openId} onOpenChange={(o) => !o && setParam("order", null)} title={detail.data ? `Order #${detail.data.number}` : "Order"} width="lg">

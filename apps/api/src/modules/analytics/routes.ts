@@ -19,6 +19,9 @@ export const METRIC_DEFINITIONS: Record<string, string> = {
   refundedOrders: "Orders with at least one refund issued in the period.",
   newCustomers: "Customers whose first paid order was in the period.",
   repeatCustomers: "Customers with a paid order in the period who had also ordered before it.",
+  channelMix: "Paid orders by where they came from: the website, or entered by staff (WhatsApp, phone, walk-in, other).",
+  offers: "Offers used on paid orders in the period: uses on website orders vs orders staff entered, discount given and order totals.",
+  paymentDue: "Staff-entered \"pay later\" orders whose money hasn't been collected yet (cancelled orders excluded). They count as sales once marked paid.",
 };
 
 const RANGE_DAYS: Record<string, number> = { today: 1, "7d": 7, "30d": 30, "90d": 90 };
@@ -43,7 +46,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
     const P = [tenantId, from, to];
     const PAID = `o.tenant_id = $1 AND o.created_at >= $2 AND o.created_at < $3 AND o.payment_status IN ('CAPTURED','PARTIALLY_REFUNDED','REFUNDED') AND o.status <> 'CANCELLED'`;
 
-    const [summary, previous, refunds, cancelled, awaiting, customers, daily, statuses, channels, fulfilment, top] = await Promise.all([
+    const [summary, previous, refunds, cancelled, awaiting, customers, daily, statuses, channels, fulfilment, top, offers, due] = await Promise.all([
       db.query<{ orders: number; gross: number; discounts: number; fees: number; completed: number }>(
         `SELECT count(*) AS orders, coalesce(sum(o.total_minor), 0) AS gross, coalesce(sum(o.discount_minor), 0) AS discounts, coalesce(sum(o.fee_minor), 0) AS fees,
                 count(*) FILTER (WHERE o.status = 'DELIVERED') AS completed FROM orders o WHERE ${PAID}`, P),
@@ -73,6 +76,14 @@ export async function analyticsRoutes(app: FastifyInstance) {
       db.query<{ name: string; quantity: number; revenue: number }>(
         `SELECT i.product_name_snapshot AS name, sum(i.quantity)::int AS quantity, sum(i.line_total_minor) AS revenue FROM order_items i JOIN orders o ON o.id = i.order_id
          WHERE ${PAID} GROUP BY 1 ORDER BY 2 DESC, 3 DESC LIMIT 10`, P),
+      db.query<{ code: string; staff_only: boolean; uses: number; website_uses: number; staff_uses: number; discount: number; sales: number }>(
+        `SELECT p.code, p.staff_only, count(*) AS uses, count(*) FILTER (WHERE r.applied_by_user_id IS NULL) AS website_uses, count(*) FILTER (WHERE r.applied_by_user_id IS NOT NULL) AS staff_uses,
+                coalesce(sum(r.discount_minor), 0) AS discount, coalesce(sum(o.total_minor), 0) AS sales
+         FROM promotion_redemptions r JOIN orders o ON o.id = r.order_id JOIN promotions p ON p.id = r.promotion_id
+         WHERE ${PAID} GROUP BY p.code, p.staff_only ORDER BY uses DESC, discount DESC LIMIT 20`, P),
+      db.query<{ orders: number; amount: number }>(
+        `SELECT count(*) AS orders, coalesce(sum(o.total_minor), 0) AS amount FROM orders o
+         WHERE o.tenant_id = $1 AND o.payment_method = 'PAY_LATER' AND o.payment_status NOT IN ('CAPTURED','PARTIALLY_REFUNDED','REFUNDED') AND o.status <> 'CANCELLED'`, [tenantId]),
     ]);
 
     const s = summary.rows[0]!;
@@ -93,6 +104,8 @@ export async function analyticsRoutes(app: FastifyInstance) {
       channelMix: channels.rows.map((c) => ({ channel: c.channel, orders: c.orders, grossSalesMinor: c.gross })),
       fulfillmentMix: fulfilment.rows.map((f) => ({ fulfillmentType: f.fulfillment_type, orders: f.orders })),
       topProducts: top.rows.map((t) => ({ name: t.name, quantity: t.quantity, revenueMinor: t.revenue })),
+      offers: offers.rows.map((o) => ({ code: o.code, staffOnly: o.staff_only, uses: o.uses, websiteUses: o.website_uses, staffUses: o.staff_uses, discountMinor: o.discount, salesMinor: o.sales })),
+      paymentDue: { orders: due.rows[0]!.orders, amountMinor: due.rows[0]!.amount },
       definitions: METRIC_DEFINITIONS,
     };
   });
