@@ -11,7 +11,9 @@
     "lint": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "tsx --test --test-concurrency=1 'test/**/*.test.ts'",
-    "dev:server": "tsx watch --env-file-if-exists=.env src/main.ts"
+    "dev:server": "tsx watch --env-file-if-exists=.env src/main.ts",
+    "demo:seed": "tsx scripts/demo/seed.ts",
+    "demo:users": "tsx scripts/demo/users.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1146.0",

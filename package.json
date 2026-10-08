@@ -21,6 +21,8 @@
     "db:migrate": "node db/scripts/migrate.mjs",
     "db:seed": "node db/scripts/seed.mjs",
     "db:setup": "pnpm db:migrate && pnpm db:seed",
+    "demo:seed": "pnpm --filter @restaurant-os/api demo:seed --",
+    "demo:users": "pnpm --filter @restaurant-os/api demo:users",
     "record": "pnpm --filter @restaurant-os/recording record --"
   },
   "type": "module",

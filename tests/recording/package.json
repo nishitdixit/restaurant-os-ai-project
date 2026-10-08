@@ -6,7 +6,8 @@
   "scripts": {
     "record": "node run.mjs",
     "typecheck": "tsc --noEmit",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "demo-assets": "node --experimental-strip-types demo-assets.ts"
   },
   "devDependencies": {
     "@clerk/backend": "^2.33.0",
