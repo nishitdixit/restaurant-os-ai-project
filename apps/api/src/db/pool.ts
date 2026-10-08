@@ -26,7 +26,7 @@ export function pool(): pg.Pool {
   if (!instance) {
     instance = new pg.Pool({
       ...connectionConfig(env().DATABASE_URL),
-      max: 10,
+      max: env().DATABASE_POOL_MAX,
       idleTimeoutMillis: 30_000,
       connectionTimeoutMillis: 5_000,
     });

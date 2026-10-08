@@ -38,6 +38,9 @@ class S3Storage implements MediaStorage {
       region: e.S3_REGION,
       endpoint: e.S3_ENDPOINT,
       forcePathStyle: e.S3_FORCE_PATH_STYLE,
+      // Only send checksums S3 requires; S3-compatible stores (Supabase Storage, R2) reject some optional ones.
+      requestChecksumCalculation: "WHEN_REQUIRED",
+      responseChecksumValidation: "WHEN_REQUIRED",
       credentials: { accessKeyId: e.S3_ACCESS_KEY_ID!, secretAccessKey: e.S3_SECRET_ACCESS_KEY! },
     });
   }

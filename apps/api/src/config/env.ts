@@ -12,6 +12,8 @@ const EnvSchema = z.object({
   TRUST_PROXY: bool.default(false),
 
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required."),
+  /** Connections per process. API + worker together must stay under the Supabase session pooler's client limit. */
+  DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(100).default(10),
   REDIS_URL: z.string().optional(),
 
   CLERK_SECRET_KEY: z.string().optional(),

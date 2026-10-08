@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.1.0",
   "packageManager": "pnpm@10.12.4",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "pnpm --parallel --filter @restaurant-os/api --filter @restaurant-os/storefront --filter @restaurant-os/admin dev",
     "dev:api": "pnpm --filter @restaurant-os/api dev",
