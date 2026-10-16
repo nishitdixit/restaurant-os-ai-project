@@ -63,15 +63,16 @@ async function bulk(tx: Tx, table: string, rows: Record<string, unknown>[]) {
 interface Photo { id: string; file: string; kind: string; alt: string }
 const PHOTOS: Photo[] = [
   { id: MEDIA.logo, file: "logo.png", kind: "logo", alt: "Saffron Street Kitchen logo" },
-  { id: MEDIA.hero, file: "hero.png", kind: "hero", alt: "Veg biryani, paneer butter masala, naan, dal makhani and mango lassi on the table" },
-  { id: MEDIA.story, file: "story.png", kind: "story", alt: "A thali, masala dosa, pav bhaji, gulab jamun and paneer tikka" },
-  ...PRODUCTS.map((p) => ({ id: MEDIA.product(p.n), file: `${p.slug}.png`, kind: "product", alt: p.name.replace(/ \(.*\)$/, "") })),
+  { id: MEDIA.hero, file: "hero.jpg", kind: "hero", alt: "A vegetarian thali with curries, rice, raita and flatbread on a red tablecloth" },
+  { id: MEDIA.story, file: "story.jpg", kind: "story", alt: "A steel thali with vegetable curries and rice on a banana leaf" },
+  ...PRODUCTS.map((p) => ({ id: MEDIA.product(p.n), file: `${p.slug}.jpg`, kind: "product", alt: p.name.replace(/ \(.*\)$/, "") })),
 ];
 const storageKey = (p: Photo) => `${T}/demo/${p.file}`;
+const contentType = (p: Photo) => (p.file.endsWith(".png") ? "image/png" : "image/jpeg");
 
 async function uploadPhotos(skip: boolean) {
   if (skip) return;
-  for (const p of PHOTOS) await storage().put(storageKey(p), readFileSync(join(assetsDir, p.file)), "image/png");
+  for (const p of PHOTOS) await storage().put(storageKey(p), readFileSync(join(assetsDir, p.file)), contentType(p));
   console.log(`photos     ${PHOTOS.length} uploaded (${env().STORAGE_DRIVER}) -> ${storage().publicUrl(storageKey(PHOTOS[0]!)).replace(/logo\.png$/, "")}`);
 }
 
@@ -186,9 +187,9 @@ async function upsertCatalog(tx: Tx, owner: string, at: Date) {
   for (const p of PHOTOS) {
     const size = readFileSync(join(assetsDir, p.file)).length;
     await tx.query(
-      `INSERT INTO media_assets (id, tenant_id, storage_key, content_type, byte_size, alt_text, kind, created_by, created_at) VALUES ($1, $2, $3, 'image/png', $4, $5, $6, $7, $8)
-       ON CONFLICT (id) DO UPDATE SET storage_key = excluded.storage_key, byte_size = excluded.byte_size, alt_text = excluded.alt_text, kind = excluded.kind, updated_at = now()`,
-      [p.id, T, storageKey(p), size, p.alt, p.kind, owner, at]);
+      `INSERT INTO media_assets (id, tenant_id, storage_key, content_type, byte_size, alt_text, kind, created_by, created_at) VALUES ($1, $2, $3, $9, $4, $5, $6, $7, $8)
+       ON CONFLICT (id) DO UPDATE SET storage_key = excluded.storage_key, content_type = excluded.content_type, byte_size = excluded.byte_size, alt_text = excluded.alt_text, kind = excluded.kind, updated_at = now()`,
+      [p.id, T, storageKey(p), size, p.alt, p.kind, owner, at, contentType(p)]);
   }
   await tx.query(`UPDATE brands SET logo_asset_id = $2 WHERE id = $1`, [DEMO.brandId, MEDIA.logo]);
 

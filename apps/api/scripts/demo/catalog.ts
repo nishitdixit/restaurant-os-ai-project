@@ -1,7 +1,7 @@
 // Saffron Street Kitchen — the dedicated restaurant for external, self-guided demos (DEMO_ACCESS.md).
 // A pure-vegetarian North & South Indian cloud kitchen in Koramangala, Bengaluru. Everything here is fictional demo
 // data with fixed ids, so `pnpm demo:seed` converges to the same restaurant every time. It never touches `pilot`.
-// Money is in paise. The dish art (`art`) drives the generated illustrations in ./assets (tests/recording/demo-assets.ts).
+// Money is in paise. Dish photos are listed in photos.ts.
 
 export const DEMO = {
   tenantId: "d1000000-0000-4000-8000-000000000001",
@@ -34,8 +34,6 @@ export const DEMO_USERS = [
 export const DEMO_PASSWORD = "SaffronDemo#2026";
 
 const id = (prefix: string, n: number) => `${prefix}000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
-
-export interface Art { bg: string; food: string; garnish: string; shape: "plate" | "bowl" | "bread" | "glass" | "dosa" | "thali" | "bites" | "rice" }
 
 export const CATEGORIES = [
   { id: id("d4", 1), slug: "starters", name: "Starters", nameHi: "स्टार्टर्स", description: "From the tandoor and the wok, made to share." },
@@ -70,147 +68,107 @@ export interface DemoProduct {
   weight: number;
   soldOut?: string;
   draft?: boolean;
-  art: Art;
 }
 
 export const PRODUCTS: DemoProduct[] = [
   // Starters
   { n: 1, slug: "paneer-tikka", name: "Paneer Tikka", nameHi: "पनीर टिक्का", category: "starters", price: 29900, dietary: "VEG", spice: 2, allergens: ["Dairy"], tags: ["tandoor", "high-protein"],
-    description: "Cottage cheese, peppers and onion marinated in hung curd and spices, charred in the tandoor.", badges: [{ kind: "signature" }], groups: ["spice"], weight: 9,
-    art: { bg: "#fed7aa", food: "#c2410c", garnish: "#facc15", shape: "bites" } },
+    description: "Cottage cheese, peppers and onion marinated in hung curd and spices, charred in the tandoor.", badges: [{ kind: "signature" }], groups: ["spice"], weight: 9 },
   { n: 2, slug: "hara-bhara-kabab", name: "Hara Bhara Kabab", category: "starters", price: 21900, dietary: "VEG", spice: 1, allergens: ["Dairy"], tags: ["shallow-fried"],
-    description: "Spinach, green pea and potato patties with a cashew-free mint chutney.", weight: 4,
-    art: { bg: "#dcfce7", food: "#15803d", garnish: "#fef9c3", shape: "bites" } },
+    description: "Spinach, green pea and potato patties with a cashew-free mint chutney.", weight: 4 },
   { n: 3, slug: "crispy-chilli-corn", name: "Crispy Chilli Corn", category: "starters", price: 19900, dietary: "VEGAN", spice: 2, allergens: ["Soy", "Gluten"], tags: ["indo-chinese"],
-    description: "Golden fried sweet corn tossed with spring onion, garlic and green chilli.", weight: 5,
-    art: { bg: "#fef9c3", food: "#eab308", garnish: "#16a34a", shape: "bowl" } },
+    description: "Golden fried sweet corn tossed with spring onion, garlic and green chilli.", weight: 5 },
   { n: 4, slug: "dahi-kebab", name: "Dahi Kebab", category: "starters", price: 23900, dietary: "VEG", spice: 1, allergens: ["Dairy", "Gluten"], tags: ["melt-in-mouth"],
-    description: "Hung-curd kebabs with a crisp crumb and a soft, creamy centre.", badges: [{ kind: "chefs-choice" }], weight: 3,
-    art: { bg: "#fff7ed", food: "#fdba74", garnish: "#ffffff", shape: "bites" } },
+    description: "Hung-curd kebabs with a crisp crumb and a soft, creamy centre.", badges: [{ kind: "chefs-choice" }], weight: 3 },
   { n: 5, slug: "tandoori-mushroom", name: "Tandoori Mushroom", category: "starters", price: 25900, dietary: "VEG", spice: 2, allergens: ["Dairy"], tags: ["tandoor"],
-    description: "Button mushrooms in a smoky tandoori marinade.", weight: 3, soldOut: "Fresh mushrooms arrive tomorrow morning",
-    art: { bg: "#e7e5e4", food: "#92400e", garnish: "#f97316", shape: "bites" } },
+    description: "Button mushrooms in a smoky tandoori marinade.", weight: 3, soldOut: "Fresh mushrooms arrive tomorrow morning" },
 
   // Chaat & street food
   { n: 6, slug: "pani-puri", name: "Pani Puri (8 pcs)", category: "chaat-street-food", price: 9900, dietary: "VEGAN", spice: 2, allergens: ["Gluten"], tags: ["street-food"],
-    description: "Crisp puris with spiced potato, tangy tamarind and mint-coriander pani packed separately.", weight: 6,
-    art: { bg: "#ecfccb", food: "#d97706", garnish: "#65a30d", shape: "bites" } },
+    description: "Crisp puris with spiced potato, tangy tamarind and mint-coriander pani packed separately.", weight: 6 },
   { n: 7, slug: "dahi-papdi-chaat", name: "Dahi Papdi Chaat", category: "chaat-street-food", price: 12900, dietary: "VEG", spice: 1, allergens: ["Dairy", "Gluten"], tags: ["street-food"],
-    description: "Papdi, chickpeas and potato under sweet curd, tamarind and green chutney, finished with sev.", weight: 4,
-    art: { bg: "#fefce8", food: "#fafaf9", garnish: "#b45309", shape: "plate" } },
+    description: "Papdi, chickpeas and potato under sweet curd, tamarind and green chutney, finished with sev.", weight: 4 },
   { n: 8, slug: "pav-bhaji", name: "Pav Bhaji", category: "chaat-street-food", price: 17900, dietary: "VEG", spice: 2, allergens: ["Dairy", "Gluten"], tags: ["mumbai-style"],
-    description: "Buttery mashed-vegetable bhaji with two toasted pavs, onion and lemon.", badges: [{ kind: "recommended" }], groups: ["pav-extras"], weight: 8,
-    art: { bg: "#ffedd5", food: "#dc2626", garnish: "#fde68a", shape: "plate" } },
+    description: "Buttery mashed-vegetable bhaji with two toasted pavs, onion and lemon.", badges: [{ kind: "recommended" }], groups: ["pav-extras"], weight: 8 },
   { n: 9, slug: "samosa-chaat", name: "Samosa Chaat", category: "chaat-street-food", price: 13900, dietary: "VEG", spice: 2, allergens: ["Dairy", "Gluten"], tags: ["street-food"],
-    description: "Crushed samosas with chole, curd and chutneys.", weight: 3,
-    art: { bg: "#fef3c7", food: "#b45309", garnish: "#16a34a", shape: "plate" } },
+    description: "Crushed samosas with chole, curd and chutneys.", weight: 3 },
 
   // Biryani & rice
   { n: 10, slug: "veg-dum-biryani", name: "Veg Dum Biryani", nameHi: "वेज दम बिरयानी", category: "biryani-rice", price: 26900, dietary: "VEG", spice: 2, allergens: ["Dairy", "Nuts"], tags: ["dum-cooked", "serves-1"],
     description: "Seasonal vegetables and aged basmati sealed and dum-cooked with saffron and whole spices. Comes with raita and salan.",
     longDescription: "Our most-ordered dish. The rice and vegetables are layered with fried onion, mint and saffron milk, then sealed with dough and slow-cooked so every grain picks up the spices.",
-    badges: [{ kind: "signature" }], groups: ["biryani-portion", "biryani-addons", "spice"], weight: 12,
-    art: { bg: "#fef3c7", food: "#f59e0b", garnish: "#15803d", shape: "rice" } },
+    badges: [{ kind: "signature" }], groups: ["biryani-portion", "biryani-addons", "spice"], weight: 12 },
   { n: 11, slug: "paneer-tikka-biryani", name: "Paneer Tikka Biryani", category: "biryani-rice", price: 31900, dietary: "VEG", spice: 2, allergens: ["Dairy", "Nuts"], tags: ["dum-cooked"],
-    description: "Tandoori paneer tikka layered through saffron dum biryani.", badges: [{ kind: "new" }], groups: ["biryani-portion", "biryani-addons", "spice"], weight: 7,
-    art: { bg: "#fde68a", food: "#d97706", garnish: "#b91c1c", shape: "rice" } },
+    description: "Tandoori paneer tikka layered through saffron dum biryani.", badges: [{ kind: "new" }], groups: ["biryani-portion", "biryani-addons", "spice"], weight: 7 },
   { n: 12, slug: "jeera-rice", name: "Jeera Rice", category: "biryani-rice", price: 14900, dietary: "VEGAN", spice: 0, allergens: [], tags: ["goes-with-dal"],
-    description: "Basmati tempered with cumin and ghee-free oil.", weight: 5,
-    art: { bg: "#fafaf9", food: "#fef3c7", garnish: "#78350f", shape: "rice" } },
+    description: "Basmati tempered with cumin and ghee-free oil.", weight: 5 },
   { n: 13, slug: "curd-rice", name: "Curd Rice", category: "biryani-rice", price: 12900, dietary: "VEG", spice: 1, allergens: ["Dairy", "Mustard"], tags: ["comfort-food"],
-    description: "Soft rice and curd with a mustard-seed, curry-leaf and ginger tempering, pomegranate on top.", weight: 3,
-    art: { bg: "#f8fafc", food: "#ffffff", garnish: "#be123c", shape: "bowl" } },
+    description: "Soft rice and curd with a mustard-seed, curry-leaf and ginger tempering, pomegranate on top.", weight: 3 },
 
   // Curries & dals
   { n: 14, slug: "paneer-butter-masala", name: "Paneer Butter Masala", nameHi: "पनीर बटर मसाला", category: "curries", price: 27900, dietary: "VEG", spice: 1, allergens: ["Dairy", "Nuts"], tags: ["creamy"],
-    description: "Paneer in a silky tomato, butter and cashew gravy.", groups: ["curry-portion"], weight: 11,
-    art: { bg: "#fed7aa", food: "#ea580c", garnish: "#fef3c7", shape: "bowl" } },
+    description: "Paneer in a silky tomato, butter and cashew gravy.", groups: ["curry-portion"], weight: 11 },
   { n: 15, slug: "kadai-paneer", name: "Kadai Paneer", category: "curries", price: 27900, dietary: "VEG", spice: 2, allergens: ["Dairy"], tags: ["peppers"],
-    description: "Paneer, capsicum and onion tossed in freshly pounded kadai masala.", groups: ["curry-portion", "spice"], weight: 5,
-    art: { bg: "#fee2e2", food: "#b91c1c", garnish: "#16a34a", shape: "bowl" } },
+    description: "Paneer, capsicum and onion tossed in freshly pounded kadai masala.", groups: ["curry-portion", "spice"], weight: 5 },
   { n: 16, slug: "dal-makhani", name: "Dal Makhani", nameHi: "दाल मखनी", category: "curries", price: 21900, dietary: "VEG", spice: 0, allergens: ["Dairy"], tags: ["slow-cooked"],
-    description: "Black lentils simmered overnight with butter and cream.", badges: [{ kind: "chefs-choice" }], groups: ["curry-portion"], weight: 10,
-    art: { bg: "#e7e5e4", food: "#78350f", garnish: "#fafaf9", shape: "bowl" } },
+    description: "Black lentils simmered overnight with butter and cream.", badges: [{ kind: "chefs-choice" }], groups: ["curry-portion"], weight: 10 },
   { n: 17, slug: "dal-tadka", name: "Yellow Dal Tadka", category: "curries", price: 17900, dietary: "VEGAN", spice: 1, allergens: ["Mustard"], tags: ["everyday"],
-    description: "Toor dal finished with a cumin, garlic and red-chilli tadka.", groups: ["curry-portion"], weight: 6,
-    art: { bg: "#fef9c3", food: "#facc15", garnish: "#b91c1c", shape: "bowl" } },
+    description: "Toor dal finished with a cumin, garlic and red-chilli tadka.", groups: ["curry-portion"], weight: 6 },
   { n: 18, slug: "chana-masala", name: "Pindi Chana Masala", category: "curries", price: 19900, dietary: "VEGAN", spice: 2, allergens: [], tags: ["punjabi"],
-    description: "Chickpeas in a dark, tangy Pindi-style masala.", groups: ["curry-portion", "spice"], weight: 4,
-    art: { bg: "#fde68a", food: "#92400e", garnish: "#15803d", shape: "bowl" } },
+    description: "Chickpeas in a dark, tangy Pindi-style masala.", groups: ["curry-portion", "spice"], weight: 4 },
   { n: 19, slug: "malai-kofta", name: "Malai Kofta", category: "curries", price: 28900, dietary: "VEG", spice: 0, allergens: ["Dairy", "Nuts"], tags: ["rich"],
-    description: "Paneer and potato dumplings in a mild, creamy cashew gravy.", groups: ["curry-portion"], weight: 4,
-    art: { bg: "#ffedd5", food: "#fb923c", garnish: "#fef3c7", shape: "bowl" } },
+    description: "Paneer and potato dumplings in a mild, creamy cashew gravy.", groups: ["curry-portion"], weight: 4 },
   { n: 20, slug: "palak-paneer", name: "Palak Paneer", category: "curries", price: 26900, dietary: "VEG", spice: 1, allergens: ["Dairy"], tags: ["greens"],
-    description: "Paneer cubes in a garlicky spinach purée.", groups: ["curry-portion"], weight: 5,
-    art: { bg: "#dcfce7", food: "#166534", garnish: "#fafaf9", shape: "bowl" } },
+    description: "Paneer cubes in a garlicky spinach purée.", groups: ["curry-portion"], weight: 5 },
   { n: 21, slug: "sarson-ka-saag", name: "Sarson ka Saag", category: "curries", price: 24900, dietary: "VEG", spice: 1, allergens: ["Dairy", "Mustard"], tags: ["seasonal", "winter-special"],
-    description: "Mustard greens slow-cooked with ghee — coming this winter.", draft: true, groups: ["curry-portion"], weight: 0,
-    art: { bg: "#ecfccb", food: "#3f6212", garnish: "#fde68a", shape: "bowl" } },
+    description: "Mustard greens slow-cooked with ghee — coming this winter.", draft: true, groups: ["curry-portion"], weight: 0 },
 
   // Breads
   { n: 22, slug: "butter-naan", name: "Butter Naan", category: "breads", price: 5900, dietary: "VEG", spice: 0, allergens: ["Dairy", "Gluten"], tags: ["tandoor"],
-    description: "Leavened bread from the tandoor, brushed with butter.", groups: ["naan-extras"], weight: 12,
-    art: { bg: "#fef9c3", food: "#fbbf24", garnish: "#a16207", shape: "bread" } },
+    description: "Leavened bread from the tandoor, brushed with butter.", groups: ["naan-extras"], weight: 12 },
   { n: 23, slug: "garlic-naan", name: "Garlic Naan", category: "breads", price: 6900, dietary: "VEG", spice: 0, allergens: ["Dairy", "Gluten"], tags: ["tandoor"],
-    description: "Naan topped with chopped garlic and coriander.", groups: ["naan-extras"], weight: 8,
-    art: { bg: "#fefce8", food: "#f59e0b", garnish: "#15803d", shape: "bread" } },
+    description: "Naan topped with chopped garlic and coriander.", groups: ["naan-extras"], weight: 8 },
   { n: 24, slug: "tandoori-roti", name: "Tandoori Roti", category: "breads", price: 3900, dietary: "VEGAN", spice: 0, allergens: ["Gluten"], tags: ["whole-wheat"],
-    description: "Whole-wheat bread from the tandoor.", weight: 6,
-    art: { bg: "#f5f5f4", food: "#a16207", garnish: "#78350f", shape: "bread" } },
+    description: "Whole-wheat bread from the tandoor.", weight: 6 },
   { n: 25, slug: "lachha-paratha", name: "Lachha Paratha", category: "breads", price: 6900, dietary: "VEG", spice: 0, allergens: ["Dairy", "Gluten"], tags: ["flaky"],
-    description: "Flaky, layered whole-wheat paratha.", weight: 4,
-    art: { bg: "#fef3c7", food: "#d97706", garnish: "#fef9c3", shape: "bread" } },
+    description: "Flaky, layered whole-wheat paratha.", weight: 4 },
 
   // South Indian
   { n: 26, slug: "masala-dosa", name: "Masala Dosa", nameHi: "मसाला डोसा", category: "south-indian", price: 14900, dietary: "VEGAN", spice: 1, allergens: ["Mustard"], tags: ["breakfast", "all-day"],
-    description: "Crisp rice-and-lentil crêpe with potato masala, coconut chutney and sambar.", groups: ["dosa-extras"], weight: 9,
-    art: { bg: "#fef3c7", food: "#ca8a04", garnish: "#fafaf9", shape: "dosa" } },
+    description: "Crisp rice-and-lentil crêpe with potato masala, coconut chutney and sambar.", groups: ["dosa-extras"], weight: 9 },
   { n: 27, slug: "mysore-masala-dosa", name: "Mysore Masala Dosa", category: "south-indian", price: 15900, dietary: "VEGAN", spice: 3, allergens: ["Mustard"], tags: ["spicy"],
-    description: "Dosa lined with fiery red chutney and filled with potato masala.", groups: ["dosa-extras"], weight: 5,
-    art: { bg: "#fee2e2", food: "#c2410c", garnish: "#fde68a", shape: "dosa" } },
+    description: "Dosa lined with fiery red chutney and filled with potato masala.", groups: ["dosa-extras"], weight: 5 },
   { n: 28, slug: "ghee-podi-idli", name: "Ghee Podi Idli (4 pcs)", category: "south-indian", price: 11900, dietary: "VEG", spice: 2, allergens: ["Dairy", "Sesame"], tags: ["breakfast"],
-    description: "Mini idlis tossed in ghee and gunpowder podi.", weight: 4,
-    art: { bg: "#fafaf9", food: "#ffffff", garnish: "#b45309", shape: "bites" } },
+    description: "Mini idlis tossed in ghee and gunpowder podi.", weight: 4 },
   { n: 29, slug: "medu-vada", name: "Medu Vada (2 pcs)", category: "south-indian", price: 9900, dietary: "VEGAN", spice: 1, allergens: [], tags: ["breakfast"],
-    description: "Crisp urad-dal doughnuts with chutney and sambar.", weight: 3,
-    art: { bg: "#fef9c3", food: "#b45309", garnish: "#fef3c7", shape: "bites" } },
+    description: "Crisp urad-dal doughnuts with chutney and sambar.", weight: 3 },
 
   // Thalis & combos
   { n: 30, slug: "saffron-street-thali", name: "Saffron Street Thali", category: "thalis-combos", price: 34900, dietary: "VEG", spice: 1, allergens: ["Dairy", "Gluten", "Nuts"], tags: ["complete-meal"],
     description: "Paneer butter masala, dal makhani, seasonal sabzi, jeera rice, two butter naans, raita, salad and gulab jamun.",
-    badges: [{ kind: "combo" }, { kind: "custom", label: "Best value", tone: "success" }], weight: 7,
-    art: { bg: "#fde68a", food: "#ea580c", garnish: "#15803d", shape: "thali" } },
+    badges: [{ kind: "combo" }, { kind: "custom", label: "Best value", tone: "success" }], weight: 7 },
   { n: 31, slug: "rajma-chawal-bowl", name: "Rajma Chawal Bowl", category: "thalis-combos", price: 19900, dietary: "VEGAN", spice: 1, allergens: [], tags: ["comfort-food"],
-    description: "Kashmiri rajma over jeera rice with onion salad.", badges: [{ kind: "combo" }], weight: 5,
-    art: { bg: "#fee2e2", food: "#7f1d1d", garnish: "#fafaf9", shape: "rice" } },
+    description: "Kashmiri rajma over jeera rice with onion salad.", badges: [{ kind: "combo" }], weight: 5 },
   { n: 32, slug: "chole-kulche-combo", name: "Chole Kulche Combo", category: "thalis-combos", price: 18900, dietary: "VEG", spice: 2, allergens: ["Dairy", "Gluten"], tags: ["punjabi"],
-    description: "Pindi chole with two butter kulchas, pickled onion and a sweet lassi.", badges: [{ kind: "combo" }], weight: 4,
-    art: { bg: "#fef3c7", food: "#92400e", garnish: "#fbbf24", shape: "thali" } },
+    description: "Pindi chole with two butter kulchas, pickled onion and a sweet lassi.", badges: [{ kind: "combo" }], weight: 4 },
 
   // Desserts
   { n: 33, slug: "gulab-jamun", name: "Gulab Jamun (2 pcs)", category: "desserts", price: 8900, dietary: "VEG", spice: 0, allergens: ["Dairy", "Gluten"], tags: ["warm"],
-    description: "Soft khoya dumplings in cardamom-rose syrup, served warm.", weight: 7,
-    art: { bg: "#fce7f3", food: "#7c2d12", garnish: "#fbcfe8", shape: "bowl" } },
+    description: "Soft khoya dumplings in cardamom-rose syrup, served warm.", weight: 7 },
   { n: 34, slug: "rasmalai", name: "Rasmalai (2 pcs)", category: "desserts", price: 11900, dietary: "VEG", spice: 0, allergens: ["Dairy", "Nuts"], tags: ["chilled"],
-    description: "Chhena discs in saffron-cardamom milk with pistachio.", weight: 4, soldOut: "Sold out for today",
-    art: { bg: "#fef9c3", food: "#fef3c7", garnish: "#65a30d", shape: "bowl" } },
+    description: "Chhena discs in saffron-cardamom milk with pistachio.", weight: 4, soldOut: "Sold out for today" },
   { n: 35, slug: "gajar-halwa", name: "Gajar ka Halwa", category: "desserts", price: 10900, dietary: "VEG", spice: 0, allergens: ["Dairy", "Nuts"], tags: ["seasonal"],
-    description: "Slow-cooked carrot halwa with khoya and almonds.", badges: [{ kind: "limited" }], weight: 3,
-    art: { bg: "#ffedd5", food: "#ea580c", garnish: "#fef3c7", shape: "bowl" } },
+    description: "Slow-cooked carrot halwa with khoya and almonds.", badges: [{ kind: "limited" }], weight: 3 },
 
   // Beverages
   { n: 36, slug: "mango-lassi", name: "Mango Lassi", category: "beverages", price: 9900, dietary: "VEG", spice: 0, allergens: ["Dairy"], tags: ["chilled"],
-    description: "Alphonso mango blended with thick curd.", groups: ["drink-size"], weight: 8,
-    art: { bg: "#ffedd5", food: "#fb923c", garnish: "#fde047", shape: "glass" } },
+    description: "Alphonso mango blended with thick curd.", groups: ["drink-size"], weight: 8 },
   { n: 37, slug: "masala-chaas", name: "Masala Chaas", category: "beverages", price: 6900, dietary: "VEG", spice: 1, allergens: ["Dairy"], tags: ["digestive"],
-    description: "Spiced buttermilk with roasted cumin and mint.", groups: ["drink-size"], weight: 6,
-    art: { bg: "#f0fdf4", food: "#f8fafc", garnish: "#16a34a", shape: "glass" } },
+    description: "Spiced buttermilk with roasted cumin and mint.", groups: ["drink-size"], weight: 6 },
   { n: 38, slug: "filter-coffee", name: "Filter Coffee", category: "beverages", price: 6900, dietary: "VEG", spice: 0, allergens: ["Dairy"], tags: ["hot"],
-    description: "Strong South Indian decoction with frothy milk.", weight: 5,
-    art: { bg: "#e7e5e4", food: "#78350f", garnish: "#fef3c7", shape: "glass" } },
+    description: "Strong South Indian decoction with frothy milk.", weight: 5 },
   { n: 39, slug: "fresh-lime-soda", name: "Fresh Lime Soda", category: "beverages", price: 7900, dietary: "VEGAN", spice: 0, allergens: [], tags: ["chilled"],
-    description: "Sweet, salted or mixed — tell us in the order note.", weight: 4,
-    art: { bg: "#ecfccb", food: "#d9f99d", garnish: "#65a30d", shape: "glass" } },
+    description: "Sweet, salted or mixed — tell us in the order note.", weight: 4 },
 ];
 
 export const productId = (n: number) => id("d5", n);
