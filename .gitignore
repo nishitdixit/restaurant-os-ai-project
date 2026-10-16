@@ -12,3 +12,6 @@ playwright-report/
 !.env.example
 .DS_Store
 .next-recording/
+
+# Recording-harness runs (videos, Playwright traces with session cookies): keep local, never commit
+recordings/

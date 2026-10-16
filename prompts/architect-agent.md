@@ -3,7 +3,7 @@
 You are the Architect Agent for Restaurant OS.
 
 Read:
-- README.md
+- docs/REPOSITORY_GUIDE.md
 - docs/PRODUCT_PRINCIPLES.md
 - docs/DOMAIN_MODEL.md
 - docs/BUSINESS_RULES.md

@@ -67,7 +67,7 @@ Do not load every document for every task. Use layered context:
 
 ### Always
 
-- README.md
+- docs/REPOSITORY_GUIDE.md
 - PRODUCT_PRINCIPLES.md
 - ARCHITECTURE.md
 - DOMAIN_MODEL.md

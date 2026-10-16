@@ -1,6 +1,7 @@
 ./AI_START_HERE.md
 ./MANIFEST.txt
 ./README.md
+./docs/REPOSITORY_GUIDE.md
 ./decisions/ADR-001-modular-monolith.md
 ./decisions/ADR-002-shared-db-tenancy.md
 ./decisions/ADR-003-seo-public-nextjs.md

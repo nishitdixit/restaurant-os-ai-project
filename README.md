@@ -1,138 +1,120 @@
-# Restaurant OS — AI-Native Product Brain
+# Restaurant OS
 
-Version: 0.1
-Status: Product/architecture baseline for implementation
-Primary pilot: a single Indian cloud kitchen / delivery-first restaurant
-Long-term product: multi-tenant SaaS Restaurant OS for independent restaurants, cloud kitchens, cafes, bakeries, tiffin/meal businesses, food trucks and multi-brand kitchens.
+**A multi-tenant ordering and operations platform for delivery-first restaurants.** Each restaurant gets its own SEO-ready storefront for direct orders (no aggregator commission) and an admin to run the business: order board, menu and stock, offers, delivery areas, customers, analytics and a no-code website designer. One deployment serves many restaurants; the pilot restaurant is a tenant, not a special code path.
 
-## What this repository is
+[![CI](https://github.com/nishitdixit/restaurant-os-ai-project/actions/workflows/ci.yml/badge.svg)](https://github.com/nishitdixit/restaurant-os-ai-project/actions/workflows/ci.yml)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)
+![Node](https://img.shields.io/badge/node-22-339933)
 
-This repository is the source of truth for an AI-assisted engineering workflow. It contains product intent, scope, business rules, architecture, domain language, UX principles, implementation boundaries, roadmap and agent instructions.
+<table>
+  <tr>
+    <td width="34%"><img src="docs/assets/storefront-phone.png" alt="Storefront on a phone: restaurant hero, order direct, menu"></td>
+    <td><img src="docs/assets/admin-new-order.png" alt="Admin: entering a WhatsApp order with the same pricing engine as the website"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Storefront (customer, phone)</sub></td>
+    <td align="center"><sub>Admin: staff enter WhatsApp / phone / walk-in orders, priced by the same engine as the website</sub></td>
+  </tr>
+</table>
 
-The system should be built once and operated by many restaurant tenants. The pilot restaurant is a tenant, not a special code path.
+## What it does
 
-## Start here
+| For customers (storefront) | For the restaurant (admin) |
+|---|---|
+| Menu with categories, search, veg-only filter, dish options and add-ons | Live order board with sound alerts: accept, prepare, ready, dispatch, deliver, cancel, refund |
+| Cart, coupons, delivery-area check by pincode or radius, minimum order | Menu, option groups, bulk stock on/off, photos, Hindi names |
+| Checkout and payment, live order tracking, reorder | Offers (public, code-only, staff-only), with usage by channel and staff member |
+| "Order on WhatsApp" with the cart prefilled | Staff-entered WhatsApp / phone / walk-in orders, pay later, mark paid |
+| Server-rendered pages, JSON-LD, sitemap, share cards | Customers, analytics that reconcile with orders, messages, team roles, audit log |
+| Per-restaurant look: 13 style presets and a homepage builder | Appearance editor with live preview, drafts, publish and restore, and a WCAG contrast guardrail that blocks unreadable themes |
 
-An AI agent working on this repository MUST read these files in order before making architectural or cross-domain changes:
+## Architecture
 
-1. `docs/PRODUCT_VISION.md`
-2. `docs/PRODUCT_PRINCIPLES.md`
-3. `docs/PRD.md`
-4. `docs/PRODUCT_SCOPE.md`
-5. `docs/DOMAIN_MODEL.md`
-6. `docs/ARCHITECTURE.md`
-7. `docs/BUSINESS_RULES.md`
-8. `docs/TENANCY.md`
-9. `engineering/AI_WORKFLOW.md`
-10. `tasks/BACKLOG.md`
+```mermaid
+flowchart LR
+    C([Customer]) --> SF[Storefront<br/>Next.js 15 · SSR/SEO]
+    O([Owner / staff]) --> AD[Admin<br/>Next.js 15 · Clerk]
+    SF --> API
+    AD --> API
+    subgraph API[API · Fastify 5 + Zod · OpenAPI]
+        MOD[Domain modules<br/>catalog · checkout · orders · payments<br/>customers · marketing · appearance · team]
+    end
+    API --> PG[(PostgreSQL<br/>shared schema, tenant_id everywhere)]
+    API -- same transaction --> OB[(Outbox table)]
+    OB --> W[Worker · BullMQ]
+    W --> RD[(Redis)]
+    W --> PROV[Provider adapters<br/>payments · messaging · storage]
+    PROV -.-> EXT[Razorpay · WhatsApp/SMS · S3/Supabase]
+```
 
-For a feature task, the agent MUST additionally read the relevant file under `specs/` and any referenced ADR.
+A **modular monolith** (ADR-001): one API with a module per domain, shared pure domain logic in `packages/domain`, shared contracts in `packages/types` and a design system in `packages/ui`. Every architectural choice is recorded as an ADR in [`decisions/`](decisions/) (14 so far).
 
-## Product thesis
+### Engineering decisions worth a look
 
-Restaurant owners need more than a website. They need a single system that helps them:
+- **Tenant isolation by construction** (ADR-002). Shared database, `tenant_id` on every row, tenant resolved server-side on every request, cross-tenant references rejected. Ten API tests cover reads, writes and cross-tenant IDs. A security review removed preview endpoints that accepted IDs without tenant checks, and a regression test keeps them unreachable.
+- **Checkout that can't double-charge or double-create.** Pricing is server-authoritative. Order creation is idempotent per `Idempotency-Key`, tested with **5 concurrent identical requests**. Payment webhooks are signature-checked, replay-safe and amount-checked.
+- **Transactional outbox** (ADR-009). Side effects (customer messages, payment-window expiry) are written to an outbox in the same transaction as the order. A worker relays them with `FOR UPDATE SKIP LOCKED`, and failed sends are retried with backoff and never duplicated.
+- **Money in integer minor units** (ADR-005). There is no floating-point arithmetic on prices, taxes or discounts anywhere.
+- **Provider adapters** (ADR-004). Payments, messaging and storage sit behind interfaces with contract tests. The pilot runs on mock providers by decision (ADR-010), and Razorpay is adapter-ready (ADR-007).
+- **Explicit order lifecycle** (ADR-011). State transitions are validated, order snapshots are immutable, and a payment window expires unpaid orders.
+- **Accessibility and readability are enforced, not hoped for.** axe checks run on customer pages in light and dark themes, and theme publishing is blocked while text contrast fails WCAG AA.
 
-- get discovered locally;
-- turn discovery into direct orders;
-- own customer relationships;
-- operate the kitchen efficiently;
-- keep product availability accurate;
-- orchestrate delivery;
-- measure economics, not just gross sales;
-- reduce dependence on fragmented tools and manual work.
+## Testing
 
-The public website is the acquisition and commerce surface. The admin system is the operating system. Integrations connect external channels and delivery/payment providers.
+| Layer | What | Count |
+|---|---|---|
+| Domain | Pure rules: pricing, promotions, delivery, theme contrast maths, preset distinctness, order messages | 69 |
+| API integration | Real PostgreSQL (throwaway, migrated per run): checkout, idempotency, webhooks, tenancy, staff orders, appearance, resilience, payment-provider contracts | 94 |
+| End to end | Playwright against API + worker + storefront on phone and desktop: customer journeys, 13 themes, accessibility (axe), WhatsApp ordering | 62 (last full run Oct 8) |
+| Recorded walkthrough | `pnpm record` films admin and storefront side by side, asserts every flow, and writes a `BUGS.md` linking each failure to the video time, traces and server logs | 19 chapters |
 
-## Core product loop
+CI runs typecheck, the domain and API suites against Postgres, a migration check on a fresh database, production builds and the end-to-end suite.
 
-`Discover -> Browse -> Order -> Prepare -> Deliver -> Retain -> Analyze -> Improve`
+## Run it locally
 
-## First release boundary
-
-MVP is intentionally delivery-first and D2C-first:
-
-- public restaurant storefront;
-- menu/catalog management;
-- stock ON/OFF availability;
-- cart and checkout;
-- payments;
-- direct order management;
-- delivery zones and manual dispatch;
-- customer records;
-- offers/coupons;
-- basic analytics;
-- WhatsApp/contact actions;
-- Swiggy/Zomato outbound ordering links, subject to merchant/platform capabilities;
-- multi-tenant foundations;
-- SEO foundations;
-- admin roles and audit logs.
-
-Inventory recipes, KDS, automated delivery booking, advanced CRM, aggregator synchronization, loyalty, AI analytics and multi-outlet/multi-brand capabilities are planned later and must not leak into MVP unless required by a concrete workflow.
-
-## Non-goals for MVP
-
-- full accounting ERP;
-- payroll/HR;
-- table reservation;
-- dine-in POS hardware integration;
-- custom native customer mobile app;
-- custom logistics fleet;
-- guaranteed Google rankings;
-- scraping or reverse engineering third-party platforms;
-- microservice architecture;
-- AI autonomy over financial or operational decisions.
-
-## Working principle
-
-Prefer the smallest reusable system that solves the pilot's real workflow and can later support multiple tenants without structural rewrites.
-
-## Run locally
-
-Prerequisites: Node 22, pnpm 10 (`corepack enable`), PostgreSQL (local or Supabase), Redis
-(`docker compose up -d redis`, `brew install redis`, or an Upstash URL), and a Clerk application.
+Prerequisites: Node 22, pnpm 10 (`corepack enable`), PostgreSQL (local or Supabase), Redis (`docker compose up -d redis`) and a Clerk development application.
 
 ```sh
 pnpm install
-cp apps/api/.env.example apps/api/.env                     # DATABASE_URL, REDIS_URL, CLERK_SECRET_KEY
+cp apps/api/.env.example apps/api/.env                 # DATABASE_URL, REDIS_URL, CLERK_SECRET_KEY
 cp apps/storefront/.env.example apps/storefront/.env.local
-cp apps/admin/.env.example apps/admin/.env.local           # Clerk publishable + secret key
-pnpm db:setup                                              # migrations + pilot seed (db/README.md)
-SEED_OWNER_CLERK_USER_ID=user_xxx SEED_OWNER_EMAIL=you@example.com pnpm db:seed   # optional: make you OWNER
-pnpm dev                                                   # API + worker :4000, storefront :3000, admin :3001
+cp apps/admin/.env.example apps/admin/.env.local       # Clerk publishable + secret key
+pnpm db:setup                                          # migrations + pilot seed
+pnpm dev                                               # API + worker :4000, storefront :3000, admin :3001
 ```
 
-To try the new-restaurant wizard instead, set `SELF_SIGNUP_ENABLED=true` in `apps/api/.env` (off by default for the pilot). API docs: http://localhost:4000/docs.
-
 | Command | Purpose |
-| --- | --- |
+|---|---|
 | `pnpm typecheck` | TypeScript across every package |
 | `pnpm test` | Domain unit tests + API integration tests against a throwaway Postgres |
-| `pnpm test:e2e` | Playwright customer journeys against a running stack (`tests/README.md`) |
+| `pnpm test:e2e` | Playwright customer journeys against a running stack |
 | `pnpm build` | Production builds (API bundle, storefront, admin) |
-| `pnpm record` | Recorded walkthrough of admin + storefront together → `recordings/<date_time>/` (`tests/recording/README.md`) |
+| `pnpm record` | Recorded walkthrough of admin + storefront → `recordings/<date_time>/` (local only) |
+| `pnpm demo:seed` | Reset the demo restaurant (menu with photos, customers, ~2 months of orders) |
 
-Operations: `engineering/RUNBOOK.md` (deploy, rollback). Pilot acceptance: `engineering/PILOT_UAT.md`.
-Payments and customer messages are in test mode for the pilot (`decisions/ADR-010-pilot-mock-providers.md`).
+API docs are served at `http://localhost:4000/docs`. Deployment (Vercel + Render + Supabase) and rollback: [`DEPLOYMENT_RUNBOOK.md`](DEPLOYMENT_RUNBOOK.md), [`engineering/RUNBOOK.md`](engineering/RUNBOOK.md).
 
-## Repository map
+## Repository layout
 
-- `docs/` — product, domain and system context
-- `decisions/` — architecture decision records
-- `roadmap/` — sequencing and release boundaries
-- `specs/` — feature-level implementation contracts
-- `tasks/` — epics and executable backlog
-- `engineering/` — software and AI development process
-- `ui/` — product design and UX standards
-- `prompts/` — reusable instructions for different AI engineering roles
+```text
+apps/
+  api/          Fastify API + BullMQ worker (modules per domain, provider integrations, jobs)
+  storefront/   Next.js customer site (SSR, SEO, themes)
+  admin/        Next.js restaurant admin (Clerk auth, role-based)
+packages/
+  domain/       pure business rules shared by API and UI
+  types/        shared contracts
+  ui/           design system
+db/             SQL migrations (0001-0010, additive) and seeds
+tests/          e2e (Playwright) and the recorded walkthrough harness
+decisions/      architecture decision records
+docs/           product, domain, architecture, security and tenancy docs
+```
 
-## Source-of-truth hierarchy
+## How it was built
 
-1. Product Vision
-2. PRD and Product Scope
-3. Domain Model and Business Rules
-4. Architecture and ADRs
-5. Feature Specifications
-6. Task instructions
-7. Code
+Restaurant OS is built with an AI-assisted, spec-driven workflow: product vision → PRD → domain model and business rules → ADRs → feature specs → tasks → code, with each layer the source of truth for the one below. The agent-facing entry points are [`AI_START_HERE.md`](AI_START_HERE.md) and [`docs/REPOSITORY_GUIDE.md`](docs/REPOSITORY_GUIDE.md). Business rules that need the owner's sign-off are tracked explicitly in [`docs/BUSINESS_RULES.md`](docs/BUSINESS_RULES.md), and current progress is in [`BUILD_STATE.md`](BUILD_STATE.md).
 
-When a lower layer conflicts with a higher layer, do not silently change the higher layer. Surface the conflict and update the appropriate source of truth first.
+## Status
+
+Pilot MVP: feature-complete and pending pilot acceptance. Payments and customer messages run on development providers for the pilot (ADR-010). Next: the Razorpay sandbox run, a real messaging provider, and the V1 roadmap (kitchen display, inventory, aggregator sync) in [`roadmap/`](roadmap/).

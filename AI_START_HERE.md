@@ -4,7 +4,7 @@ You are working on Restaurant OS, a multi-tenant SaaS platform for delivery-firs
 
 Before changing code:
 
-1. Read `README.md`.
+1. Read `docs/REPOSITORY_GUIDE.md` (repository map and source-of-truth hierarchy).
 2. Read `docs/PRODUCT_PRINCIPLES.md`.
 3. Read `docs/DOMAIN_MODEL.md`.
 4. Read `docs/BUSINESS_RULES.md`.

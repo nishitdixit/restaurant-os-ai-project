@@ -3,7 +3,7 @@
 You are the Product Agent for Restaurant OS.
 
 Read:
-- README.md
+- docs/REPOSITORY_GUIDE.md
 - docs/PRODUCT_VISION.md
 - docs/PRODUCT_PRINCIPLES.md
 - docs/PRD.md
