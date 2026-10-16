@@ -99,7 +99,7 @@ test("from checkout: the cart plus delivery details and the quoted total", async
 test("the restaurant's general WhatsApp links carry the cart; with an empty cart they keep their own text", async ({ page }) => {
   await page.goto("/");
   const [, empty] = await whatsappMessage(page, () => page.getByRole("link", { name: "Chat on WhatsApp" }).click());
-  expect(empty).toBe("", "the footer chat link has no prefilled text of its own");
+  expect(empty, "the footer chat link has no prefilled text of its own").toBe("");
   await page.goto("/menu");
   await addButterChicken(page);
   await page.goto("/");
